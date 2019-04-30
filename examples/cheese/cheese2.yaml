@@ -1,0 +1,29 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: cheese
+  labels:
+    app: cheese
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cheese
+  template:
+    metadata:
+      labels:
+        app: cheese
+        version: v0.0.1
+    spec:
+      containers:
+      - name: cheese
+        image: errm/cheese:wensleydale
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 50Mi
+        ports:
+        - containerPort: 80
