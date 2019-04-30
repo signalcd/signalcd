@@ -13,32 +13,50 @@ import (
 	v1 "k8s.io/api/apps/v1"
 )
 
-var fakeCurrentWorkload = struct {
+var fakeCurrentPipeline = struct {
 	mu       sync.RWMutex
-	Workload cd.Workload
+	Pipeline cd.Pipeline
 }{}
 
-// Example, but real images as workload
-var fakeWorkloads = []cd.Workload{
-	{Image: "grafana/loki:master-e506f16"},
-	{Image: "grafana/loki:master-e2b2561"},
-	{Image: "grafana/loki:master-9440dc9"},
-	{Image: "grafana/loki:master-80fdece"},
-	{Image: "grafana/loki:master-199746a"},
+var fakePipelines = []cd.Pipeline{
+	{
+		ID: "eee4047d-3826-4bf0-a7f1-b0b339521a52",
+		Config: cd.Config{
+			Steps: []cd.Step{
+				{
+					Name:     "echo",
+					Image:    "alpine:3.7",
+					Commands: []string{"echo 'hi'", "uname -a"},
+				},
+			},
+		},
+	},
+	{
+		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
+		Config: cd.Config{
+			Steps: []cd.Step{
+				{
+					Name:     "echo",
+					Image:    "alpine:3.6",
+					Commands: []string{"echo 'hi'", "uname -a"},
+				},
+			},
+		},
+	},
 }
 
 func New() *chi.Mux {
-	fakeCurrentWorkload.Workload = fakeWorkloads[0]
+	fakeCurrentPipeline.Pipeline = fakePipelines[0]
 
 	router := chi.NewRouter()
 
 	router.Get("/", index())
-	router.Get("/workload", workload())
-	router.Get("/workloads", workloads())
-	router.Patch("/workloads/{index}", setWorkload())
+	router.Get("/pipeline", pipeline())
+	router.Get("/pipelines", pipelines())
+	router.Patch("/pipelines/{index}", setPipeline())
 
-	router.Get("/workloads/agents", workloadAgents())
-	router.Post("/workloads/agents", updateWorkloadAgents())
+	router.Get("/pipelines/agents", pipelineAgents())
+	router.Post("/pipelines/agents", updatePipelineAgents())
 
 	return router
 }
@@ -49,9 +67,9 @@ func index() http.HandlerFunc {
 	}
 }
 
-func workloads() http.HandlerFunc {
+func pipelines() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		bytes, err := json.Marshal(fakeWorkloads)
+		bytes, err := json.Marshal(fakePipelines)
 		if err != nil {
 			http.Error(w, "failed to marshal", http.StatusInternalServerError)
 			return
@@ -61,12 +79,12 @@ func workloads() http.HandlerFunc {
 	}
 }
 
-func workload() http.HandlerFunc {
+func pipeline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fakeCurrentWorkload.mu.RLock()
-		defer fakeCurrentWorkload.mu.RUnlock()
+		fakeCurrentPipeline.mu.RLock()
+		defer fakeCurrentPipeline.mu.RUnlock()
 
-		bytes, err := json.Marshal(fakeCurrentWorkload.Workload)
+		bytes, err := json.Marshal(fakeCurrentPipeline.Pipeline)
 		if err != nil {
 			http.Error(w, "failed to marshal", http.StatusInternalServerError)
 			return
@@ -76,7 +94,7 @@ func workload() http.HandlerFunc {
 	}
 }
 
-func setWorkload() http.HandlerFunc {
+func setPipeline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		index := chi.URLParam(r, "index")
 		i, err := strconv.Atoi(index)
@@ -84,16 +102,16 @@ func setWorkload() http.HandlerFunc {
 			return
 		}
 
-		fakeCurrentWorkload.mu.Lock()
-		defer fakeCurrentWorkload.mu.Unlock()
+		fakeCurrentPipeline.mu.Lock()
+		defer fakeCurrentPipeline.mu.Unlock()
 		// TODO: This will panic with unbound index
-		fakeCurrentWorkload.Workload = fakeWorkloads[i]
+		fakeCurrentPipeline.Pipeline = fakePipelines[i]
 	}
 }
 
 var agents = sync.Map{}
 
-func workloadAgents() http.HandlerFunc {
+func pipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var as []cd.Agent
 
@@ -118,10 +136,9 @@ func workloadAgents() http.HandlerFunc {
 
 		w.Write(payload)
 	}
-
 }
 
-func updateWorkloadAgents() http.HandlerFunc {
+func updatePipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var agent cd.Agent
 		if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {

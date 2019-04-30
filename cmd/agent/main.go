@@ -86,7 +86,7 @@ type updater struct {
 	logger    log.Logger
 	agentName string
 
-	currentWorkload cd.Workload
+	currentPipeline cd.Pipeline
 }
 
 func (u *updater) pollLoop(ctx context.Context) error {
@@ -112,27 +112,27 @@ func (u *updater) pollLoop(ctx context.Context) error {
 }
 
 func (u *updater) poll() error {
-	w, err := u.workload()
+	p, err := u.pipeline()
 	if err != nil {
 		return err
 	}
 
-	if u.currentWorkload.Image == "" {
-		level.Info(u.logger).Log("msg", "unknown state, applying", "image", w.Image)
-		u.currentWorkload = w
+	if u.currentPipeline.ID == "" {
+		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
+		u.currentPipeline = p
 	}
-	if u.currentWorkload.Image != w.Image {
-		level.Info(u.logger).Log("msg", "updated state, applying", "image", w.Image)
-		u.currentWorkload = w
+	if u.currentPipeline.ID != p.ID {
+		level.Info(u.logger).Log("msg", "updated pipeline", "pipeline", p.ID)
+		u.currentPipeline = p
 	}
 
 	return nil
 }
 
-func (u *updater) workload() (cd.Workload, error) {
-	var w cd.Workload
+func (u *updater) pipeline() (cd.Pipeline, error) {
+	var w cd.Pipeline
 
-	resp, err := http.Get(api + "/workload")
+	resp, err := http.Get(api + "/pipeline")
 	if err != nil {
 		return w, err
 	}
@@ -146,7 +146,7 @@ func (u *updater) workload() (cd.Workload, error) {
 	return w, err
 }
 
-func (u *updater) workloadAgent(status appsv1.DeploymentStatus) error {
+func (u *updater) pipelineAgents(status appsv1.DeploymentStatus) error {
 	payload, err := json.Marshal(cd.Agent{
 		Name:   u.agentName,
 		Status: status,
@@ -155,7 +155,7 @@ func (u *updater) workloadAgent(status appsv1.DeploymentStatus) error {
 		return err
 	}
 
-	resp, err := http.Post(api+"/workloads/agents", "application/json", bytes.NewBuffer(payload))
+	resp, err := http.Post(api+"/pipelines/agents", "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
