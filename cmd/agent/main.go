@@ -16,6 +16,8 @@ import (
 	"github.com/metalmatze/cd/cd"
 	"github.com/oklog/run"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -119,10 +121,16 @@ func (u *updater) poll() error {
 
 	if u.currentPipeline.ID == "" {
 		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
+		if err := u.runPipeline(p); err != nil {
+			return err
+		}
 		u.currentPipeline = p
 	}
 	if u.currentPipeline.ID != p.ID {
 		level.Info(u.logger).Log("msg", "updated pipeline", "pipeline", p.ID)
+		if err := u.runPipeline(p); err != nil {
+			return err
+		}
 		u.currentPipeline = p
 	}
 
@@ -162,6 +170,54 @@ func (u *updater) pipelineAgents(status appsv1.DeploymentStatus) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("no 200 OK, but %s", resp.Status)
 	}
+
+	return nil
+}
+
+func (u *updater) runPipeline(p cd.Pipeline) error {
+	fmt.Printf("%+v\n", p)
+
+	for _, s := range p.Config.Steps {
+		if err := u.runStep(s); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (u *updater) runStep(step cd.Step) error {
+	args := []string{"-c"}
+	for _, c := range step.Commands {
+		args = append(args, c)
+	}
+
+	p := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      step.Name,
+			Namespace: "default",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name:    step.Name,
+				Image:   step.Image,
+				Command: []string{"sh"},
+				Args:    args,
+			}},
+			RestartPolicy: corev1.RestartPolicyNever,
+		},
+	}
+
+	_, err := u.client.CoreV1().Pods("default").Create(&p)
+	if err != nil {
+		return err
+	}
+	defer func(p *corev1.Pod) {
+		_ = u.client.CoreV1().Pods("default").Delete(p.Name, nil)
+	}(&p)
+
+	// TODO: Wait until completed or failed
+	time.Sleep(time.Minute)
 
 	return nil
 }
