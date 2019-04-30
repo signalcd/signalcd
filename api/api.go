@@ -8,10 +8,9 @@ import (
 	"strconv"
 	"sync"
 
-	v1 "k8s.io/api/apps/v1"
-
 	"github.com/go-chi/chi"
 	"github.com/metalmatze/cd/cd"
+	v1 "k8s.io/api/apps/v1"
 )
 
 var fakeCurrentWorkload = struct {

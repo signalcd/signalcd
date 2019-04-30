@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -15,7 +16,6 @@ import (
 	"github.com/metalmatze/cd/cd"
 	"github.com/oklog/run"
 	appsv1 "k8s.io/api/apps/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -47,16 +47,28 @@ func main() {
 		os.Exit(3)
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	var gr run.Group
 	{
-		c := &controller{client: client, logger: logger, agentName: *agentName}
-
-		ctx, cancel := context.WithCancel(context.Background())
+		u := &updater{client: client, logger: logger, agentName: *agentName}
 
 		gr.Add(func() error {
-			return c.reconcileLoop(ctx)
+			return u.pollLoop(ctx)
 		}, func(err error) {
 			cancel()
+		})
+	}
+	{
+		sig := make(chan os.Signal)
+
+		gr.Add(func() error {
+			signal.Notify(sig, os.Interrupt)
+			<-sig
+			cancel()
+			return nil
+		}, func(err error) {
+			close(sig)
 		})
 	}
 
@@ -69,18 +81,19 @@ func main() {
 	}
 }
 
-type controller struct {
-	client *kubernetes.Clientset
-	logger log.Logger
-
+type updater struct {
+	client    *kubernetes.Clientset
+	logger    log.Logger
 	agentName string
+
+	currentWorkload cd.Workload
 }
 
-func (c *controller) reconcileLoop(ctx context.Context) error {
+func (u *updater) pollLoop(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	level.Info(c.logger).Log("msg", "starting reconcile loop")
+	level.Info(u.logger).Log("msg", "starting poll loop")
 
 	for {
 		select {
@@ -88,43 +101,35 @@ func (c *controller) reconcileLoop(ctx context.Context) error {
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			if err := c.reconcile(); err != nil {
-				level.Warn(c.logger).Log(
-					"msg", "failed to reconcile",
+			if err := u.poll(); err != nil {
+				level.Warn(u.logger).Log(
+					"msg", "failed to poll",
 					"err", err,
 				)
 			}
-
 		}
 	}
 }
 
-func (c *controller) reconcile() error {
-	deployment, err := c.client.AppsV1().Deployments("logging").Get("loki", metav1.GetOptions{})
+func (u *updater) poll() error {
+	w, err := u.workload()
 	if err != nil {
 		return err
 	}
 
-	w, err := c.workload()
-	if err != nil {
-		return err
+	if u.currentWorkload.Image == "" {
+		level.Info(u.logger).Log("msg", "unknown state, applying", "image", w.Image)
+		u.currentWorkload = w
+	}
+	if u.currentWorkload.Image != w.Image {
+		level.Info(u.logger).Log("msg", "updated state, applying", "image", w.Image)
+		u.currentWorkload = w
 	}
 
-	for i, container := range deployment.Spec.Template.Spec.Containers {
-		if container.Image != w.Image {
-			deployment.Spec.Template.Spec.Containers[i].Image = w.Image
-
-			_, err := c.client.AppsV1().Deployments("logging").Update(deployment)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return c.workloadAgent(deployment.Status)
+	return nil
 }
 
-func (c *controller) workload() (cd.Workload, error) {
+func (u *updater) workload() (cd.Workload, error) {
 	var w cd.Workload
 
 	resp, err := http.Get(api + "/workload")
@@ -141,9 +146,9 @@ func (c *controller) workload() (cd.Workload, error) {
 	return w, err
 }
 
-func (c *controller) workloadAgent(status appsv1.DeploymentStatus) error {
+func (u *updater) workloadAgent(status appsv1.DeploymentStatus) error {
 	payload, err := json.Marshal(cd.Agent{
-		Name:   c.agentName,
+		Name:   u.agentName,
 		Status: status,
 	})
 	if err != nil {
