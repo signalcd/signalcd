@@ -201,11 +201,13 @@ func (u *updater) runStep(step cd.Step) error {
 			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{
+			ServiceAccountName: "cd",
 			Containers: []corev1.Container{{
-				Name:    step.Name,
-				Image:   step.Image,
-				Command: []string{"sh"},
-				Args:    args,
+				Name:            step.Name,
+				Image:           step.Image,
+				ImagePullPolicy: corev1.PullAlways,
+				Command:         []string{"sh"},
+				Args:            args,
 			}},
 			RestartPolicy: corev1.RestartPolicyNever,
 		},
@@ -216,7 +218,6 @@ func (u *updater) runStep(step cd.Step) error {
 		return err
 	}
 	defer func(p *corev1.Pod) {
-		time.Sleep(15 * time.Second)
 		_ = u.client.CoreV1().Pods(namespace).Delete(p.Name, nil)
 	}(&p)
 

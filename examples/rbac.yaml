@@ -1,0 +1,46 @@
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: cd
+  namespace: default
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cd
+  namespace: default
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - services
+    verbs:
+      - create
+      - get
+      - list
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+      - patch
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cd
+  namespace: default
+roleRef:
+  apiGroup: ''
+  kind: Role
+  name: cd
+subjects:
+  - kind: ServiceAccount
+    name: cd
+    namespace: default
