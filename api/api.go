@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"sync"
+
+	"github.com/go-chi/chi/middleware"
 
 	"github.com/go-chi/chi"
 	"github.com/metalmatze/cd/cd"
@@ -53,11 +56,21 @@ var fakePipelines = []cd.Pipeline{
 	},
 }
 
+func getPipeline(id string) (cd.Pipeline, error) {
+	for _, p := range fakePipelines {
+		if p.ID == id {
+			return p, nil
+		}
+	}
+	return cd.Pipeline{}, fmt.Errorf("pipeline not found")
+}
+
 const (
 	PipelineCurrent       = "/pipeline"
 	PipelineCurrentUpdate = "/pipeline/{id}"
 	Pipelines             = "/pipelines"
 	Pipeline              = "/pipelines/{id}"
+	PipelineArtifact      = "/pipelines/{id}/artifacts/{name}"
 	PipelinesStatus       = "/pipelines/status"
 )
 
@@ -65,12 +78,15 @@ func New() *chi.Mux {
 	fakeCurrentPipeline.Pipeline = fakePipelines[0]
 
 	router := chi.NewRouter()
+	router.Use(middleware.StripSlashes)
+
 	router.Get("/", index())
 
 	router.Get(PipelineCurrent, pipelineCurrent())
 	router.Patch(PipelineCurrentUpdate, updateCurrentPipeline())
 	router.Get(Pipelines, pipelines())
 	router.Get(Pipeline, pipeline())
+	router.Get(PipelineArtifact, pipelineArtifact())
 	router.Get(PipelinesStatus, pipelineAgents())
 	router.Post(PipelinesStatus, updatePipelineAgents())
 
@@ -99,20 +115,36 @@ func pipeline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
-		for _, p := range fakePipelines {
-			if p.ID == id {
-				payload, err := json.Marshal(p)
-				if err != nil {
-					http.Error(w, "failed to marshal", http.StatusInternalServerError)
-					return
-				}
-
-				_, _ = w.Write(payload)
-				return
-			}
+		p, err := getPipeline(id)
+		if err != nil {
+			http.Error(w, "pipeline not found", http.StatusNotFound)
+			return
 		}
 
-		http.Error(w, "pipeline not found", http.StatusNotFound)
+		payload, err := json.Marshal(p)
+		if err != nil {
+			http.Error(w, "failed to marshal", http.StatusInternalServerError)
+			return
+		}
+
+		_, _ = w.Write(payload)
+	}
+}
+
+func pipelineArtifact() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		artifact := chi.URLParam(r, "name")
+
+		_, err := getPipeline(id)
+		if err != nil {
+			http.Error(w, "pipeline not found", http.StatusNotFound)
+			return
+		}
+
+		path := filepath.Join("examples", artifact)
+		fmt.Println(path)
+		http.ServeFile(w, r, path)
 	}
 }
 
@@ -135,18 +167,17 @@ func updateCurrentPipeline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
 
-		fakeCurrentPipeline.mu.Lock()
-		defer fakeCurrentPipeline.mu.Unlock()
-
-		for _, p := range fakePipelines {
-			if p.ID == id {
-				fakeCurrentPipeline.Pipeline = p
-				w.WriteHeader(http.StatusNoContent)
-				return
-			}
+		p, err := getPipeline(id)
+		if err != nil {
+			http.Error(w, "pipeline not found", http.StatusNotFound)
+			return
 		}
 
-		http.Error(w, "id not found", http.StatusNotFound)
+		fakeCurrentPipeline.mu.Lock()
+		fakeCurrentPipeline.Pipeline = p
+		fakeCurrentPipeline.mu.Unlock()
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
