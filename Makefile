@@ -22,3 +22,15 @@ container-agent:
 .PHONY: container-api
 container-api:
 	docker build -t cd-api ./cmd/api
+
+.PHONY: container-cheese0
+container-cheese0:
+	docker build -t quay.io/metalmatze/cd:cheese0 ./examples/cheese0
+
+.PHONY: container-cheese1
+container-cheese1:
+	docker build -t quay.io/metalmatze/cd:cheese1 ./examples/cheese1
+
+.PHONY: container-cheese2
+container-cheese2:
+	docker build -t quay.io/metalmatze/cd:cheese2 ./examples/cheese2
