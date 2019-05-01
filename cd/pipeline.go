@@ -1,11 +1,7 @@
 package cd
 
 type Pipeline struct {
-	ID     string
-	Config Config `json:"config"`
-}
-
-type Config struct {
+	ID    string
 	Steps []Step `json:"steps"`
 }
 

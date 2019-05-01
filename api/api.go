@@ -21,37 +21,31 @@ var fakeCurrentPipeline = struct {
 var fakePipelines = []cd.Pipeline{
 	{
 		ID: "eee4047d-3826-4bf0-a7f1-b0b339521a52",
-		Config: cd.Config{
-			Steps: []cd.Step{
-				{
-					Name:     "echo",
-					Image:    "alpine:3.7",
-					Commands: []string{"apk --version"},
-				},
+		Steps: []cd.Step{
+			{
+				Name:     "echo",
+				Image:    "alpine:3.7",
+				Commands: []string{"apk --version"},
 			},
 		},
 	},
 	{
 		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
-		Config: cd.Config{
-			Steps: []cd.Step{
-				{
-					Name:     "echo",
-					Image:    "alpine:3.6",
-					Commands: []string{"apk --version"},
-				},
+		Steps: []cd.Step{
+			{
+				Name:     "echo",
+				Image:    "alpine:3.6",
+				Commands: []string{"apk --version"},
 			},
 		},
 	},
 	{
 		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
-		Config: cd.Config{
-			Steps: []cd.Step{
-				{
-					Name:     "echo",
-					Image:    "alpine:3.5",
-					Commands: []string{"apk --version"},
-				},
+		Steps: []cd.Step{
+			{
+				Name:     "echo",
+				Image:    "alpine:3.5",
+				Commands: []string{"apk --version"},
 			},
 		},
 	},

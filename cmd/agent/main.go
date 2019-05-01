@@ -175,9 +175,7 @@ func (u *updater) pipelineAgents(status appsv1.DeploymentStatus) error {
 }
 
 func (u *updater) runPipeline(p cd.Pipeline) error {
-	fmt.Printf("%+v\n", p)
-
-	for _, s := range p.Config.Steps {
+	for _, s := range p.Steps {
 		if err := u.runStep(s); err != nil {
 			return err
 		}
