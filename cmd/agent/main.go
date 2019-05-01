@@ -9,10 +9,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/metalmatze/cd/api"
 	"github.com/metalmatze/cd/cd"
 	"github.com/oklog/run"
 	appsv1 "k8s.io/api/apps/v1"
@@ -22,7 +24,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const api = "http://localhost:6660"
+const apiURL = "http://localhost:6660"
+const namespace = "default"
 
 func main() {
 	kubeconfig := flag.String("kubeconfig", "", "Path to kubeconfig")
@@ -120,18 +123,20 @@ func (u *updater) poll() error {
 	}
 
 	if u.currentPipeline.ID == "" {
+		u.currentPipeline = p
+
 		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
 		if err := u.runPipeline(p); err != nil {
 			return err
 		}
-		u.currentPipeline = p
 	}
 	if u.currentPipeline.ID != p.ID {
+		u.currentPipeline = p
+
 		level.Info(u.logger).Log("msg", "updated pipeline", "pipeline", p.ID)
 		if err := u.runPipeline(p); err != nil {
 			return err
 		}
-		u.currentPipeline = p
 	}
 
 	return nil
@@ -215,8 +220,32 @@ func (u *updater) runStep(step cd.Step) error {
 		_ = u.client.CoreV1().Pods(namespace).Delete(p.Name, nil)
 	}(&p)
 
-	// TODO: Wait until completed or failed
-	time.Sleep(time.Minute)
+	watch, err := u.client.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
+		LabelSelector: labelsSelector(p.GetLabels()),
+		Watch:         true,
+	})
+	if err != nil {
+		return err
+	}
+
+	for event := range watch.ResultChan() {
+		pod := event.Object.(*corev1.Pod)
+
+		if pod.Status.Phase == corev1.PodSucceeded {
+			return nil
+		}
+		if pod.Status.Phase == corev1.PodFailed {
+			return fmt.Errorf("step failed")
+		}
+	}
 
 	return nil
+}
+
+func labelsSelector(ls map[string]string) string {
+	var selectors []string
+	for key, value := range ls {
+		selectors = append(selectors, key+"="+value)
+	}
+	return strings.Join(selectors, ",")
 }
