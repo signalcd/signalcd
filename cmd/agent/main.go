@@ -126,7 +126,7 @@ func (u *updater) poll() error {
 		u.currentPipeline = p
 
 		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
-		if err := u.runPipeline(p); err != nil {
+		if err := u.runSteps(p); err != nil {
 			return err
 		}
 	}
@@ -134,7 +134,10 @@ func (u *updater) poll() error {
 		u.currentPipeline = p
 
 		level.Info(u.logger).Log("msg", "updated pipeline", "pipeline", p.ID)
-		if err := u.runPipeline(p); err != nil {
+		if err := u.runSteps(p); err != nil {
+			return err
+		}
+		if u.runChecks(p); err != nil {
 			return err
 		}
 	}
@@ -179,7 +182,7 @@ func (u *updater) pipelineStatus(status appsv1.DeploymentStatus) error {
 	return nil
 }
 
-func (u *updater) runPipeline(p cd.Pipeline) error {
+func (u *updater) runSteps(p cd.Pipeline) error {
 	for _, s := range p.Steps {
 		if err := u.runStep(s); err != nil {
 			return err
@@ -240,6 +243,11 @@ func (u *updater) runStep(step cd.Step) error {
 		}
 	}
 
+	return nil
+}
+
+func (u *updater) runChecks(p cd.Pipeline) error {
+	fmt.Println("checking")
 	return nil
 }
 

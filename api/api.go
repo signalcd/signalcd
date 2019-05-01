@@ -28,6 +28,14 @@ var fakePipelines = []cd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
+		Checks: []cd.Check{
+			{
+				Name:  "Deployment",
+				Image: "quay.io/metalmatze/cd:kubernetes-status",
+				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
+				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
+			},
+		},
 	},
 	{
 		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
