@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"strconv"
 	"sync"
 
 	"github.com/go-chi/chi"
@@ -54,18 +53,26 @@ var fakePipelines = []cd.Pipeline{
 	},
 }
 
+const (
+	PipelineCurrent       = "/pipeline"
+	PipelineCurrentUpdate = "/pipeline/{id}"
+	Pipelines             = "/pipelines"
+	Pipeline              = "/pipelines/{id}"
+	PipelinesStatus       = "/pipelines/status"
+)
+
 func New() *chi.Mux {
 	fakeCurrentPipeline.Pipeline = fakePipelines[0]
 
 	router := chi.NewRouter()
-
 	router.Get("/", index())
-	router.Get("/pipeline", pipeline())
-	router.Get("/pipelines", pipelines())
-	router.Patch("/pipelines/{index}", setPipeline())
 
-	router.Get("/pipelines/agents", pipelineAgents())
-	router.Post("/pipelines/agents", updatePipelineAgents())
+	router.Get(PipelineCurrent, pipelineCurrent())
+	router.Patch(PipelineCurrentUpdate, updateCurrentPipeline())
+	router.Get(Pipelines, pipelines())
+	router.Get(Pipeline, pipeline())
+	router.Get(PipelinesStatus, pipelineAgents())
+	router.Post(PipelinesStatus, updatePipelineAgents())
 
 	return router
 }
@@ -90,6 +97,27 @@ func pipelines() http.HandlerFunc {
 
 func pipeline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+
+		for _, p := range fakePipelines {
+			if p.ID == id {
+				payload, err := json.Marshal(p)
+				if err != nil {
+					http.Error(w, "failed to marshal", http.StatusInternalServerError)
+					return
+				}
+
+				_, _ = w.Write(payload)
+				return
+			}
+		}
+
+		http.Error(w, "pipeline not found", http.StatusNotFound)
+	}
+}
+
+func pipelineCurrent() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		fakeCurrentPipeline.mu.RLock()
 		defer fakeCurrentPipeline.mu.RUnlock()
 
@@ -103,18 +131,22 @@ func pipeline() http.HandlerFunc {
 	}
 }
 
-func setPipeline() http.HandlerFunc {
+func updateCurrentPipeline() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		index := chi.URLParam(r, "index")
-		i, err := strconv.Atoi(index)
-		if err != nil {
-			return
-		}
+		id := chi.URLParam(r, "id")
 
 		fakeCurrentPipeline.mu.Lock()
 		defer fakeCurrentPipeline.mu.Unlock()
-		// TODO: This will panic with unbound index
-		fakeCurrentPipeline.Pipeline = fakePipelines[i]
+
+		for _, p := range fakePipelines {
+			if p.ID == id {
+				fakeCurrentPipeline.Pipeline = p
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+		}
+
+		http.Error(w, "id not found", http.StatusNotFound)
 	}
 }
 

@@ -140,7 +140,7 @@ func (u *updater) poll() error {
 func (u *updater) pipeline() (cd.Pipeline, error) {
 	var w cd.Pipeline
 
-	resp, err := http.Get(api + "/pipeline")
+	resp, err := http.Get(apiURL + api.PipelineCurrent)
 	if err != nil {
 		return w, err
 	}
@@ -154,7 +154,7 @@ func (u *updater) pipeline() (cd.Pipeline, error) {
 	return w, err
 }
 
-func (u *updater) pipelineAgents(status appsv1.DeploymentStatus) error {
+func (u *updater) pipelineStatus(status appsv1.DeploymentStatus) error {
 	payload, err := json.Marshal(cd.Agent{
 		Name:   u.agentName,
 		Status: status,
@@ -163,7 +163,7 @@ func (u *updater) pipelineAgents(status appsv1.DeploymentStatus) error {
 		return err
 	}
 
-	resp, err := http.Post(api+"/pipelines/agents", "application/json", bytes.NewBuffer(payload))
+	resp, err := http.Post(apiURL+api.PipelinesStatus, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func (u *updater) runStep(step cd.Step) error {
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      step.Name,
-			Namespace: "default",
+			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{{
@@ -206,12 +206,13 @@ func (u *updater) runStep(step cd.Step) error {
 		},
 	}
 
-	_, err := u.client.CoreV1().Pods("default").Create(&p)
+	_, err := u.client.CoreV1().Pods(namespace).Create(&p)
 	if err != nil {
 		return err
 	}
 	defer func(p *corev1.Pod) {
-		_ = u.client.CoreV1().Pods("default").Delete(p.Name, nil)
+		time.Sleep(15 * time.Second)
+		_ = u.client.CoreV1().Pods(namespace).Delete(p.Name, nil)
 	}(&p)
 
 	// TODO: Wait until completed or failed
