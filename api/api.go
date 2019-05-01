@@ -26,7 +26,7 @@ var fakePipelines = []cd.Pipeline{
 				{
 					Name:     "echo",
 					Image:    "alpine:3.7",
-					Commands: []string{"echo 'hi'", "uname -a"},
+					Commands: []string{"apk --version"},
 				},
 			},
 		},
@@ -38,7 +38,19 @@ var fakePipelines = []cd.Pipeline{
 				{
 					Name:     "echo",
 					Image:    "alpine:3.6",
-					Commands: []string{"echo 'hi'", "uname -a"},
+					Commands: []string{"apk --version"},
+				},
+			},
+		},
+	},
+	{
+		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
+		Config: cd.Config{
+			Steps: []cd.Step{
+				{
+					Name:     "echo",
+					Image:    "alpine:3.5",
+					Commands: []string{"apk --version"},
 				},
 			},
 		},
