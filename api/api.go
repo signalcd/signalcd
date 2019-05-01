@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"sort"
 	"sync"
 
-	"github.com/go-chi/chi/middleware"
-
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/metalmatze/cd/cd"
 	v1 "k8s.io/api/apps/v1"
 )
@@ -22,35 +20,32 @@ var fakeCurrentPipeline = struct {
 
 var fakePipelines = []cd.Pipeline{
 	{
-		ID:       "eee4047d-3826-4bf0-a7f1-b0b339521a52",
-		Artifact: cd.Artifact{URL: "cheese0.tar.gz"},
+		ID: "eee4047d-3826-4bf0-a7f1-b0b339521a52",
 		Steps: []cd.Step{
 			{
 				Name:     "cheese0",
-				Image:    "kubeciio/kubectl",
-				Commands: []string{"kubectl version"},
+				Image:    "quay.io/metalmatze/cd:cheese0",
+				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
 	},
 	{
-		ID:       "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
-		Artifact: cd.Artifact{URL: "cheese1.tar.gz"},
+		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
 		Steps: []cd.Step{
 			{
 				Name:     "cheese1",
-				Image:    "kubeciio/kubectl",
-				Commands: []string{"kubectl version"},
+				Image:    "quay.io/metalmatze/cd:cheese1",
+				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
 	},
 	{
-		ID:       "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
-		Artifact: cd.Artifact{URL: "cheese2.tar.gz"},
+		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
 		Steps: []cd.Step{
 			{
 				Name:     "cheese2",
-				Image:    "kubeciio/kubectl",
-				Commands: []string{"kubectl version"},
+				Image:    "quay.io/metalmatze/cd:cheese2",
+				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
 	},
@@ -70,7 +65,6 @@ const (
 	PipelineCurrentUpdate = "/pipeline/{id}"
 	Pipelines             = "/pipelines"
 	Pipeline              = "/pipelines/{id}"
-	PipelineArtifact      = "/pipelines/{id}/artifacts/{name}"
 	PipelinesStatus       = "/pipelines/status"
 )
 
@@ -86,7 +80,6 @@ func New() *chi.Mux {
 	router.Patch(PipelineCurrentUpdate, updateCurrentPipeline())
 	router.Get(Pipelines, pipelines())
 	router.Get(Pipeline, pipeline())
-	router.Get(PipelineArtifact, pipelineArtifact())
 	router.Get(PipelinesStatus, pipelineAgents())
 	router.Post(PipelinesStatus, updatePipelineAgents())
 
@@ -128,23 +121,6 @@ func pipeline() http.HandlerFunc {
 		}
 
 		_, _ = w.Write(payload)
-	}
-}
-
-func pipelineArtifact() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		artifact := chi.URLParam(r, "name")
-
-		_, err := getPipeline(id)
-		if err != nil {
-			http.Error(w, "pipeline not found", http.StatusNotFound)
-			return
-		}
-
-		path := filepath.Join("examples", artifact)
-		fmt.Println(path)
-		http.ServeFile(w, r, path)
 	}
 }
 
