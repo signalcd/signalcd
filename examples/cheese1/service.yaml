@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: cheese
+  labels:
+    app: cheese
+spec:
+  selector:
+    app: cheese
+  ports:
+    - name: web
+      port: 80
+      targetPort: 80
