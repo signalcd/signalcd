@@ -20,32 +20,35 @@ var fakeCurrentPipeline = struct {
 
 var fakePipelines = []cd.Pipeline{
 	{
-		ID: "eee4047d-3826-4bf0-a7f1-b0b339521a52",
+		ID:       "eee4047d-3826-4bf0-a7f1-b0b339521a52",
+		Artifact: cd.Artifact{URL: "cheese0.tar.gz"},
 		Steps: []cd.Step{
 			{
-				Name:     "echo",
-				Image:    "alpine:3.7",
-				Commands: []string{"apk --version"},
+				Name:     "cheese0",
+				Image:    "kubeciio/kubectl",
+				Commands: []string{"kubectl version"},
 			},
 		},
 	},
 	{
-		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
+		ID:       "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
+		Artifact: cd.Artifact{URL: "cheese1.tar.gz"},
 		Steps: []cd.Step{
 			{
-				Name:     "echo",
-				Image:    "alpine:3.6",
-				Commands: []string{"apk --version"},
+				Name:     "cheese1",
+				Image:    "kubeciio/kubectl",
+				Commands: []string{"kubectl version"},
 			},
 		},
 	},
 	{
-		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
+		ID:       "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
+		Artifact: cd.Artifact{URL: "cheese2.tar.gz"},
 		Steps: []cd.Step{
 			{
-				Name:     "echo",
-				Image:    "alpine:3.5",
-				Commands: []string{"apk --version"},
+				Name:     "cheese2",
+				Image:    "kubeciio/kubectl",
+				Commands: []string{"kubectl version"},
 			},
 		},
 	},
