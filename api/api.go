@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -18,6 +19,17 @@ var fakeCurrentPipeline = struct {
 	Pipeline cd.Pipeline
 }{}
 
+var fakeChecks = []cd.Check{
+	{
+		Name:     "kubernetes-status",
+		Image:    "quay.io/metalmatze/cd:kubernetes-status",
+		Duration: time.Minute,
+		Environment: map[string]string{
+			"PLUGIN_LABELS": "app=cheese",
+		},
+	},
+}
+
 var fakePipelines = []cd.Pipeline{
 	{
 		ID: "eee4047d-3826-4bf0-a7f1-b0b339521a52",
@@ -28,14 +40,7 @@ var fakePipelines = []cd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
-		Checks: []cd.Check{
-			{
-				Name:  "kubernetes-status",
-				Image: "quay.io/metalmatze/cd:kubernetes-status",
-				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
-				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
-			},
-		},
+		Checks: fakeChecks,
 	},
 	{
 		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
@@ -46,14 +51,7 @@ var fakePipelines = []cd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
-		Checks: []cd.Check{
-			{
-				Name:  "kubernetes-status",
-				Image: "quay.io/metalmatze/cd:kubernetes-status",
-				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
-				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
-			},
-		},
+		Checks: fakeChecks,
 	},
 	{
 		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
@@ -64,14 +62,7 @@ var fakePipelines = []cd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
-		Checks: []cd.Check{
-			{
-				Name:  "kubernetes-status",
-				Image: "quay.io/metalmatze/cd:kubernetes-status",
-				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
-				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
-			},
-		},
+		Checks: fakeChecks,
 	},
 }
 

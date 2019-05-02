@@ -16,7 +16,8 @@ type Step struct {
 }
 
 type Check struct {
-	Name     string        `json:"name"`
-	Image    string        `json:"image"`
-	Duration time.Duration `json:"duration"`
+	Name        string            `json:"name"`
+	Image       string            `json:"image"`
+	Duration    time.Duration     `json:"duration"`
+	Environment map[string]string `json:"environment"`
 }
