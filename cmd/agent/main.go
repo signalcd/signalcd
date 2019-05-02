@@ -137,7 +137,7 @@ func (u *updater) poll() error {
 		if err := u.runSteps(p); err != nil {
 			return err
 		}
-		if u.runChecks(p); err != nil {
+		if err := u.runChecks(p); err != nil {
 			return err
 		}
 	}
@@ -247,7 +247,42 @@ func (u *updater) runStep(step cd.Step) error {
 }
 
 func (u *updater) runChecks(p cd.Pipeline) error {
-	fmt.Println("checking")
+	for _, c := range p.Checks {
+		if err := u.runCheck(c); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (u *updater) runCheck(check cd.Check) error {
+	p := corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      strings.ToLower(check.Name),
+			Namespace: namespace,
+		},
+		Spec: corev1.PodSpec{
+			ServiceAccountName: "cd",
+			Containers: []corev1.Container{{
+				Name:            strings.ToLower(check.Name),
+				Image:           check.Image,
+				ImagePullPolicy: corev1.PullAlways,
+			}},
+			RestartPolicy: corev1.RestartPolicyNever,
+		},
+	}
+
+	pod, err := u.client.CoreV1().Pods(namespace).Create(&p)
+	if err != nil {
+		return err
+	}
+
+	defer func(pod *corev1.Pod) {
+		time.Sleep(time.Minute)
+		_ = u.client.CoreV1().Pods(namespace).Delete(pod.Name, nil)
+	}(pod)
+
 	return nil
 }
 

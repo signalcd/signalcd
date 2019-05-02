@@ -30,7 +30,7 @@ var fakePipelines = []cd.Pipeline{
 		},
 		Checks: []cd.Check{
 			{
-				Name:  "Deployment",
+				Name:  "kubernetes-status",
 				Image: "quay.io/metalmatze/cd:kubernetes-status",
 				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
 				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
@@ -46,6 +46,14 @@ var fakePipelines = []cd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
+		Checks: []cd.Check{
+			{
+				Name:  "kubernetes-status",
+				Image: "quay.io/metalmatze/cd:kubernetes-status",
+				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
+				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
+			},
+		},
 	},
 	{
 		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
@@ -54,6 +62,14 @@ var fakePipelines = []cd.Pipeline{
 				Name:     "cheese2",
 				Image:    "quay.io/metalmatze/cd:cheese2",
 				Commands: []string{"kubectl apply -f /data"},
+			},
+		},
+		Checks: []cd.Check{
+			{
+				Name:  "kubernetes-status",
+				Image: "quay.io/metalmatze/cd:kubernetes-status",
+				// TODO: Pass any kv-pair as environment to plugin if no command given. See Drone's plugin
+				// In this case we would provide the label set that we want to check and maybe the number if healthy replicas.
 			},
 		},
 	},
