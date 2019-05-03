@@ -257,6 +257,11 @@ func (u *updater) runChecks(p cd.Pipeline) error {
 }
 
 func (u *updater) runCheck(check cd.Check) error {
+	var env []corev1.EnvVar
+	for name, value := range check.Environment {
+		env = append(env, corev1.EnvVar{Name: name, Value: value})
+	}
+
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(check.Name),
@@ -268,20 +273,16 @@ func (u *updater) runCheck(check cd.Check) error {
 				Name:            strings.ToLower(check.Name),
 				Image:           check.Image,
 				ImagePullPolicy: corev1.PullAlways,
+				Env:             env,
 			}},
 			RestartPolicy: corev1.RestartPolicyNever,
 		},
 	}
 
-	pod, err := u.client.CoreV1().Pods(namespace).Create(&p)
+	_, err := u.client.CoreV1().Pods(namespace).Create(&p)
 	if err != nil {
 		return err
 	}
-
-	defer func(pod *corev1.Pod) {
-		time.Sleep(time.Minute)
-		_ = u.client.CoreV1().Pods(namespace).Delete(pod.Name, nil)
-	}(pod)
 
 	return nil
 }
