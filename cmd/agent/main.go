@@ -124,22 +124,26 @@ func (u *updater) poll() error {
 
 	if u.currentPipeline.ID == "" {
 		u.currentPipeline = p
-
 		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
-		if err := u.runSteps(p); err != nil {
-			return err
-		}
+
+		return u.runPipeline(p)
 	}
 	if u.currentPipeline.ID != p.ID {
 		u.currentPipeline = p
-
 		level.Info(u.logger).Log("msg", "updated pipeline", "pipeline", p.ID)
-		if err := u.runSteps(p); err != nil {
-			return err
-		}
-		if err := u.runChecks(p); err != nil {
-			return err
-		}
+
+		return u.runPipeline(p)
+	}
+
+	return nil
+}
+
+func (u *updater) runPipeline(p cd.Pipeline) error {
+	if err := u.runSteps(p); err != nil {
+		return err
+	}
+	if err := u.runChecks(p); err != nil {
+		return err
 	}
 
 	return nil
