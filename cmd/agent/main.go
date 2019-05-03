@@ -17,8 +17,10 @@ import (
 	"github.com/metalmatze/cd/api"
 	"github.com/metalmatze/cd/cd"
 	"github.com/oklog/run"
+	"golang.org/x/xerrors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -45,7 +47,7 @@ func main() {
 
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		level.Error(logger).Log(
+		_ = level.Error(logger).Log(
 			"msg", "failed to create Kubernetes client",
 			"err", err,
 		)
@@ -123,13 +125,31 @@ func (u *updater) poll() error {
 	}
 
 	if u.currentPipeline.ID == "" {
+		loaded, err := u.loadPipeline()
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+
 		u.currentPipeline = p
+
+		// if running pipeline id in cluster equals to wanted pipeline
+		// we don't need to run the pipeline
+		if loaded.ID == p.ID {
+			return nil
+		}
 
 		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
 		if err := u.runSteps(p); err != nil {
 			return err
 		}
+
+		err = u.savePipeline(p)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
+
 	if u.currentPipeline.ID != p.ID {
 		u.currentPipeline = p
 
@@ -140,6 +160,12 @@ func (u *updater) poll() error {
 		if err := u.runChecks(p); err != nil {
 			return err
 		}
+
+		err := u.savePipeline(p)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return nil
@@ -293,4 +319,56 @@ func labelsSelector(ls map[string]string) string {
 		selectors = append(selectors, key+"="+value)
 	}
 	return strings.Join(selectors, ",")
+}
+
+func (u *updater) loadPipeline() (cd.Pipeline, error) {
+
+	const name = "cd"
+	const filename = "pipeline.json"
+
+	cm, err := u.client.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return cd.Pipeline{}, err
+	}
+
+	res := cd.Pipeline{}
+	b := cm.Data[filename]
+
+	err = json.Unmarshal([]byte(b), &res)
+	if err != nil {
+		return cd.Pipeline{}, err
+	}
+
+	return res, nil
+}
+
+func (u *updater) savePipeline(p cd.Pipeline) error {
+
+	const name = "cd"
+	const filename = "pipeline.json"
+
+	b, err := json.Marshal(&p)
+	if err != nil {
+		return err
+	}
+
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: map[string]string{filename: string(b)},
+	}
+
+	_, err = u.client.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		_, err = u.client.CoreV1().ConfigMaps(namespace).Create(cm)
+		return xerrors.Errorf("failed to create ConfigMap: %v", err)
+	}
+	if err != nil {
+		return xerrors.Errorf("failed to return ConfigMap: %v", err)
+	}
+
+	_, err = u.client.CoreV1().ConfigMaps(namespace).Update(cm)
+	return xerrors.Errorf("failed to update ConfigMap: %v", err)
 }
