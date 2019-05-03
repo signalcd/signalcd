@@ -20,7 +20,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	if err := Main(ctx, logger); err != nil {
+	if err := Main(ctx); err != nil {
 		level.Error(logger).Log(
 			"msg", "failed to run",
 			"err", err,
@@ -29,7 +29,7 @@ func main() {
 	}
 }
 
-func Main(ctx context.Context, logger log.Logger) error {
+func Main(ctx context.Context) error {
 	config, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
 		return err
@@ -41,7 +41,6 @@ func Main(ctx context.Context, logger log.Logger) error {
 	}
 
 	labels := os.Getenv("PLUGIN_LABELS")
-	fmt.Println(labels)
 
 	watch, err := client.AppsV1().Deployments("default").Watch(metav1.ListOptions{
 		LabelSelector: labels,
@@ -60,6 +59,9 @@ func Main(ctx context.Context, logger log.Logger) error {
 		case <-ticker.C:
 			printStatus(status)
 		case event := <-watch.ResultChan():
+			if event.Object == nil {
+				continue
+			}
 			d := event.Object.(*v1.Deployment)
 			status = d.Status
 			printStatus(status)
@@ -71,5 +73,5 @@ func Main(ctx context.Context, logger log.Logger) error {
 }
 
 func printStatus(status v1.DeploymentStatus) {
-	fmt.Printf("%d of %d replicas are ready", status.ReadyReplicas, status.Replicas)
+	fmt.Printf("%d of %d replicas are ready\n", status.ReadyReplicas, status.Replicas)
 }
