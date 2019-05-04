@@ -146,7 +146,7 @@ func (u *updater) poll() error {
 
 		err = u.savePipeline(p)
 		if err != nil {
-			return err
+			return xerrors.Errorf("failed to save pipeline: %w", err)
 		}
 		return nil
 	}
@@ -161,7 +161,7 @@ func (u *updater) poll() error {
 
 		err := u.savePipeline(p)
 		if err != nil {
-			return err
+			return xerrors.Errorf("failed to save pipeline: %w", err)
 		}
 		return nil
 	}
@@ -332,6 +332,7 @@ func labelsSelector(ls map[string]string) string {
 
 const configMapName = "cd"
 const configMapFilename = "pipeline.json"
+
 func (u *updater) loadPipeline() (cd.Pipeline, error) {
 	cm, err := u.client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 	if err != nil {
@@ -374,7 +375,7 @@ func (u *updater) savePipeline(p cd.Pipeline) error {
 		return nil
 	}
 	if err != nil {
-		return xerrors.Errorf("failed to return ConfigMap: %v", err)
+		return xerrors.Errorf("failed to get ConfigMap: %v", err)
 	}
 
 	_, err = u.client.CoreV1().ConfigMaps(namespace).Update(cm)
