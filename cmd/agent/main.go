@@ -175,6 +175,11 @@ func (u *updater) runPipeline(p cd.Pipeline) error {
 	if err := u.runSteps(p); err != nil {
 		return err
 	}
+
+	if err := u.cleanChecks(p); err != nil {
+		return xerrors.Errorf("failed to clean old checks: %w", err)
+	}
+
 	if err := u.runChecks(p); err != nil {
 		return err
 	}
@@ -285,6 +290,17 @@ func (u *updater) runStep(pipeline cd.Pipeline, step cd.Step) error {
 	return nil
 }
 
+func (u *updater) cleanChecks(pipeline cd.Pipeline) error {
+	err := u.client.CoreV1().Pods(namespace).DeleteCollection(nil, metav1.ListOptions{
+		LabelSelector: labelsSelector(checkLabels),
+	})
+	if err != nil {
+		return xerrors.Errorf("failed to delete pods: %w", err)
+	}
+
+	return nil
+}
+
 func (u *updater) runChecks(p cd.Pipeline) error {
 	for _, c := range p.Checks {
 		if err := u.runCheck(p, c); err != nil {
@@ -293,6 +309,10 @@ func (u *updater) runChecks(p cd.Pipeline) error {
 	}
 
 	return nil
+}
+
+var checkLabels = map[string]string{
+	"cd": "check",
 }
 
 func (u *updater) runCheck(pipeline cd.Pipeline, check cd.Check) error {
@@ -308,6 +328,7 @@ func (u *updater) runCheck(pipeline cd.Pipeline, check cd.Check) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(pipeline.Name + "-" + check.Name),
 			Namespace: namespace,
+			Labels:    checkLabels,
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: "cd",
