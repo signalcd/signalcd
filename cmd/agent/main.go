@@ -126,8 +126,8 @@ func (u *updater) poll() error {
 
 	if u.currentPipeline.ID == "" {
 		loaded, err := u.loadPipeline()
-		if !apierrors.IsNotFound(err) {
-			return err
+		if err != nil && !apierrors.IsNotFound(err) {
+			return xerrors.Errorf("failed to load pipeline: %v", err)
 		}
 
 		u.currentPipeline = p
