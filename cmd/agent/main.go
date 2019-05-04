@@ -139,8 +139,9 @@ func (u *updater) poll() error {
 		}
 
 		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
-		if err := u.runSteps(p); err != nil {
-			return err
+
+		if err := u.runPipeline(p); err != nil {
+			return xerrors.Errorf("failed to run pipeline: %w", err)
 		}
 
 		err = u.savePipeline(p)
@@ -154,11 +155,8 @@ func (u *updater) poll() error {
 		u.currentPipeline = p
 		level.Info(u.logger).Log("msg", "updated pipeline", "pipeline", p.ID)
 
-		if err := u.runSteps(p); err != nil {
-			return err
-		}
-		if err := u.runChecks(p); err != nil {
-			return err
+		if err := u.runPipeline(p); err != nil {
+			return xerrors.Errorf("failed to run pipeline: %w", err)
 		}
 
 		err := u.savePipeline(p)
