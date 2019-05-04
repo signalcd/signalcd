@@ -17,14 +17,14 @@ cmd/api/api:
 cmd/plugins/kubernetes-status/kubernetes-status:
 	$(GO) build -v -o ./cmd/plugins/kubernetes-status/kubernetes-status ./cmd/plugins/kubernetes-status
 
-container: cmd/agent/agent container-agent cmd/api/api container-api
+container: container-agent container-api container-kubernetes-status
 
 .PHONY: container-agent
-container-agent:
+container-agent: cmd/agent/agent
 	docker build -t cd-agent ./cmd/agent
 
 .PHONY: container-api
-container-api:
+container-api: cmd/api/api
 	docker build -t cd-api ./cmd/api
 
 .PHONY: container-kubernetes-status
