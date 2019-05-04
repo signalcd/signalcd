@@ -47,7 +47,7 @@ func main() {
 
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		_ = level.Error(logger).Log(
+		level.Error(logger).Log(
 			"msg", "failed to create Kubernetes client",
 			"err", err,
 		)

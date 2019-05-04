@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"sort"
 	"sync"
+	"time"
 )
 
 var fakeCurrentPipeline = struct {
@@ -18,14 +19,14 @@ var fakeCurrentPipeline = struct {
 }{}
 
 var fakeChecks = []cd.Check{
-	//{
-	//	Name:     "kubernetes-status",
-	//	Image:    "quay.io/metalmatze/cd:kubernetes-status",
-	//	Duration: time.Minute,
-	//	Environment: map[string]string{
-	//		"PLUGIN_LABELS": "app=cheese",
-	//	},
-	//},
+	{
+		Name:     "kubernetes-status",
+		Image:    "quay.io/metalmatze/cd:kubernetes-status",
+		Duration: time.Minute,
+		Environment: map[string]string{
+			"PLUGIN_LABELS": "app=cheese",
+		},
+	},
 }
 
 var fakePipelines = []cd.Pipeline{
