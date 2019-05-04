@@ -332,32 +332,26 @@ func labelsSelector(ls map[string]string) string {
 	return strings.Join(selectors, ",")
 }
 
+const configMapName = "cd"
+const configMapFilename = "pipeline.json"
 func (u *updater) loadPipeline() (cd.Pipeline, error) {
-
-	const name = "cd"
-	const filename = "pipeline.json"
-
-	cm, err := u.client.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	cm, err := u.client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 	if err != nil {
 		return cd.Pipeline{}, err
 	}
 
-	res := cd.Pipeline{}
-	b := cm.Data[filename]
+	b := cm.Data[configMapFilename]
 
-	err = json.Unmarshal([]byte(b), &res)
+	var p cd.Pipeline
+	err = json.Unmarshal([]byte(b), &p)
 	if err != nil {
 		return cd.Pipeline{}, err
 	}
 
-	return res, nil
+	return p, nil
 }
 
 func (u *updater) savePipeline(p cd.Pipeline) error {
-
-	const name = "cd"
-	const filename = "pipeline.json"
-
 	b, err := json.Marshal(&p)
 	if err != nil {
 		return err
@@ -365,13 +359,15 @@ func (u *updater) savePipeline(p cd.Pipeline) error {
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
+			Name:      configMapName,
 			Namespace: namespace,
 		},
-		Data: map[string]string{filename: string(b)},
+		Data: map[string]string{
+			configMapFilename: string(b),
+		},
 	}
 
-	_, err = u.client.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+	_, err = u.client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		_, err = u.client.CoreV1().ConfigMaps(namespace).Create(cm)
 		if err != nil {
