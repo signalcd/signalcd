@@ -374,12 +374,18 @@ func (u *updater) savePipeline(p cd.Pipeline) error {
 	_, err = u.client.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		_, err = u.client.CoreV1().ConfigMaps(namespace).Create(cm)
-		return xerrors.Errorf("failed to create ConfigMap: %v", err)
+		if err != nil {
+			return xerrors.Errorf("failed to create ConfigMap: %v", err)
+		}
+		return nil
 	}
 	if err != nil {
 		return xerrors.Errorf("failed to return ConfigMap: %v", err)
 	}
 
 	_, err = u.client.CoreV1().ConfigMaps(namespace).Update(cm)
-	return xerrors.Errorf("failed to update ConfigMap: %v", err)
+	if err != nil {
+		return xerrors.Errorf("failed to update ConfigMap: %v", err)
+	}
+	return nil
 }
