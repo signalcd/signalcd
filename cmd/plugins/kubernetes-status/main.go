@@ -68,6 +68,7 @@ func Main(ctx context.Context) error {
 		case <-ctx.Done():
 			ticker.Stop()
 			watch.Stop()
+			return nil
 		}
 	}
 }

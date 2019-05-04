@@ -12,4 +12,5 @@
 *.out
 /cmd/agent/agent
 /cmd/api/api
+/cmd/plugins/kubernetes-status/kubernetes-status
 /vendor/
