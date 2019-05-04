@@ -4,6 +4,7 @@ import "time"
 
 type Pipeline struct {
 	ID     string  `json:"id"`
+	Name   string  `json:"name"`
 	Steps  []Step  `json:"steps"`
 	Checks []Check `json:"checks"`
 }

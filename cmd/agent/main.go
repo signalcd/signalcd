@@ -233,9 +233,11 @@ func (u *updater) runStep(step cd.Step) error {
 		args = append(args, c)
 	}
 
+	podName := strings.ToLower(pipeline.Name + "-" + step.Name)
+
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      step.Name,
+			Name:      podName,
 			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{
@@ -299,7 +301,7 @@ func (u *updater) runCheck(check cd.Check) error {
 
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      strings.ToLower(check.Name),
+			Name:      strings.ToLower(pipeline.Name + "-" + check.Name),
 			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{

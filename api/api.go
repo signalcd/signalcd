@@ -3,14 +3,15 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/metalmatze/cd/cd"
-	"k8s.io/api/apps/v1"
 	"net/http"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/metalmatze/cd/cd"
+	appsv1 "k8s.io/api/apps/v1"
 )
 
 var fakeCurrentPipeline = struct {
@@ -31,7 +32,8 @@ var fakeChecks = []cd.Check{
 
 var fakePipelines = []cd.Pipeline{
 	{
-		ID: "eee4047d-3826-4bf0-a7f1-b0b339521a52",
+		ID:   "eee4047d-3826-4bf0-a7f1-b0b339521a52",
+		Name: "cheese0",
 		Steps: []cd.Step{
 			{
 				Name:     "cheese0",
@@ -42,7 +44,8 @@ var fakePipelines = []cd.Pipeline{
 		Checks: fakeChecks,
 	},
 	{
-		ID: "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
+		ID:   "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
+		Name: "cheese1",
 		Steps: []cd.Step{
 			{
 				Name:     "cheese1",
@@ -53,7 +56,8 @@ var fakePipelines = []cd.Pipeline{
 		Checks: fakeChecks,
 	},
 	{
-		ID: "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
+		ID:   "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
+		Name: "cheese2",
 		Steps: []cd.Step{
 			{
 				Name:     "cheese2",
@@ -180,7 +184,7 @@ func pipelineAgents() http.HandlerFunc {
 		agents.Range(func(key, value interface{}) bool {
 			as = append(as, cd.Agent{
 				Name:   key.(string),
-				Status: value.(v1.DeploymentStatus),
+				Status: value.(appsv1.DeploymentStatus),
 			})
 
 			return true
