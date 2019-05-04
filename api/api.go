@@ -3,15 +3,14 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/metalmatze/cd/cd"
+	"k8s.io/api/apps/v1"
 	"net/http"
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/metalmatze/cd/cd"
-	v1 "k8s.io/api/apps/v1"
 )
 
 var fakeCurrentPipeline = struct {

@@ -12,3 +12,4 @@
 *.out
 /cmd/agent/agent
 /cmd/api/api
+/vendor/
