@@ -13,6 +13,10 @@ cmd/agent/agent:
 cmd/api/api:
 	$(GO) build -v -o ./cmd/api/api ./cmd/api
 
+.PHONY: cmd/plugins/kubernetes-status/kubernetes-status
+cmd/plugins/kubernetes-status/kubernetes-status:
+	$(GO) build -v -o ./cmd/plugins/kubernetes-status/kubernetes-status ./cmd/plugins/kubernetes-status
+
 container: cmd/agent/agent container-agent cmd/api/api container-api
 
 .PHONY: container-agent
@@ -22,6 +26,10 @@ container-agent:
 .PHONY: container-api
 container-api:
 	docker build -t cd-api ./cmd/api
+
+.PHONY: container-kubernetes-status
+container-kubernetes-status: cmd/plugins/kubernetes-status/kubernetes-status
+	docker build -t quay.io/metalmatze/cd:kubernetes-status ./cmd/plugins/kubernetes-status
 
 .PHONY: container-cheese0
 container-cheese0:

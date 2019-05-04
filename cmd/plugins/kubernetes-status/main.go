@@ -8,19 +8,50 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/urfave/cli"
+	"golang.org/x/xerrors"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var (
+	config = struct {
+		API      string
+		Duration time.Duration
+		Labels   string
+	}{}
+
+	flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "api",
+			EnvVar:      "PLUGIN_API",
+			Destination: &config.API,
+		},
+		cli.DurationFlag{
+			Name:        "duration",
+			EnvVar:      "PLUGIN_DURATION",
+			Value:       time.Minute,
+			Destination: &config.Duration,
+		},
+		cli.StringFlag{
+			Name:        "labels",
+			EnvVar:      "PLUGIN_LABELS",
+			Destination: &config.Labels,
+		},
+	}
+)
+
 func main() {
+	app := cli.NewApp()
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
+	app.Name = "kubernetes status"
+	app.Action = run
+	app.Flags = flags
 
-	if err := Main(ctx); err != nil {
+	if err := app.Run(os.Args); err != nil {
 		level.Error(logger).Log(
 			"msg", "failed to run",
 			"err", err,
@@ -29,21 +60,22 @@ func main() {
 	}
 }
 
-func Main(ctx context.Context) error {
-	config, err := clientcmd.BuildConfigFromFlags("", "")
+func run(c *cli.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), config.Duration)
+	defer cancel()
+
+	konfig, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
-		return err
+		return xerrors.Errorf("failed to create kuberentes config: %w", err)
 	}
 
-	client, err := kubernetes.NewForConfig(config)
+	klient, err := kubernetes.NewForConfig(konfig)
 	if err != nil {
-		return err
+		return xerrors.Errorf("failed to create kuberentes client: %w", err)
 	}
 
-	labels := os.Getenv("PLUGIN_LABELS")
-
-	watch, err := client.AppsV1().Deployments("default").Watch(metav1.ListOptions{
-		LabelSelector: labels,
+	watch, err := klient.AppsV1().Deployments("default").Watch(metav1.ListOptions{
+		LabelSelector: config.Labels,
 		Watch:         true,
 	})
 	if err != nil {
