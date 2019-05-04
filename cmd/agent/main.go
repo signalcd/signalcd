@@ -121,7 +121,7 @@ func (u *updater) pollLoop(ctx context.Context) error {
 func (u *updater) poll() error {
 	p, err := u.pipeline()
 	if err != nil {
-		return err
+		return xerrors.Errorf("failed to get current pipeline: %w", err)
 	}
 
 	if u.currentPipeline.ID == "" {
@@ -129,12 +129,14 @@ func (u *updater) poll() error {
 		if err != nil && !apierrors.IsNotFound(err) {
 			return xerrors.Errorf("failed to load pipeline: %v", err)
 		}
+		level.Debug(u.logger).Log("msg", "loaded pipeline from ConfigMap")
 
 		u.currentPipeline = p
 
 		// if running pipeline id in cluster equals to wanted pipeline
 		// we don't need to run the pipeline
 		if loaded.ID == p.ID {
+			level.Debug(u.logger).Log("msg", "ConfigMap has same pipeline ID", "id", p.ID)
 			return nil
 		}
 
