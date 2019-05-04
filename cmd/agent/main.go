@@ -219,7 +219,7 @@ func (u *updater) pipelineStatus(status appsv1.DeploymentStatus) error {
 
 func (u *updater) runSteps(p cd.Pipeline) error {
 	for _, s := range p.Steps {
-		if err := u.runStep(s); err != nil {
+		if err := u.runStep(p, s); err != nil {
 			return err
 		}
 	}
@@ -227,7 +227,7 @@ func (u *updater) runSteps(p cd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runStep(step cd.Step) error {
+func (u *updater) runStep(pipeline cd.Pipeline, step cd.Step) error {
 	args := []string{"-c"}
 	for _, c := range step.Commands {
 		args = append(args, c)
@@ -285,7 +285,7 @@ func (u *updater) runStep(step cd.Step) error {
 
 func (u *updater) runChecks(p cd.Pipeline) error {
 	for _, c := range p.Checks {
-		if err := u.runCheck(c); err != nil {
+		if err := u.runCheck(p, c); err != nil {
 			return err
 		}
 	}
@@ -293,7 +293,10 @@ func (u *updater) runChecks(p cd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runCheck(check cd.Check) error {
+func (u *updater) runCheck(pipeline cd.Pipeline, check cd.Check) error {
+	// Add PLUGIN_API for plugins to find the API
+	check.Environment["PLUGIN_API"] = apiURL
+
 	var env []corev1.EnvVar
 	for name, value := range check.Environment {
 		env = append(env, corev1.EnvVar{Name: name, Value: value})
@@ -318,7 +321,7 @@ func (u *updater) runCheck(check cd.Check) error {
 
 	_, err := u.client.CoreV1().Pods(namespace).Create(&p)
 	if err != nil {
-		return err
+		return xerrors.Errorf("failed to create check pod: %w", err)
 	}
 
 	return nil
