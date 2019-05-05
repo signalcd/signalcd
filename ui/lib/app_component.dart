@@ -1,8 +1,12 @@
 import 'package:angular/angular.dart';
+import 'package:ui/pipelines_component.dart';
 
 @Component(
   selector: 'my-app',
-  template: '<h1>Hello {{name}}</h1>',
+  templateUrl: 'app_component.html',
+  directives: [
+    PipelinesComponent,
+  ],
 )
 class AppComponent {
   var name = 'Angular';
