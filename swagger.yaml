@@ -99,11 +99,6 @@ paths:
       operationId: "pipelineAgents"
       produces:
         - "application/json"
-      parameters:
-        - in: "path"
-          required: true
-          name: "id"
-          type: "string"
       responses:
         200:
           description: "OK"
@@ -148,7 +143,7 @@ paths:
 definitions:
   pipeline:
     required:
-      - name
+      - id
     properties:
       id:
         type: string

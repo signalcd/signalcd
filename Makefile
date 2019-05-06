@@ -2,6 +2,29 @@ GO := CGO_ENABLED=0 GO111MODULE=on go
 
 all: build
 
+.PHONY: apiv1
+apiv1: api/v1/models api/v1/restapi ui/lib/src/api
+
+GOSWAGGER ?= docker run --rm \
+	--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
+	-v $(shell pwd):/go/src/github.com/metalmatze/cd \
+	-w /go/src/github.com/metalmatze/cd quay.io/goswagger/swagger:v0.18.0
+
+pkg/api/v1/models pkg/api/v1/restapi: swagger.yaml
+	-rm -r api/v1/{models,restapi}
+	$(GOSWAGGER) generate server -f swagger.yaml --exclude-main -A cd --target api/v1
+
+SWAGGER ?= docker run --rm \
+		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
+		-v $(shell pwd):/local \
+		swaggerapi/swagger-codegen-cli:2.4.0
+
+ui/lib/src/api: swagger.yaml
+	-rm -rf ui/lib/src/api
+	$(SWAGGER) generate -i /local/swagger.yaml -l dart -o /local/tmp/dart
+	mv tmp/dart/lib ui/lib/src/api
+	-rm -rf tmp/
+
 .PHONY: build
 build: cmd/agent/agent cmd/api/api
 
