@@ -1,0 +1,193 @@
+swagger: "2.0"
+info:
+  description: "Swagger 2.0 specification for CD"
+  version: "v0.01"
+  title: "CD Swagger Spec"
+  termsOfService: "http://swagger.io/terms/"
+host: "localhost:6660"
+basePath: "/v1"
+tags:
+  - name: "pipeline"
+    description: "manage pipelines"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /pipeline:
+    get:
+      tags:
+        - "pipeline"
+      summary: "Returns the current executed pipeline"
+      operationId: "pipelineCurrent"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/pipeline"
+        400:
+          description: "bad request"
+        500:
+          description: "internal server error"
+    patch:
+      tags:
+        - "pipeline"
+      summary: "updates the current pipeline"
+      operationId: "updateCurrentPipeline"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/pipeline"
+        400:
+          description: "bad request"
+        default:
+          description: "internal server error"
+  /pipelines:
+    get:
+      tags:
+        - "pipeline"
+      summary: "returns a list of all pipelines"
+      operationId: "pipelines"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/pipeline"
+        400:
+          description: "bad request"
+        500:
+          description: "internal server error"
+  /pipelines/{id}:
+    get:
+      tags:
+        - "pipeline"
+      summary: "returns a pipeline by id"
+      operationId: "pipeline"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          required: true
+          name: "id"
+          type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/pipeline"
+        400:
+          description: "bad request"
+        500:
+          description: "internal server error"
+  /pipelines/status:
+    get:
+      tags:
+        - "pipeline"
+      summary: "returns the status of a running agent"
+      operationId: "pipelineAgents"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "path"
+          required: true
+          name: "id"
+          type: "string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/pipeline"
+        400:
+          description: "bad request"
+        500:
+          description: "internal server error"
+    post:
+      tags:
+        - "pipeline"
+      summary: "updates the status of a running agent"
+      operationId: "updatePipelineAgents"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "options"
+          schema:
+            type: "object"
+            required:
+              - "agent"
+              - "healthy"
+            properties:
+              agent:
+                type: "string"
+                format: "uuid"
+              healthy:
+                type: "boolean"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/pipeline"
+        400:
+          description: "bad request"
+        500:
+          description: "internal server error"
+definitions:
+  pipeline:
+    required:
+      - name
+    properties:
+      id:
+        type: string
+        format: uuid
+      steps:
+        $ref: '#/definitions/step'
+      checks:
+        $ref: '#/definitions/check'
+  step:
+    required:
+      - name
+      - image
+    properties:
+      name:
+        type: string
+      image:
+        type: string
+      commands:
+        type: array
+        items:
+          type: string
+  check:
+    required:
+      - name
+      - image
+      - duration
+    properties:
+      name:
+        type: string
+      image:
+        type: string
+      duration:
+        type: number
+      environment:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            key:
+              type: string
+            value:
+              type: string
