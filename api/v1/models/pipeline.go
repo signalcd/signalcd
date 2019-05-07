@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -18,15 +20,18 @@ import (
 type Pipeline struct {
 
 	// checks
-	Checks *Check `json:"checks,omitempty"`
+	Checks []*Check `json:"checks"`
 
 	// id
 	// Required: true
 	// Format: uuid
 	ID *strfmt.UUID `json:"id"`
 
+	// name
+	Name string `json:"name,omitempty"`
+
 	// steps
-	Steps *Step `json:"steps,omitempty"`
+	Steps []*Step `json:"steps"`
 }
 
 // Validate validates this pipeline
@@ -57,13 +62,20 @@ func (m *Pipeline) validateChecks(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if m.Checks != nil {
-		if err := m.Checks.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("checks")
-			}
-			return err
+	for i := 0; i < len(m.Checks); i++ {
+		if swag.IsZero(m.Checks[i]) { // not required
+			continue
 		}
+
+		if m.Checks[i] != nil {
+			if err := m.Checks[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("checks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -88,13 +100,20 @@ func (m *Pipeline) validateSteps(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if m.Steps != nil {
-		if err := m.Steps.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("steps")
-			}
-			return err
+	for i := 0; i < len(m.Steps); i++ {
+		if swag.IsZero(m.Steps[i]) { // not required
+			continue
 		}
+
+		if m.Steps[i] != nil {
+			if err := m.Steps[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("steps" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

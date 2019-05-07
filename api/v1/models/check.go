@@ -18,11 +18,10 @@ import (
 type Check struct {
 
 	// duration
-	// Required: true
-	Duration *float64 `json:"duration"`
+	Duration float64 `json:"duration,omitempty"`
 
 	// environment
-	Environment map[string]CheckEnvironmentAnon `json:"environment,omitempty"`
+	Environment *CheckEnvironment `json:"environment,omitempty"`
 
 	// image
 	// Required: true
@@ -36,10 +35,6 @@ type Check struct {
 // Validate validates this check
 func (m *Check) Validate(formats strfmt.Registry) error {
 	var res []error
-
-	if err := m.validateDuration(formats); err != nil {
-		res = append(res, err)
-	}
 
 	if err := m.validateEnvironment(formats); err != nil {
 		res = append(res, err)
@@ -59,32 +54,19 @@ func (m *Check) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Check) validateDuration(formats strfmt.Registry) error {
-
-	if err := validate.Required("duration", "body", m.Duration); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *Check) validateEnvironment(formats strfmt.Registry) error {
 
 	if swag.IsZero(m.Environment) { // not required
 		return nil
 	}
 
-	for k := range m.Environment {
-
-		if swag.IsZero(m.Environment[k]) { // not required
-			continue
-		}
-		if val, ok := m.Environment[k]; ok {
-			if err := val.Validate(formats); err != nil {
-				return err
+	if m.Environment != nil {
+		if err := m.Environment.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("environment")
 			}
+			return err
 		}
-
 	}
 
 	return nil
@@ -126,9 +108,9 @@ func (m *Check) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// CheckEnvironmentAnon check environment anon
-// swagger:model CheckEnvironmentAnon
-type CheckEnvironmentAnon struct {
+// CheckEnvironment check environment
+// swagger:model CheckEnvironment
+type CheckEnvironment struct {
 
 	// key
 	Key string `json:"key,omitempty"`
@@ -137,13 +119,13 @@ type CheckEnvironmentAnon struct {
 	Value string `json:"value,omitempty"`
 }
 
-// Validate validates this check environment anon
-func (m *CheckEnvironmentAnon) Validate(formats strfmt.Registry) error {
+// Validate validates this check environment
+func (m *CheckEnvironment) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *CheckEnvironmentAnon) MarshalBinary() ([]byte, error) {
+func (m *CheckEnvironment) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -151,8 +133,8 @@ func (m *CheckEnvironmentAnon) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *CheckEnvironmentAnon) UnmarshalBinary(b []byte) error {
-	var res CheckEnvironmentAnon
+func (m *CheckEnvironment) UnmarshalBinary(b []byte) error {
+	var res CheckEnvironment
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

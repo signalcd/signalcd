@@ -231,8 +231,7 @@ func init() {
     "check": {
       "required": [
         "name",
-        "image",
-        "duration"
+        "image"
       ],
       "properties": {
         "duration": {
@@ -240,15 +239,12 @@ func init() {
         },
         "environment": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
             }
           }
         },
@@ -266,14 +262,23 @@ func init() {
       ],
       "properties": {
         "checks": {
-          "$ref": "#/definitions/check"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/check"
+          }
         },
         "id": {
           "type": "string",
           "format": "uuid"
         },
+        "name": {
+          "type": "string"
+        },
         "steps": {
-          "$ref": "#/definitions/step"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
         }
       }
     },
@@ -519,8 +524,7 @@ func init() {
     "check": {
       "required": [
         "name",
-        "image",
-        "duration"
+        "image"
       ],
       "properties": {
         "duration": {
@@ -528,15 +532,12 @@ func init() {
         },
         "environment": {
           "type": "object",
-          "additionalProperties": {
-            "type": "object",
-            "properties": {
-              "key": {
-                "type": "string"
-              },
-              "value": {
-                "type": "string"
-              }
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
             }
           }
         },
@@ -554,14 +555,23 @@ func init() {
       ],
       "properties": {
         "checks": {
-          "$ref": "#/definitions/check"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/check"
+          }
         },
         "id": {
           "type": "string",
           "format": "uuid"
         },
+        "name": {
+          "type": "string"
+        },
         "steps": {
-          "$ref": "#/definitions/step"
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/step"
+          }
         }
       }
     },
