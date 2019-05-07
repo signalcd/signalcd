@@ -11,7 +11,7 @@ class Check {
   num duration = null;
   
 
-  Map<String, CheckEnvironment> environment = {};
+  CheckEnvironment environment = null;
   
   Check();
 
@@ -33,8 +33,8 @@ class Check {
     ;
     environment =
       
-      CheckEnvironment.mapFromJson(json['environment'])
       
+      new CheckEnvironment.fromJson(json['environment'])
 ;
   }
 

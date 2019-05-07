@@ -5,16 +5,19 @@ class Pipeline {
   String id = null;
   
 
-  Step steps = null;
+  String name = null;
   
 
-  Check checks = null;
+  List<Step> steps = [];
+  
+
+  List<Check> checks = [];
   
   Pipeline();
 
   @override
   String toString() {
-    return 'Pipeline[id=$id, steps=$steps, checks=$checks, ]';
+    return 'Pipeline[id=$id, name=$name, steps=$steps, checks=$checks, ]';
   }
 
   Pipeline.fromJson(Map<String, dynamic> json) {
@@ -22,21 +25,21 @@ class Pipeline {
     id =
         json['id']
     ;
+    name =
+        json['name']
+    ;
     steps =
-      
-      
-      new Step.fromJson(json['steps'])
+      Step.listFromJson(json['steps'])
 ;
     checks =
-      
-      
-      new Check.fromJson(json['checks'])
+      Check.listFromJson(json['checks'])
 ;
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'name': name,
       'steps': steps,
       'checks': checks
      };
