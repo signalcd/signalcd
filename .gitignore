@@ -13,4 +13,5 @@
 /cmd/agent/agent
 /cmd/api/api
 /cmd/plugins/kubernetes-status/kubernetes-status
+/development/caddy
 /vendor/

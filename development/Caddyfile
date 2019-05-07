@@ -1,0 +1,6 @@
+0.0.0.0:6060 {
+    proxy / localhost:8080
+    proxy /api localhost:6660 {
+        without /api
+    }
+}
