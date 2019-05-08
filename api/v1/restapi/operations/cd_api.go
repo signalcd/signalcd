@@ -308,7 +308,7 @@ func (o *CdAPI) initHandlerCache() {
 	if o.handlers["PATCH"] == nil {
 		o.handlers["PATCH"] = make(map[string]http.Handler)
 	}
-	o.handlers["PATCH"]["/pipeline"] = pipeline.NewUpdateCurrentPipeline(o.context, o.PipelineUpdateCurrentPipelineHandler)
+	o.handlers["PATCH"]["/pipeline/{id}"] = pipeline.NewUpdateCurrentPipeline(o.context, o.PipelineUpdateCurrentPipelineHandler)
 
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)

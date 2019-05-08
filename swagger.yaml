@@ -32,6 +32,7 @@ paths:
           description: "bad request"
         500:
           description: "internal server error"
+  /pipeline/{id}:
     patch:
       tags:
         - "pipeline"
@@ -39,6 +40,11 @@ paths:
       operationId: "updateCurrentPipeline"
       produces:
         - "application/json"
+      parameters:
+        - in: "path"
+          required: true
+          name: "id"
+          type: "string"
       responses:
         200:
           description: "OK"

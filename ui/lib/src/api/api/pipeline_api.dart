@@ -209,13 +209,16 @@ class PipelineApi {
   /// updates the current pipeline
   ///
   /// 
-  Future<List<Pipeline>> updateCurrentPipeline() async {
+  Future<List<Pipeline>> updateCurrentPipeline(String id) async {
     Object postBody = null;
 
     // verify required params are set
+    if(id == null) {
+     throw new ApiException(400, "Missing required param: id");
+    }
 
     // create path and map variables
-    String path = "/pipeline".replaceAll("{format}","json");
+    String path = "/pipeline/{id}".replaceAll("{format}","json").replaceAll("{" + "id" + "}", id.toString());
 
     // query params
     List<QueryParam> queryParams = [];
