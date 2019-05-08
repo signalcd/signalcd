@@ -25,4 +25,15 @@ class PipelinesComponent implements OnInit {
         .pipelines()
         .then((List<Pipeline> pipelines) => this.pipelines = pipelines);
   }
+
+  void deploy(Pipeline pipeline) {
+    _pipelinesService
+        .deploy(pipeline.id)
+        .then((dynamic) => print('pipeline ${pipeline.id} deployed!'))
+        .catchError(() => print('error dpeloying pipeline'));
+  }
+
+  void rollback(Pipeline pipeline) {
+    print("rollback ${pipeline.id}");
+  }
 }
