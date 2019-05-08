@@ -9,55 +9,30 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/runtime"
-
-	models "github.com/metalmatze/cd/api/v1/models"
 )
 
-// UpdateCurrentPipelineOKCode is the HTTP code returned for type UpdateCurrentPipelineOK
-const UpdateCurrentPipelineOKCode int = 200
+// UpdateCurrentPipelineAcceptedCode is the HTTP code returned for type UpdateCurrentPipelineAccepted
+const UpdateCurrentPipelineAcceptedCode int = 202
 
-/*UpdateCurrentPipelineOK OK
+/*UpdateCurrentPipelineAccepted The current pipeline was updated successfully
 
-swagger:response updateCurrentPipelineOK
+swagger:response updateCurrentPipelineAccepted
 */
-type UpdateCurrentPipelineOK struct {
-
-	/*
-	  In: Body
-	*/
-	Payload []*models.Pipeline `json:"body,omitempty"`
+type UpdateCurrentPipelineAccepted struct {
 }
 
-// NewUpdateCurrentPipelineOK creates UpdateCurrentPipelineOK with default headers values
-func NewUpdateCurrentPipelineOK() *UpdateCurrentPipelineOK {
+// NewUpdateCurrentPipelineAccepted creates UpdateCurrentPipelineAccepted with default headers values
+func NewUpdateCurrentPipelineAccepted() *UpdateCurrentPipelineAccepted {
 
-	return &UpdateCurrentPipelineOK{}
-}
-
-// WithPayload adds the payload to the update current pipeline o k response
-func (o *UpdateCurrentPipelineOK) WithPayload(payload []*models.Pipeline) *UpdateCurrentPipelineOK {
-	o.Payload = payload
-	return o
-}
-
-// SetPayload sets the payload to the update current pipeline o k response
-func (o *UpdateCurrentPipelineOK) SetPayload(payload []*models.Pipeline) {
-	o.Payload = payload
+	return &UpdateCurrentPipelineAccepted{}
 }
 
 // WriteResponse to the client
-func (o *UpdateCurrentPipelineOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+func (o *UpdateCurrentPipelineAccepted) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
-	rw.WriteHeader(200)
-	payload := o.Payload
-	if payload == nil {
-		// return empty array
-		payload = make([]*models.Pipeline, 0, 50)
-	}
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
 
-	if err := producer.Produce(rw, payload); err != nil {
-		panic(err) // let the recovery middleware deal with this
-	}
+	rw.WriteHeader(202)
 }
 
 // UpdateCurrentPipelineBadRequestCode is the HTTP code returned for type UpdateCurrentPipelineBadRequest

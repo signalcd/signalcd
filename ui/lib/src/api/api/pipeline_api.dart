@@ -209,7 +209,7 @@ class PipelineApi {
   /// updates the current pipeline
   ///
   /// 
-  Future<List<Pipeline>> updateCurrentPipeline(String id) async {
+  Future updateCurrentPipeline(String id) async {
     Object postBody = null;
 
     // verify required params are set
@@ -253,9 +253,9 @@ class PipelineApi {
       throw new ApiException(response.statusCode, response.body);
     } else if(response.body != null) {
       return 
-        (apiClient.deserialize(response.body, 'List<Pipeline>') as List).map((item) => item as Pipeline).toList();
+          ;
     } else {
-      return null;
+      return ;
     }
   }
   /// updates the status of a running agent

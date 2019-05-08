@@ -80,14 +80,8 @@ func init() {
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/pipeline"
-              }
-            }
+          "202": {
+            "description": "The current pipeline was updated successfully"
           },
           "400": {
             "description": "bad request"
@@ -383,14 +377,8 @@ func init() {
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/pipeline"
-              }
-            }
+          "202": {
+            "description": "The current pipeline was updated successfully"
           },
           "400": {
             "description": "bad request"
