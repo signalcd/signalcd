@@ -1,8 +1,8 @@
 swagger: "2.0"
 info:
-  description: "Swagger 2.0 specification for CD"
-  version: "v0.01"
-  title: "CD Swagger Spec"
+  description: "Swagger 2.0 specification for SignalCD"
+  version: "v0.0.0"
+  title: "SignalCD Swagger Spec"
   termsOfService: "http://swagger.io/terms/"
 host: "localhost:6660"
 basePath: "/v1"

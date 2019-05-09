@@ -24,10 +24,10 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Swagger 2.0 specification for CD",
-    "title": "CD Swagger Spec",
+    "description": "Swagger 2.0 specification for SignalCD",
+    "title": "SignalCD Swagger Spec",
     "termsOfService": "http://swagger.io/terms/",
-    "version": "v0.01"
+    "version": "v0.0.0"
   },
   "host": "localhost:6660",
   "basePath": "/v1",
@@ -321,10 +321,10 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Swagger 2.0 specification for CD",
-    "title": "CD Swagger Spec",
+    "description": "Swagger 2.0 specification for SignalCD",
+    "title": "SignalCD Swagger Spec",
     "termsOfService": "http://swagger.io/terms/",
-    "version": "v0.01"
+    "version": "v0.0.0"
   },
   "host": "localhost:6660",
   "basePath": "/v1",

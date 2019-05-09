@@ -14,9 +14,9 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/metalmatze/cd/api"
-	"github.com/metalmatze/cd/cd"
 	"github.com/oklog/run"
+	"github.com/signalcd/signalcd/api"
+	"github.com/signalcd/signalcd/signalcd"
 	"golang.org/x/xerrors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -93,7 +93,7 @@ type updater struct {
 	logger    log.Logger
 	agentName string
 
-	currentPipeline cd.Pipeline
+	currentPipeline signalcd.Pipeline
 }
 
 func (u *updater) pollLoop(ctx context.Context) error {
@@ -177,7 +177,7 @@ func (u *updater) poll() error {
 	return nil
 }
 
-func (u *updater) runPipeline(p cd.Pipeline) error {
+func (u *updater) runPipeline(p signalcd.Pipeline) error {
 	if err := u.runSteps(p); err != nil {
 		return err
 	}
@@ -193,8 +193,8 @@ func (u *updater) runPipeline(p cd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) pipeline() (cd.Pipeline, error) {
-	var w cd.Pipeline
+func (u *updater) pipeline() (signalcd.Pipeline, error) {
+	var w signalcd.Pipeline
 
 	resp, err := http.Get(apiURL + api.PipelineCurrent)
 	if err != nil {
@@ -211,7 +211,7 @@ func (u *updater) pipeline() (cd.Pipeline, error) {
 }
 
 func (u *updater) pipelineStatus(status appsv1.DeploymentStatus) error {
-	payload, err := json.Marshal(cd.Agent{
+	payload, err := json.Marshal(signalcd.Agent{
 		Name:   u.agentName,
 		Status: status,
 	})
@@ -230,7 +230,7 @@ func (u *updater) pipelineStatus(status appsv1.DeploymentStatus) error {
 	return nil
 }
 
-func (u *updater) runSteps(p cd.Pipeline) error {
+func (u *updater) runSteps(p signalcd.Pipeline) error {
 	for _, s := range p.Steps {
 		if err := u.runStep(p, s); err != nil {
 			return err
@@ -240,7 +240,7 @@ func (u *updater) runSteps(p cd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runStep(pipeline cd.Pipeline, step cd.Step) error {
+func (u *updater) runStep(pipeline signalcd.Pipeline, step signalcd.Step) error {
 	args := []string{"-c"}
 	for _, c := range step.Commands {
 		args = append(args, c)
@@ -296,7 +296,7 @@ func (u *updater) runStep(pipeline cd.Pipeline, step cd.Step) error {
 	return nil
 }
 
-func (u *updater) cleanChecks(pipeline cd.Pipeline) error {
+func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
 	err := u.client.CoreV1().Pods(namespace).DeleteCollection(nil, metav1.ListOptions{
 		LabelSelector: labelsSelector(checkLabels),
 	})
@@ -307,7 +307,7 @@ func (u *updater) cleanChecks(pipeline cd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runChecks(p cd.Pipeline) error {
+func (u *updater) runChecks(p signalcd.Pipeline) error {
 	for _, c := range p.Checks {
 		if err := u.runCheck(p, c); err != nil {
 			return err
@@ -321,7 +321,7 @@ var checkLabels = map[string]string{
 	"cd": "check",
 }
 
-func (u *updater) runCheck(pipeline cd.Pipeline, check cd.Check) error {
+func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) error {
 	// Add PLUGIN_API for plugins to find the API
 	check.Environment["PLUGIN_API"] = apiURL
 
@@ -367,24 +367,24 @@ func labelsSelector(ls map[string]string) string {
 const configMapName = "cd"
 const configMapFilename = "pipeline.json"
 
-func (u *updater) loadPipeline() (cd.Pipeline, error) {
+func (u *updater) loadPipeline() (signalcd.Pipeline, error) {
 	cm, err := u.client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 	if err != nil {
-		return cd.Pipeline{}, err
+		return signalcd.Pipeline{}, err
 	}
 
 	b := cm.Data[configMapFilename]
 
-	var p cd.Pipeline
+	var p signalcd.Pipeline
 	err = json.Unmarshal([]byte(b), &p)
 	if err != nil {
-		return cd.Pipeline{}, err
+		return signalcd.Pipeline{}, err
 	}
 
 	return p, nil
 }
 
-func (u *updater) savePipeline(p cd.Pipeline) error {
+func (u *updater) savePipeline(p signalcd.Pipeline) error {
 	b, err := json.Marshal(&p)
 	if err != nil {
 		return err

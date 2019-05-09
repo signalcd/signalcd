@@ -19,7 +19,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/metalmatze/cd/api/v1/restapi/operations/pipeline"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 )
 
 // NewCdAPI creates a new Cd instance
@@ -60,7 +60,7 @@ func NewCdAPI(spec *loads.Document) *CdAPI {
 	}
 }
 
-/*CdAPI Swagger 2.0 specification for CD */
+/*CdAPI Swagger 2.0 specification for SignalCD */
 type CdAPI struct {
 	spec            *loads.Document
 	context         *middleware.Context

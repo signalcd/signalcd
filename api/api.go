@@ -10,19 +10,19 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/metalmatze/cd/cd"
+	"github.com/signalcd/signalcd/signalcd"
 	appsv1 "k8s.io/api/apps/v1"
 )
 
 var fakeCurrentPipeline = struct {
 	mu       sync.RWMutex
-	Pipeline cd.Pipeline
+	Pipeline signalcd.Pipeline
 }{}
 
-var fakeChecks = []cd.Check{
+var fakeChecks = []signalcd.Check{
 	{
 		Name:     "kubernetes-status",
-		Image:    "quay.io/metalmatze/cd:kubernetes-status",
+		Image:    "quay.io/signalcd/signalcd:kubernetes-status",
 		Duration: time.Minute,
 		Environment: map[string]string{
 			"PLUGIN_LABELS": "app=cheese",
@@ -30,14 +30,14 @@ var fakeChecks = []cd.Check{
 	},
 }
 
-var fakePipelines = []cd.Pipeline{
+var fakePipelines = []signalcd.Pipeline{
 	{
 		ID:   "eee4047d-3826-4bf0-a7f1-b0b339521a52",
 		Name: "cheese0",
-		Steps: []cd.Step{
+		Steps: []signalcd.Step{
 			{
 				Name:     "cheese0",
-				Image:    "quay.io/metalmatze/cd:cheese0",
+				Image:    "quay.io/signalcd/signalcd:cheese0",
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
@@ -46,10 +46,10 @@ var fakePipelines = []cd.Pipeline{
 	{
 		ID:   "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
 		Name: "cheese1",
-		Steps: []cd.Step{
+		Steps: []signalcd.Step{
 			{
 				Name:     "cheese1",
-				Image:    "quay.io/metalmatze/cd:cheese1",
+				Image:    "quay.io/signalcd/signalcd:cheese1",
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
@@ -58,10 +58,10 @@ var fakePipelines = []cd.Pipeline{
 	{
 		ID:   "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
 		Name: "cheese2",
-		Steps: []cd.Step{
+		Steps: []signalcd.Step{
 			{
 				Name:     "cheese2",
-				Image:    "quay.io/metalmatze/cd:cheese2",
+				Image:    "quay.io/signalcd/signalcd:cheese2",
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
@@ -69,13 +69,13 @@ var fakePipelines = []cd.Pipeline{
 	},
 }
 
-func getPipeline(id string) (cd.Pipeline, error) {
+func getPipeline(id string) (signalcd.Pipeline, error) {
 	for _, p := range fakePipelines {
 		if p.ID == id {
 			return p, nil
 		}
 	}
-	return cd.Pipeline{}, fmt.Errorf("pipeline not found")
+	return signalcd.Pipeline{}, fmt.Errorf("pipeline not found")
 }
 
 const (
@@ -179,10 +179,10 @@ var agents = sync.Map{}
 
 func pipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var as []cd.Agent
+		var as []signalcd.Agent
 
 		agents.Range(func(key, value interface{}) bool {
-			as = append(as, cd.Agent{
+			as = append(as, signalcd.Agent{
 				Name:   key.(string),
 				Status: value.(appsv1.DeploymentStatus),
 			})
@@ -206,7 +206,7 @@ func pipelineAgents() http.HandlerFunc {
 
 func updatePipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var agent cd.Agent
+		var agent signalcd.Agent
 		if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {
 			http.Error(w, "failed to decode", http.StatusBadRequest)
 			return

@@ -1,2 +1,3 @@
-# cd
-continuous delivery for Kubernetes
+# SignalCD
+
+Continuous Delivery for Kubernetes reacting to Observability Signals.

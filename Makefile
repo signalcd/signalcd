@@ -7,8 +7,8 @@ apiv1: api/v1/models api/v1/restapi ui/lib/src/api
 
 GOSWAGGER ?= docker run --rm \
 	--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
-	-v $(shell pwd):/go/src/github.com/metalmatze/cd \
-	-w /go/src/github.com/metalmatze/cd quay.io/goswagger/swagger:v0.19.0
+	-v $(shell pwd):/go/src/github.com/signalcd/signalcd \
+	-w /go/src/github.com/signalcd/signalcd quay.io/goswagger/swagger:v0.19.0
 
 api/v1/models api/v1/restapi: swagger.yaml
 	-rm -r api/v1/{models,restapi}

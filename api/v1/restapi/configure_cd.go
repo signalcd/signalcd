@@ -10,8 +10,8 @@ import (
 	runtime "github.com/go-openapi/runtime"
 	middleware "github.com/go-openapi/runtime/middleware"
 
-	"github.com/metalmatze/cd/api/v1/restapi/operations"
-	"github.com/metalmatze/cd/api/v1/restapi/operations/pipeline"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 )
 
 //go:generate swagger generate server --target ../../v1 --name Cd --spec ../../../swagger.yaml --exclude-main

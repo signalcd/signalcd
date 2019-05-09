@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	models "github.com/metalmatze/cd/api/v1/models"
+	models "github.com/signalcd/signalcd/api/v1/models"
 )
 
 // PipelineCurrentOKCode is the HTTP code returned for type PipelineCurrentOK
