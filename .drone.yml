@@ -1,0 +1,33 @@
+---
+kind: pipeline
+name: build
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  pull: always
+  image: golang:1.12
+  commands:
+  - make build
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
+- name: signalcd-api
+  image: plugins/docker
+  settings:
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/api
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+
+...
