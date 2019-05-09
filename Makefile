@@ -40,6 +40,10 @@ cmd/api/api:
 cmd/plugins/kubernetes-status/kubernetes-status:
 	$(GO) build -v -o ./cmd/plugins/kubernetes-status/kubernetes-status ./cmd/plugins/kubernetes-status
 
+.PHONY: ui-serve
+ui-serve:
+	cd ui && webdev serve
+
 container: container-agent container-api container-kubernetes-status
 
 .PHONY: container-agent
