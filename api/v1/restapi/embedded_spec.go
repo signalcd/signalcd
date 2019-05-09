@@ -59,7 +59,9 @@ func init() {
             "description": "internal server error"
           }
         }
-      },
+      }
+    },
+    "/pipeline/{id}": {
       "patch": {
         "produces": [
           "application/json"
@@ -69,15 +71,17 @@ func init() {
         ],
         "summary": "updates the current pipeline",
         "operationId": "updateCurrentPipeline",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/pipeline"
-              }
-            }
+          "202": {
+            "description": "The current pipeline was updated successfully"
           },
           "400": {
             "description": "bad request"
@@ -352,7 +356,9 @@ func init() {
             "description": "internal server error"
           }
         }
-      },
+      }
+    },
+    "/pipeline/{id}": {
       "patch": {
         "produces": [
           "application/json"
@@ -362,15 +368,17 @@ func init() {
         ],
         "summary": "updates the current pipeline",
         "operationId": "updateCurrentPipeline",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
         "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/pipeline"
-              }
-            }
+          "202": {
+            "description": "The current pipeline was updated successfully"
           },
           "400": {
             "description": "bad request"

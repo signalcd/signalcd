@@ -29,7 +29,7 @@ func NewUpdateCurrentPipeline(ctx *middleware.Context, handler UpdateCurrentPipe
 	return &UpdateCurrentPipeline{Context: ctx, Handler: handler}
 }
 
-/*UpdateCurrentPipeline swagger:route PATCH /pipeline pipeline updateCurrentPipeline
+/*UpdateCurrentPipeline swagger:route PATCH /pipeline/{id} pipeline updateCurrentPipeline
 
 updates the current pipeline
 
