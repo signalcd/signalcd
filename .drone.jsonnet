@@ -43,33 +43,16 @@
       name: 'build',
       commands: [
         'make build',
-        // 'make test',
       ],
     },
-
-    // golang {
-    //   name: 'generate',
-    //   commands: [
-    //     'make check-license',
-    //     'make generate',
-    //     'git diff --exit-code',
-    //   ],
-    // },
-
+  ] + [
     docker {
-      name: 'docker-api',
+      name: 'docker-%s' % name,
       settings+: {
-        repo: 'quay.io/signalcd/api',
-        dockerfile: 'cmd/api/Dockerfile',
+        repo: 'quay.io/signalcd/%s' % name,
+        dockerfile: 'cmd/%s/Dockerfile' % name,
       },
-    },
-
-    docker {
-      name: 'docker-agent',
-      settings+: {
-        repo: 'quay.io/signalcd/agent',
-        dockerfile: 'cmd/agent/Dockerfile',
-      },
-    },
+    }
+    for name in ['api', 'agent']
   ],
 }
