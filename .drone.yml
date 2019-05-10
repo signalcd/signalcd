@@ -17,6 +17,16 @@ steps:
     GO111MODULE: on
     GOPROXY: https://proxy.golang.org
 
+- name: dart
+  pull: always
+  image: google/dart:2.3
+  commands:
+  - cd ui
+  - pub get --no-precompile
+  - pub global activate webdev
+  - ~/.pub-cache/bin/webdev build
+  - rm -rf build/packages
+
 - name: docker-api
   image: plugins/docker
   settings:

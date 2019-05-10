@@ -45,6 +45,18 @@
         'make build',
       ],
     },
+    {
+      name: 'dart',
+      image: 'google/dart:2.3',
+      pull: 'always',
+      commands: [
+        'cd ui',
+        'pub get --no-precompile',
+        'pub global activate webdev',
+        '~/.pub-cache/bin/webdev build',
+        'rm -rf build/packages',
+      ],
+    },
   ] + [
     docker {
       name: 'docker-%s' % name,
