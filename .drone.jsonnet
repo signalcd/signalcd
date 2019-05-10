@@ -57,7 +57,7 @@
     // },
 
     docker {
-      name: 'signalcd-api',
+      name: 'docker-api',
       settings+: {
         repo: 'quay.io/signalcd/api',
         dockerfile: 'cmd/api/Dockerfile',
@@ -65,7 +65,7 @@
     },
 
     docker {
-      name: 'signalcd-agent',
+      name: 'docker-agent',
       settings+: {
         repo: 'quay.io/signalcd/agent',
         dockerfile: 'cmd/agent/Dockerfile',

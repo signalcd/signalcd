@@ -17,7 +17,7 @@ steps:
     GO111MODULE: on
     GOPROXY: https://proxy.golang.org
 
-- name: signalcd-api
+- name: docker-api
   image: plugins/docker
   settings:
     dockerfile: cmd/api/Dockerfile
@@ -32,7 +32,7 @@ steps:
     - master
     - drone
 
-- name: signalcd-agent
+- name: docker-agent
   image: plugins/docker
   settings:
     dockerfile: cmd/agent/Dockerfile
