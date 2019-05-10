@@ -30,6 +30,7 @@ steps:
 - name: docker-api
   image: plugins/docker
   settings:
+    context: ./cmd/api/
     dockerfile: cmd/api/Dockerfile
     password:
       from_secret: quay_password
@@ -45,6 +46,7 @@ steps:
 - name: docker-agent
   image: plugins/docker
   settings:
+    context: ./cmd/agent/
     dockerfile: cmd/agent/Dockerfile
     password:
       from_secret: quay_password

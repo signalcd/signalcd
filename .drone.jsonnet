@@ -63,6 +63,7 @@
       settings+: {
         repo: 'quay.io/signalcd/%s' % name,
         dockerfile: 'cmd/%s/Dockerfile' % name,
+        context: './cmd/%s/' % name,
       },
     }
     for name in ['api', 'agent']
