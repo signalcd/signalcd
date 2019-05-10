@@ -6,7 +6,6 @@
     arch: 'amd64',
   },
 
-
   local golang = {
     name: 'golang',
     image: 'golang:1.12',
@@ -34,6 +33,7 @@
     when: {
       branch: [
         'master',
+        'drone',
       ],
     },
   },
@@ -60,6 +60,7 @@
       name: 'signalcd-api',
       settings+: {
         repo: 'quay.io/signalcd/api',
+        dockerfile: 'cmd/api/Dockerfile',
       },
     },
   ],

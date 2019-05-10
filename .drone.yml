@@ -20,6 +20,7 @@ steps:
 - name: signalcd-api
   image: plugins/docker
   settings:
+    dockerfile: cmd/api/Dockerfile
     password:
       from_secret: quay_password
     registry: quay.io
@@ -29,5 +30,6 @@ steps:
   when:
     branch:
     - master
+    - drone
 
 ...
