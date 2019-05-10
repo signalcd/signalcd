@@ -63,5 +63,13 @@
         dockerfile: 'cmd/api/Dockerfile',
       },
     },
+
+    docker {
+      name: 'signalcd-agent',
+      settings+: {
+        repo: 'quay.io/signalcd/agent',
+        dockerfile: 'cmd/agent/Dockerfile',
+      },
+    },
   ],
 }

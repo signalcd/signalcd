@@ -32,4 +32,19 @@ steps:
     - master
     - drone
 
+- name: signalcd-agent
+  image: plugins/docker
+  settings:
+    dockerfile: cmd/agent/Dockerfile
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/agent
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+    - drone
+
 ...
