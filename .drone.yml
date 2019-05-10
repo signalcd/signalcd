@@ -41,7 +41,6 @@ steps:
   when:
     branch:
     - master
-    - drone
 
 - name: docker-agent
   image: plugins/docker
@@ -57,6 +56,5 @@ steps:
   when:
     branch:
     - master
-    - drone
 
 ...

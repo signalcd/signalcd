@@ -33,7 +33,6 @@
     when: {
       branch: [
         'master',
-        'drone',
       ],
     },
   },
