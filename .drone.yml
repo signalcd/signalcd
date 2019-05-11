@@ -1,0 +1,60 @@
+---
+kind: pipeline
+name: build
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  pull: always
+  image: golang:1.12
+  commands:
+  - make build
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
+- name: dart
+  pull: always
+  image: google/dart:2.3
+  commands:
+  - cd ui
+  - pub get --no-precompile
+  - pub global activate webdev
+  - ~/.pub-cache/bin/webdev build
+  - rm -rf build/packages
+
+- name: docker-api
+  image: plugins/docker
+  settings:
+    context: ./cmd/api/
+    dockerfile: cmd/api/Dockerfile
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/api
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+
+- name: docker-agent
+  image: plugins/docker
+  settings:
+    context: ./cmd/agent/
+    dockerfile: cmd/agent/Dockerfile
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/agent
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+
+...
