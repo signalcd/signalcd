@@ -80,6 +80,7 @@ local docker = {
         name: 'docker-examples-%s' % name,
         settings+: {
           repo: 'quay.io/signalcd/examples:%s' % name,
+          dockerfile: 'examples/%s/Dockerfile' % name,
           context: 'examples/%s' % name,
         },
       }

@@ -70,6 +70,7 @@ steps:
   image: plugins/docker
   settings:
     context: examples/cheese0
+    dockerfile: examples/cheese0/Dockerfile
     password:
       from_secret: quay_password
     registry: quay.io
@@ -84,6 +85,7 @@ steps:
   image: plugins/docker
   settings:
     context: examples/cheese1
+    dockerfile: examples/cheese1/Dockerfile
     password:
       from_secret: quay_password
     registry: quay.io
@@ -98,6 +100,7 @@ steps:
   image: plugins/docker
   settings:
     context: examples/cheese2
+    dockerfile: examples/cheese2/Dockerfile
     password:
       from_secret: quay_password
     registry: quay.io
