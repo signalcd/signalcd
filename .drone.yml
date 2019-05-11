@@ -74,7 +74,9 @@ steps:
     password:
       from_secret: quay_password
     registry: quay.io
-    repo: quay.io/signalcd/examples:cheese0
+    repo: quay.io/signalcd/examples
+    tags:
+    - cheese0
     username:
       from_secret: quay_username
   when:
@@ -89,7 +91,9 @@ steps:
     password:
       from_secret: quay_password
     registry: quay.io
-    repo: quay.io/signalcd/examples:cheese1
+    repo: quay.io/signalcd/examples
+    tags:
+    - cheese1
     username:
       from_secret: quay_username
   when:
@@ -104,7 +108,9 @@ steps:
     password:
       from_secret: quay_password
     registry: quay.io
-    repo: quay.io/signalcd/examples:cheese2
+    repo: quay.io/signalcd/examples
+    tags:
+    - cheese2
     username:
       from_secret: quay_username
   when:

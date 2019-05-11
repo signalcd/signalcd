@@ -79,9 +79,10 @@ local docker = {
       docker {
         name: 'docker-examples-%s' % name,
         settings+: {
-          repo: 'quay.io/signalcd/examples:%s' % name,
+          repo: 'quay.io/signalcd/examples',
           dockerfile: 'examples/%s/Dockerfile' % name,
           context: 'examples/%s' % name,
+          tags: [name],
         },
       }
       for name in ['cheese0', 'cheese1', 'cheese2']
