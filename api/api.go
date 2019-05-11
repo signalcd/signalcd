@@ -37,7 +37,7 @@ var fakePipelines = []signalcd.Pipeline{
 		Steps: []signalcd.Step{
 			{
 				Name:     "cheese0",
-				Image:    "quay.io/signalcd/signalcd:cheese0",
+				Image:    "quay.io/signalcd/examples:cheese0",
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
@@ -49,7 +49,7 @@ var fakePipelines = []signalcd.Pipeline{
 		Steps: []signalcd.Step{
 			{
 				Name:     "cheese1",
-				Image:    "quay.io/signalcd/signalcd:cheese1",
+				Image:    "quay.io/signalcd/examples:cheese1",
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
@@ -61,7 +61,7 @@ var fakePipelines = []signalcd.Pipeline{
 		Steps: []signalcd.Step{
 			{
 				Name:     "cheese2",
-				Image:    "quay.io/signalcd/signalcd:cheese2",
+				Image:    "quay.io/signalcd/examples:cheese2",
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
