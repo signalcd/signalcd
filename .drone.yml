@@ -11,7 +11,8 @@ steps:
   pull: always
   image: golang:1.12
   commands:
-  - make build
+  - make cmd/agent/agent
+  - make cmd/api/api
   environment:
     CGO_ENABLED: 0
     GO111MODULE: on

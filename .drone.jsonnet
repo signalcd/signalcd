@@ -45,7 +45,8 @@ local docker = {
       golang {
         name: 'build',
         commands: [
-          'make build',
+          'make cmd/agent/agent',
+          'make cmd/api/api',
         ],
       },
       {
