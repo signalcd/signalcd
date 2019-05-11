@@ -80,6 +80,8 @@ steps:
 - name: docker-kubernetes-status
   image: plugins/docker
   settings:
+    context: cmd/plugins/kubernetes-status
+    dockerfile: cmd/plugins/kubernetes-status/Dockerfile
     password:
       from_secret: quay_password
     registry: quay.io

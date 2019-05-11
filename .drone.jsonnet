@@ -88,6 +88,8 @@ local docker = {
         name: 'docker-kubernetes-status',
         settings+: {
           repo: 'quay.io/signalcd/kubernetes-status',
+          dockerfile: 'cmd/plugins/kubernetes-status/Dockerfile',
+          context: 'cmd/plugins/kubernetes-status',
         },
       },
     ],
