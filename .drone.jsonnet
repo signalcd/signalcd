@@ -72,4 +72,18 @@ local docker = {
       for name in ['api', 'agent']
     ],
   },
+
+  pipeline {
+    name: 'examples',
+    steps+: [
+      docker {
+        name: 'docker-examples-%s' % name,
+        settings+: {
+          repo: 'quay.io/signalcd/examples:%s' % name,
+          context: 'examples/%s' % name,
+        },
+      }
+      for name in ['cheese0', 'cheese1', 'cheese2']
+    ],
+  },
 ]

@@ -57,4 +57,55 @@ steps:
     branch:
     - master
 
+---
+kind: pipeline
+name: examples
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: docker-examples-cheese0
+  image: plugins/docker
+  settings:
+    context: examples/cheese0
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/examples:cheese0
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+
+- name: docker-examples-cheese1
+  image: plugins/docker
+  settings:
+    context: examples/cheese1
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/examples:cheese1
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+
+- name: docker-examples-cheese2
+  image: plugins/docker
+  settings:
+    context: examples/cheese2
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/examples:cheese2
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+
 ...
