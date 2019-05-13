@@ -22,7 +22,7 @@ var fakeCurrentPipeline = struct {
 var fakeChecks = []signalcd.Check{
 	{
 		Name:     "kubernetes-status",
-		Image:    "quay.io/signalcd/signalcd:kubernetes-status",
+		Image:    "quay.io/signalcd/kubernetes-status",
 		Duration: time.Minute,
 		Environment: map[string]string{
 			"PLUGIN_LABELS": "app=cheese",
