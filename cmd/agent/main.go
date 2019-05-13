@@ -18,7 +18,6 @@ import (
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/signalcd"
 	"golang.org/x/xerrors"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -108,11 +107,26 @@ func (u *updater) pollLoop(ctx context.Context) error {
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			if err := u.poll(); err != nil {
+			err := u.poll()
+			if err != nil {
 				level.Warn(u.logger).Log(
 					"msg", "failed to poll",
 					"err", err,
 				)
+
+				if err := u.pipelineStatus(signalcd.Failed); err != nil {
+					level.Warn(u.logger).Log(
+						"msg", "failed to update pipeline status",
+						"err", err,
+					)
+				}
+			} else {
+				if err := u.pipelineStatus(signalcd.Success); err != nil {
+					level.Warn(u.logger).Log(
+						"msg", "failed to update pipeline status",
+						"err", err,
+					)
+				}
 			}
 		}
 	}
@@ -140,7 +154,14 @@ func (u *updater) poll() error {
 			return nil
 		}
 
-		level.Info(u.logger).Log("msg", "unknown pipeline", "pipeline", p.ID)
+		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "pipeline", p.ID)
+
+		if err := u.pipelineStatus(signalcd.Progress); err != nil {
+			level.Warn(u.logger).Log(
+				"msg", "failed to update pipeline status",
+				"err", err,
+			)
+		}
 
 		if err := u.runPipeline(p); err != nil {
 			return xerrors.Errorf("failed to run pipeline: %w", err)
@@ -159,6 +180,13 @@ func (u *updater) poll() error {
 	if u.currentPipeline.ID != p.ID {
 		u.currentPipeline = p
 		level.Info(u.logger).Log("msg", "update pipeline", "pipeline", p.ID)
+
+		if err := u.pipelineStatus(signalcd.Progress); err != nil {
+			level.Warn(u.logger).Log(
+				"msg", "failed to update pipeline status",
+				"err", err,
+			)
+		}
 
 		if err := u.runPipeline(p); err != nil {
 			return xerrors.Errorf("failed to run pipeline: %w", err)
@@ -210,7 +238,7 @@ func (u *updater) pipeline() (signalcd.Pipeline, error) {
 	return w, err
 }
 
-func (u *updater) pipelineStatus(status appsv1.DeploymentStatus) error {
+func (u *updater) pipelineStatus(status signalcd.PipelineStatus) error {
 	payload, err := json.Marshal(signalcd.Agent{
 		Name:   u.agentName,
 		Status: status,

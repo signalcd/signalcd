@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/signalcd/signalcd/signalcd"
-	appsv1 "k8s.io/api/apps/v1"
 )
 
 var fakeCurrentPipeline = struct {
@@ -182,11 +181,7 @@ func pipelineAgents() http.HandlerFunc {
 		var as []signalcd.Agent
 
 		agents.Range(func(key, value interface{}) bool {
-			as = append(as, signalcd.Agent{
-				Name:   key.(string),
-				Status: value.(appsv1.DeploymentStatus),
-			})
-
+			as = append(as, value.(signalcd.Agent))
 			return true
 		})
 
@@ -213,6 +208,6 @@ func updatePipelineAgents() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
-		agents.Store(agent.Name, agent.Status)
+		agents.Store(agent.Name, agent)
 	}
 }

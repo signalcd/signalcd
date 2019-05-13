@@ -1,10 +1,15 @@
 package signalcd
 
-import (
-	appsv1 "k8s.io/api/apps/v1"
+type PipelineStatus string
+
+const (
+	Unknown  PipelineStatus = "unknown"
+	Success  PipelineStatus = "success"
+	Failed   PipelineStatus = "failed"
+	Progress PipelineStatus = "progress"
 )
 
 type Agent struct {
-	Name   string                  `json:"name"`
-	Status appsv1.DeploymentStatus `json:"status"`
+	Name   string         `json:"name"`
+	Status PipelineStatus `json:"status"`
 }
