@@ -14,6 +14,14 @@ type Step struct {
 	Name     string   `json:"name"`
 	Image    string   `json:"image"`
 	Commands []string `json:"commands"`
+
+	Status *StepStatus `json:"status,omitempty"`
+}
+
+type StepStatus struct {
+	ExitCode int   `json:"exit_code"`
+	Started  int64 `json:"started,omitempty"`
+	Stopped  int64 `json:"stopped,omitempty"`
 }
 
 type Check struct {

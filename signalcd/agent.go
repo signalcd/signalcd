@@ -1,5 +1,7 @@
 package signalcd
 
+import "time"
+
 type PipelineStatus string
 
 const (
@@ -10,6 +12,9 @@ const (
 )
 
 type Agent struct {
-	Name   string         `json:"name"`
-	Status PipelineStatus `json:"status"`
+	Name      string         `json:"name"`
+	Status    PipelineStatus `json:"status"`
+	Heartbeat time.Time      `json:"heartbeat"`
+
+	Pipeline Pipeline `json:"pipeline"`
 }

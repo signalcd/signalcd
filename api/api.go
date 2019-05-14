@@ -208,6 +208,8 @@ func updatePipelineAgents() http.HandlerFunc {
 		}
 		defer r.Body.Close()
 
+		agent.Heartbeat = time.Now()
+
 		agents.Store(agent.Name, agent)
 	}
 }
