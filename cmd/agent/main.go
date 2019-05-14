@@ -240,8 +240,9 @@ func (u *updater) pipeline() (signalcd.Pipeline, error) {
 
 func (u *updater) pipelineStatus(status signalcd.PipelineStatus) error {
 	payload, err := json.Marshal(signalcd.Agent{
-		Name:   u.agentName,
-		Status: status,
+		Name:     u.agentName,
+		Status:   status,
+		Pipeline: u.currentPipeline,
 	})
 	if err != nil {
 		return err

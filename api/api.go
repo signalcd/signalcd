@@ -178,15 +178,15 @@ var agents = sync.Map{}
 
 func pipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var as []signalcd.Agent
+		var as []signalcd.AgentServer
 
 		agents.Range(func(key, value interface{}) bool {
-			as = append(as, value.(signalcd.Agent))
+			as = append(as, value.(signalcd.AgentServer))
 			return true
 		})
 
 		sort.Slice(as, func(i, j int) bool {
-			return as[i].Name < as[j].Name
+			return as[i].Agent.Name < as[j].Agent.Name
 		})
 
 		payload, err := json.Marshal(as)
@@ -201,7 +201,7 @@ func pipelineAgents() http.HandlerFunc {
 
 func updatePipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var agent signalcd.Agent
+		var agent signalcd.AgentServer
 		if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {
 			http.Error(w, "failed to decode", http.StatusBadRequest)
 			return
@@ -210,6 +210,6 @@ func updatePipelineAgents() http.HandlerFunc {
 
 		agent.Heartbeat = time.Now()
 
-		agents.Store(agent.Name, agent)
+		agents.Store(agent.Agent.Name, agent)
 	}
 }
