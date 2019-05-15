@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
 	strfmt "github.com/go-openapi/strfmt"
 
 	"github.com/go-openapi/errors"
@@ -21,7 +23,7 @@ type Check struct {
 	Duration float64 `json:"duration,omitempty"`
 
 	// environment
-	Environment *CheckEnvironment `json:"environment,omitempty"`
+	Environment []*CheckEnvironmentItems0 `json:"environment"`
 
 	// image
 	// Required: true
@@ -60,13 +62,20 @@ func (m *Check) validateEnvironment(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if m.Environment != nil {
-		if err := m.Environment.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("environment")
-			}
-			return err
+	for i := 0; i < len(m.Environment); i++ {
+		if swag.IsZero(m.Environment[i]) { // not required
+			continue
 		}
+
+		if m.Environment[i] != nil {
+			if err := m.Environment[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("environment" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -108,9 +117,9 @@ func (m *Check) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// CheckEnvironment check environment
-// swagger:model CheckEnvironment
-type CheckEnvironment struct {
+// CheckEnvironmentItems0 check environment items0
+// swagger:model CheckEnvironmentItems0
+type CheckEnvironmentItems0 struct {
 
 	// key
 	Key string `json:"key,omitempty"`
@@ -119,13 +128,13 @@ type CheckEnvironment struct {
 	Value string `json:"value,omitempty"`
 }
 
-// Validate validates this check environment
-func (m *CheckEnvironment) Validate(formats strfmt.Registry) error {
+// Validate validates this check environment items0
+func (m *CheckEnvironmentItems0) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *CheckEnvironment) MarshalBinary() ([]byte, error) {
+func (m *CheckEnvironmentItems0) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -133,8 +142,8 @@ func (m *CheckEnvironment) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *CheckEnvironment) UnmarshalBinary(b []byte) error {
-	var res CheckEnvironment
+func (m *CheckEnvironmentItems0) UnmarshalBinary(b []byte) error {
+	var res CheckEnvironmentItems0
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

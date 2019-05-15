@@ -14,6 +14,6 @@ class PipelinesService {
   }
 
   Future<dynamic> deploy(String id) async {
-    return await _api.pipelines.updateCurrentPipeline(id);
+//    return await _api.pipelines.updateCurrentPipeline(id);
   }
 }

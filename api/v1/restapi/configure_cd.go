@@ -11,6 +11,7 @@ import (
 	middleware "github.com/go-openapi/runtime/middleware"
 
 	"github.com/signalcd/signalcd/api/v1/restapi/operations"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 )
 
@@ -34,34 +35,24 @@ func configureAPI(api *operations.CdAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	if api.DeploymentsCurrentDeploymentHandler == nil {
+		api.DeploymentsCurrentDeploymentHandler = deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams) middleware.Responder {
+			return middleware.NotImplemented("operation deployments.CurrentDeployment has not yet been implemented")
+		})
+	}
+	if api.DeploymentsDeploymentsHandler == nil {
+		api.DeploymentsDeploymentsHandler = deployments.DeploymentsHandlerFunc(func(params deployments.DeploymentsParams) middleware.Responder {
+			return middleware.NotImplemented("operation deployments.Deployments has not yet been implemented")
+		})
+	}
 	if api.PipelinePipelineHandler == nil {
 		api.PipelinePipelineHandler = pipeline.PipelineHandlerFunc(func(params pipeline.PipelineParams) middleware.Responder {
 			return middleware.NotImplemented("operation pipeline.Pipeline has not yet been implemented")
 		})
 	}
-	if api.PipelinePipelineAgentsHandler == nil {
-		api.PipelinePipelineAgentsHandler = pipeline.PipelineAgentsHandlerFunc(func(params pipeline.PipelineAgentsParams) middleware.Responder {
-			return middleware.NotImplemented("operation pipeline.PipelineAgents has not yet been implemented")
-		})
-	}
-	if api.PipelinePipelineCurrentHandler == nil {
-		api.PipelinePipelineCurrentHandler = pipeline.PipelineCurrentHandlerFunc(func(params pipeline.PipelineCurrentParams) middleware.Responder {
-			return middleware.NotImplemented("operation pipeline.PipelineCurrent has not yet been implemented")
-		})
-	}
 	if api.PipelinePipelinesHandler == nil {
 		api.PipelinePipelinesHandler = pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams) middleware.Responder {
 			return middleware.NotImplemented("operation pipeline.Pipelines has not yet been implemented")
-		})
-	}
-	if api.PipelineUpdateCurrentPipelineHandler == nil {
-		api.PipelineUpdateCurrentPipelineHandler = pipeline.UpdateCurrentPipelineHandlerFunc(func(params pipeline.UpdateCurrentPipelineParams) middleware.Responder {
-			return middleware.NotImplemented("operation pipeline.UpdateCurrentPipeline has not yet been implemented")
-		})
-	}
-	if api.PipelineUpdatePipelineAgentsHandler == nil {
-		api.PipelineUpdatePipelineAgentsHandler = pipeline.UpdatePipelineAgentsHandlerFunc(func(params pipeline.UpdatePipelineAgentsParams) middleware.Responder {
-			return middleware.NotImplemented("operation pipeline.UpdatePipelineAgents has not yet been implemented")
 		})
 	}
 

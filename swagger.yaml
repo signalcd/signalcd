@@ -13,45 +13,32 @@ schemes:
   - "https"
   - "http"
 paths:
-  /pipeline:
+  /deployments:
     get:
       tags:
-        - "pipeline"
-      summary: "Returns the current executed pipeline"
-      operationId: "pipelineCurrent"
-      produces:
-        - "application/json"
+        - "deployments"
+      summary: "Returns the history of deployments"
+      operationId: "deployments"
       responses:
         200:
           description: "OK"
           schema:
-            type: "array"
+            type: array
             items:
-              $ref: "#/definitions/pipeline"
-        400:
-          description: "bad request"
+              $ref: '#/definitions/deployment'
         500:
           description: "internal server error"
-  /pipeline/{id}:
-    patch:
+  /deployments/current:
+    get:
       tags:
-        - "pipeline"
-      summary: "updates the current pipeline"
-      operationId: "updateCurrentPipeline"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "path"
-          required: true
-          name: "id"
-          type: "string"
+        - "deployments"
+      summary: "Returns the currently active deployment"
+      operationId: "currentDeployment"
       responses:
-        202:
-          description: "The current pipeline was updated successfully"
-        400:
-          description: "bad request"
-        default:
-          description: "internal server error"
+        200:
+          description: "OK"
+          schema:
+            $ref: '#/definitions/deployment'
   /pipelines:
     get:
       tags:
@@ -93,56 +80,30 @@ paths:
           description: "bad request"
         500:
           description: "internal server error"
-  /pipelines/status:
-    get:
-      tags:
-        - "pipeline"
-      summary: "returns the status of a running agent"
-      operationId: "pipelineAgents"
-      produces:
-        - "application/json"
-      responses:
-        200:
-          description: "OK"
-          schema:
-            $ref: "#/definitions/pipeline"
-        400:
-          description: "bad request"
-        500:
-          description: "internal server error"
-    post:
-      tags:
-        - "pipeline"
-      summary: "updates the status of a running agent"
-      operationId: "updatePipelineAgents"
-      consumes:
-        - "application/json"
-      produces:
-        - "application/json"
-      parameters:
-        - in: "body"
-          name: "options"
-          schema:
-            type: "object"
-            required:
-              - "agent"
-              - "healthy"
-            properties:
-              agent:
-                type: "string"
-                format: "uuid"
-              healthy:
-                type: "boolean"
-      responses:
-        200:
-          description: "OK"
-          schema:
-            $ref: "#/definitions/pipeline"
-        400:
-          description: "bad request"
-        500:
-          description: "internal server error"
 definitions:
+  deployment:
+    required:
+      - number
+    properties:
+      number:
+        type: number
+        format: int64
+      created:
+        type: string
+        format: 'date-time'
+      status:
+        $ref: '#/definitions/deploymentstatus'
+      pipeline:
+        $ref: '#/definitions/pipeline'
+  deploymentstatus:
+    properties:
+      phase:
+        type: string
+        enum:
+          - unknown
+          - success
+          - failed
+          - progress
   pipeline:
     required:
       - id
@@ -185,9 +146,11 @@ definitions:
       duration:
         type: number
       environment:
-        type: object
-        properties:
-          key:
-            type: string
-          value:
-            type: string
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: string
+            value:
+              type: string

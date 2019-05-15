@@ -41,8 +41,10 @@ class ApiClient {
           return new Check.fromJson(value);
         case 'CheckEnvironment':
           return new CheckEnvironment.fromJson(value);
-        case 'Options':
-          return new Options.fromJson(value);
+        case 'Deployment':
+          return new Deployment.fromJson(value);
+        case 'Deploymentstatus':
+          return new Deploymentstatus.fromJson(value);
         case 'Pipeline':
           return new Pipeline.fromJson(value);
         case 'Step':

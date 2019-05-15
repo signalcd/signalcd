@@ -2,24 +2,21 @@ part of swagger.api;
 
 
 
-class PipelineApi {
+class DeploymentsApi {
   final ApiClient apiClient;
 
-  PipelineApi([ApiClient apiClient]) : apiClient = apiClient ?? defaultApiClient;
+  DeploymentsApi([ApiClient apiClient]) : apiClient = apiClient ?? defaultApiClient;
 
-  /// returns a pipeline by id
+  /// Returns the currently active deployment
   ///
   /// 
-  Future<Pipeline> pipeline(String id) async {
+  Future<Deployment> currentDeployment() async {
     Object postBody = null;
 
     // verify required params are set
-    if(id == null) {
-     throw new ApiException(400, "Missing required param: id");
-    }
 
     // create path and map variables
-    String path = "/pipelines/{id}".replaceAll("{format}","json").replaceAll("{" + "id" + "}", id.toString());
+    String path = "/deployments/current".replaceAll("{format}","json");
 
     // query params
     List<QueryParam> queryParams = [];
@@ -54,21 +51,21 @@ class PipelineApi {
       throw new ApiException(response.statusCode, response.body);
     } else if(response.body != null) {
       return 
-          apiClient.deserialize(response.body, 'Pipeline') as Pipeline ;
+          apiClient.deserialize(response.body, 'Deployment') as Deployment ;
     } else {
       return null;
     }
   }
-  /// returns a list of all pipelines
+  /// Returns the history of deployments
   ///
   /// 
-  Future<List<Pipeline>> pipelines() async {
+  Future<List<Deployment>> deployments() async {
     Object postBody = null;
 
     // verify required params are set
 
     // create path and map variables
-    String path = "/pipelines".replaceAll("{format}","json");
+    String path = "/deployments".replaceAll("{format}","json");
 
     // query params
     List<QueryParam> queryParams = [];
@@ -103,7 +100,7 @@ class PipelineApi {
       throw new ApiException(response.statusCode, response.body);
     } else if(response.body != null) {
       return 
-        (apiClient.deserialize(response.body, 'List<Pipeline>') as List).map((item) => item as Pipeline).toList();
+        (apiClient.deserialize(response.body, 'List<Deployment>') as List).map((item) => item as Deployment).toList();
     } else {
       return null;
     }

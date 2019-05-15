@@ -13,11 +13,13 @@ part 'auth/api_key_auth.dart';
 part 'auth/oauth.dart';
 part 'auth/http_basic_auth.dart';
 
+part 'api/deployments_api.dart';
 part 'api/pipeline_api.dart';
 
 part 'model/check.dart';
 part 'model/check_environment.dart';
-part 'model/options.dart';
+part 'model/deployment.dart';
+part 'model/deploymentstatus.dart';
 part 'model/pipeline.dart';
 part 'model/step.dart';
 
