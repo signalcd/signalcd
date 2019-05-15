@@ -206,7 +206,7 @@ func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 	case signalcd.Success:
 		return models.DeploymentstatusPhaseSuccess
 	case signalcd.Failed:
-		return models.DeploymentstatusPhaseFailed
+		return models.DeploymentstatusPhaseFailure
 	case signalcd.Progress:
 		return models.DeploymentstatusPhaseProgress
 	default:

@@ -7,7 +7,7 @@ type DeploymentPhase string
 const (
 	Unknown  DeploymentPhase = "unknown"
 	Success  DeploymentPhase = "success"
-	Failed   DeploymentPhase = "failed"
+	Failed   DeploymentPhase = "failure"
 	Progress DeploymentPhase = "progress"
 )
 

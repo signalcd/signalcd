@@ -238,7 +238,7 @@ func (u *updater) pipeline() (signalcd.Pipeline, error) {
 	return w, err
 }
 
-func (u *updater) pipelineStatus(status signalcd.PipelineStatus) error {
+func (u *updater) pipelineStatus(status signalcd.DeploymentPhase) error {
 	payload, err := json.Marshal(signalcd.Agent{
 		Name:     u.agentName,
 		Status:   status,

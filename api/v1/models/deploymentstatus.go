@@ -20,7 +20,7 @@ import (
 type Deploymentstatus struct {
 
 	// phase
-	// Enum: [unknown success failed progress]
+	// Enum: [unknown success failure progress]
 	Phase string `json:"phase,omitempty"`
 }
 
@@ -42,7 +42,7 @@ var deploymentstatusTypePhasePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["unknown","success","failed","progress"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["unknown","success","failure","progress"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -58,8 +58,8 @@ const (
 	// DeploymentstatusPhaseSuccess captures enum value "success"
 	DeploymentstatusPhaseSuccess string = "success"
 
-	// DeploymentstatusPhaseFailed captures enum value "failed"
-	DeploymentstatusPhaseFailed string = "failed"
+	// DeploymentstatusPhaseFailure captures enum value "failure"
+	DeploymentstatusPhaseFailure string = "failure"
 
 	// DeploymentstatusPhaseProgress captures enum value "progress"
 	DeploymentstatusPhaseProgress string = "progress"

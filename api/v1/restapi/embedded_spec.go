@@ -196,7 +196,7 @@ func init() {
           "enum": [
             "unknown",
             "success",
-            "failed",
+            "failure",
             "progress"
           ]
         }
@@ -435,7 +435,7 @@ func init() {
           "enum": [
             "unknown",
             "success",
-            "failed",
+            "failure",
             "progress"
           ]
         }
