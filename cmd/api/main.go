@@ -16,7 +16,14 @@ func main() {
 
 	var gr run.Group
 	{
-		router := api.New()
+		router, err := api.NewV1()
+		if err != nil {
+			level.Error(logger).Log(
+				"msg", "failed to initialize api",
+				"err", err,
+			)
+			os.Exit(1)
+		}
 
 		s := http.Server{
 			Addr:    ":6660",
