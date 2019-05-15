@@ -1,33 +1,30 @@
 <div>
-
     <div class="card" *ngFor="let pipeline of pipelines" style="margin-bottom: 1.5rem;">
         <div class="card-content">
             <div class="media">
-                <div class="media-left">
-                    <figure class="image is-48x48">
-                        <img src="https://bulma.io/images/placeholders/96x96.png" alt="Placeholder image">
-                    </figure>
-                </div>
                 <div class="media-content">
                     <p class="title is-4">{{ pipeline.name }}</p>
-                    <p class="subtitle is-6">{{ pipeline.id }}</p>
+                    <!--<p class="subtitle is-6">{{ pipeline.id }}</p>-->
                 </div>
             </div>
-            <div class="content">
-                <p>{{ pipeline.steps.length }} steps, {{ pipeline.checks.length }} checks</p>
+            <div class="content columns">
+                <div class="column">
+                    <h6 class="title is-6">Steps</h6>
+                    <ul>
+                        <li *ngFor="let step of pipeline.steps">{{step.name}}</li>
+                    </ul>
+                </div>
+                <div class="column">
+                    <h6 class="title is-6">Checks</h6>
+                    <ul>
+                        <li *ngFor="let check of pipeline.checks">{{check.name}}</li>
+                    </ul>
+                </div>
             </div>
-            <!--
-            <div class="content">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-                Phasellus nec iaculis mauris. <a>@bulmaio</a>.
-            </div>
-            -->
         </div>
 
         <footer class="card-footer">
             <a class="card-footer-item" (click)="deploy(pipeline)">Deploy</a>
-            <a class="card-footer-item" (click)="rollback(pipeline)">Rollback</a>
         </footer>
     </div>
-
 </div>

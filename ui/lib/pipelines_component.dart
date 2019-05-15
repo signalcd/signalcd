@@ -32,8 +32,4 @@ class PipelinesComponent implements OnInit {
         .then((dynamic) => print('pipeline ${pipeline.id} deployed!'))
         .catchError(() => print('error dpeloying pipeline'));
   }
-
-  void rollback(Pipeline pipeline) {
-    print("rollback ${pipeline.id}");
-  }
 }

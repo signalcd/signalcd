@@ -3,7 +3,7 @@ part of swagger.api;
 class Deploymentstatus {
   
   String phase = null;
-  //enum phaseEnum {  unknown,  success,  failed,  progress,  };
+  //enum phaseEnum {  unknown,  success,  failure,  progress,  };
   Deploymentstatus();
 
   @override
