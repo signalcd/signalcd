@@ -5,19 +5,9 @@ import (
 	"time"
 )
 
-type PipelineStatus string
-
-const (
-	Unknown  PipelineStatus = "unknown"
-	Success  PipelineStatus = "success"
-	Failed   PipelineStatus = "failed"
-	Progress PipelineStatus = "progress"
-)
-
 type Agent struct {
-	Name     string         `json:"name"`
-	Status   PipelineStatus `json:"status"`
-	Pipeline Pipeline       `json:"pipeline"`
+	Name     string   `json:"name"`
+	Pipeline Pipeline `json:"pipeline"`
 }
 
 type AgentServer struct {
