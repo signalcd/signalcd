@@ -55,6 +55,11 @@ func configureAPI(api *operations.CdAPI) http.Handler {
 			return middleware.NotImplemented("operation pipeline.Pipelines has not yet been implemented")
 		})
 	}
+	if api.DeploymentsSetCurrentDeploymentHandler == nil {
+		api.DeploymentsSetCurrentDeploymentHandler = deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams) middleware.Responder {
+			return middleware.NotImplemented("operation deployments.SetCurrentDeployment has not yet been implemented")
+		})
+	}
 
 	api.ServerShutdown = func() {}
 

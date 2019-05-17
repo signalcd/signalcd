@@ -70,6 +70,24 @@ func init() {
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "deployments"
+        ],
+        "summary": "Schedule a new deployment",
+        "operationId": "setCurrentDeployment",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/deployment"
+            }
+          },
+          "500": {
+            "description": "internal server error"
+          }
+        }
       }
     },
     "/pipelines": {
@@ -307,6 +325,24 @@ func init() {
             "schema": {
               "$ref": "#/definitions/deployment"
             }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "deployments"
+        ],
+        "summary": "Schedule a new deployment",
+        "operationId": "setCurrentDeployment",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/deployment"
+            }
+          },
+          "500": {
+            "description": "internal server error"
           }
         }
       }

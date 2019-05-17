@@ -52,6 +52,9 @@ func NewCdAPI(spec *loads.Document) *CdAPI {
 		PipelinePipelinesHandler: pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams) middleware.Responder {
 			return middleware.NotImplemented("operation PipelinePipelines has not yet been implemented")
 		}),
+		DeploymentsSetCurrentDeploymentHandler: deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams) middleware.Responder {
+			return middleware.NotImplemented("operation DeploymentsSetCurrentDeployment has not yet been implemented")
+		}),
 	}
 }
 
@@ -91,6 +94,8 @@ type CdAPI struct {
 	PipelinePipelineHandler pipeline.PipelineHandler
 	// PipelinePipelinesHandler sets the operation handler for the pipelines operation
 	PipelinePipelinesHandler pipeline.PipelinesHandler
+	// DeploymentsSetCurrentDeploymentHandler sets the operation handler for the set current deployment operation
+	DeploymentsSetCurrentDeploymentHandler deployments.SetCurrentDeploymentHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -168,6 +173,10 @@ func (o *CdAPI) Validate() error {
 
 	if o.PipelinePipelinesHandler == nil {
 		unregistered = append(unregistered, "pipeline.PipelinesHandler")
+	}
+
+	if o.DeploymentsSetCurrentDeploymentHandler == nil {
+		unregistered = append(unregistered, "deployments.SetCurrentDeploymentHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -287,6 +296,11 @@ func (o *CdAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/pipelines"] = pipeline.NewPipelines(o.context, o.PipelinePipelinesHandler)
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/deployments/current"] = deployments.NewSetCurrentDeployment(o.context, o.DeploymentsSetCurrentDeploymentHandler)
 
 }
 

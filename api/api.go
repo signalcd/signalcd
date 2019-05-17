@@ -80,6 +80,8 @@ func getPipeline(id string) (signalcd.Pipeline, error) {
 	return signalcd.Pipeline{}, fmt.Errorf("pipeline not found")
 }
 
+var fakeDeploymentsLock sync.RWMutex
+
 var fakeDeployments = []signalcd.Deployment{
 	{
 		Number:  4,
@@ -143,6 +145,7 @@ func NewV1() (*chi.Mux, error) {
 
 	api.DeploymentsDeploymentsHandler = getDeploymentsHandler()
 	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler()
+	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler()
 	api.PipelinePipelineHandler = getPipelineHandler()
 	api.PipelinePipelinesHandler = getPipelinesHandler()
 
@@ -219,15 +222,7 @@ func getDeploymentsHandler() deployments.DeploymentsHandlerFunc {
 		var payload []*models.Deployment
 
 		for _, fd := range fakeDeployments {
-			number := fd.Number
-			d := &models.Deployment{
-				Number:   &number,
-				Created:  strfmt.DateTime(fd.Created),
-				Pipeline: getModelsPipeline(fd.Pipeline),
-				Status: &models.Deploymentstatus{
-					Phase: getDeploymentStatusPhase(fd.Status.Phase),
-				},
-			}
+			d := getModelsDeployment(fd)
 			payload = append(payload, d)
 		}
 
@@ -235,8 +230,30 @@ func getDeploymentsHandler() deployments.DeploymentsHandlerFunc {
 	}
 }
 
+func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
+	return &models.Deployment{
+		Number:   &fd.Number,
+		Created:  strfmt.DateTime(fd.Created),
+		Pipeline: getModelsPipeline(fd.Pipeline),
+		Status: &models.Deploymentstatus{
+			Phase: getDeploymentStatusPhase(fd.Status.Phase),
+		},
+	}
+}
+
 func getCurrentDeploymentHandler() deployments.CurrentDeploymentHandlerFunc {
 	return func(params deployments.CurrentDeploymentParams) restmiddleware.Responder {
+		fakeDeploymentsLock.RLock()
+		defer fakeDeploymentsLock.RUnlock()
+
+		d := fakeDeployments[0]
+
+		return deployments.NewCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
+	}
+}
+
+func setCurrentDeploymentHandler() deployments.SetCurrentDeploymentHandlerFunc {
+	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
 		return nil
 	}
 }
