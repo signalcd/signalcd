@@ -1,21 +1,21 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
-	"github.com/signalcd/signalcd/api"
+	"github.com/signalcd/signalcd/cmd/agent/client"
+	"github.com/signalcd/signalcd/cmd/agent/models"
 	"github.com/signalcd/signalcd/signalcd"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +25,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const apiURL = "http://localhost:6660"
+const apiURL = "localhost:6660"
 const namespace = "default"
 
 func main() {
@@ -35,7 +35,10 @@ func main() {
 
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 
-	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
+	transportCfg := client.DefaultTransportConfig().WithSchemes([]string{"http"}).WithHost(apiURL)
+	client := client.NewHTTPClientWithConfig(nil, transportCfg)
+
+	konfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 	if err != nil {
 		level.Error(logger).Log(
 			"msg", "failed to read Kubernetes config",
@@ -44,7 +47,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	client, err := kubernetes.NewForConfig(config)
+	klient, err := kubernetes.NewForConfig(konfig)
 	if err != nil {
 		level.Error(logger).Log(
 			"msg", "failed to create Kubernetes client",
@@ -57,7 +60,12 @@ func main() {
 
 	var gr run.Group
 	{
-		u := &updater{client: client, logger: logger, agentName: *agentName}
+		u := &updater{
+			client:    client,
+			klient:    klient,
+			logger:    logger,
+			agentName: *agentName,
+		}
 
 		gr.Add(func() error {
 			return u.pollLoop(ctx)
@@ -87,12 +95,30 @@ func main() {
 	}
 }
 
+type currentDeployment struct {
+	mu         sync.RWMutex
+	deployment *signalcd.Deployment
+}
+
+func (cd currentDeployment) get() *signalcd.Deployment {
+	cd.mu.RLock()
+	defer cd.mu.RUnlock()
+	return cd.deployment
+}
+
+func (cd currentDeployment) set(deployment *signalcd.Deployment) {
+	cd.mu.Lock()
+	defer cd.mu.Unlock()
+	cd.deployment = deployment
+}
+
 type updater struct {
-	client    *kubernetes.Clientset
+	client    *client.SignalCDSwaggerSpec
+	klient    *kubernetes.Clientset
 	logger    log.Logger
 	agentName string
 
-	currentPipeline signalcd.Pipeline
+	currentDeployment currentDeployment
 }
 
 func (u *updater) pollLoop(ctx context.Context) error {
@@ -113,91 +139,119 @@ func (u *updater) pollLoop(ctx context.Context) error {
 					"msg", "failed to poll",
 					"err", err,
 				)
-
-				if err := u.pipelineStatus(signalcd.Failed); err != nil {
-					level.Warn(u.logger).Log(
-						"msg", "failed to update pipeline status",
-						"err", err,
-					)
-				}
+				// TODO
+				//if err := u.pipelineStatus(signalcd.Failed); err != nil {
+				//	level.Warn(u.logger).Log(
+				//		"msg", "failed to update deployment status",
+				//		"err", err,
+				//	)
+				//}
 			} else {
-				if err := u.pipelineStatus(signalcd.Success); err != nil {
-					level.Warn(u.logger).Log(
-						"msg", "failed to update pipeline status",
-						"err", err,
-					)
-				}
+				// TODO
+				//if err := u.pipelineStatus(signalcd.Success); err != nil {
+				//	level.Warn(u.logger).Log(
+				//		"msg", "failed to update deployment status",
+				//		"err", err,
+				//	)
+				//}
 			}
 		}
 	}
 }
 
-func (u *updater) poll() error {
-	p, err := u.pipeline()
-	if err != nil {
-		return xerrors.Errorf("failed to get current pipeline: %w", err)
+func deploymentStatusPhase(phase string) signalcd.DeploymentPhase {
+	switch phase {
+	case models.DeploymentstatusPhaseSuccess:
+		return signalcd.Success
+	case models.DeploymentstatusPhaseFailure:
+		return signalcd.Failed
+	case models.DeploymentstatusPhaseProgress:
+		return signalcd.Progress
+	default:
+		return signalcd.Unknown
 	}
+}
 
-	if u.currentPipeline.ID == "" {
-		loaded, err := u.loadPipeline()
+func deploymentFromAPI(deployment *models.Deployment) signalcd.Deployment {
+	return signalcd.Deployment{
+		Number:  *deployment.Number,
+		Created: time.Time(deployment.Created),
+		Status: signalcd.DeploymentStatus{
+			Phase: deploymentStatusPhase(deployment.Status.Phase),
+		},
+		Pipeline: signalcd.Pipeline{},
+	}
+}
+
+func (u *updater) poll() error {
+	deploymentOK, err := u.client.Deployments.CurrentDeployment(nil)
+	if err != nil {
+		return xerrors.Errorf("failed to get current deployment: %w", err)
+	}
+	deployment := deploymentFromAPI(deploymentOK.Payload)
+
+	if u.currentDeployment.get() == nil {
+		loaded, err := u.loadDeployment()
 		if err != nil && !apierrors.IsNotFound(err) {
 			return xerrors.Errorf("failed to load pipeline: %v", err)
 		}
 		level.Debug(u.logger).Log("msg", "loaded pipeline from ConfigMap")
 
-		u.currentPipeline = p
+		u.currentDeployment.set(&deployment)
 
-		// if running pipeline id in cluster equals to wanted pipeline
+		// if running deployment id in cluster equals to wanted deployment
 		// we don't need to run the pipeline
-		if loaded.ID == p.ID {
-			level.Debug(u.logger).Log("msg", "ConfigMap has same pipeline ID", "id", p.ID)
+		if loaded.Number == deployment.Number {
+			level.Debug(u.logger).Log("msg", "ConfigMap has same deployment ID", "number", deployment.Number)
 			return nil
 		}
 
-		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "pipeline", p.ID)
+		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
 
-		if err := u.pipelineStatus(signalcd.Progress); err != nil {
-			level.Warn(u.logger).Log(
-				"msg", "failed to update pipeline status",
-				"err", err,
-			)
-		}
+		// TODO
+		//if err := u.pipelineStatus(signalcd.Progress); err != nil {
+		//	level.Warn(u.logger).Log(
+		//		"msg", "failed to update pipeline status",
+		//		"err", err,
+		//	)
+		//}
 
-		if err := u.runPipeline(p); err != nil {
+		if err := u.runPipeline(deployment.Pipeline); err != nil {
 			return xerrors.Errorf("failed to run pipeline: %w", err)
 		}
 
-		err = u.savePipeline(p)
+		err = u.saveDeployment(deployment)
 		if err != nil {
 			return xerrors.Errorf("failed to save pipeline: %w", err)
 		}
 
-		level.Info(u.logger).Log("msg", "finished updating pipeline", "pipeline", p.ID)
+		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
 
 		return nil
 	}
 
-	if u.currentPipeline.ID != p.ID {
-		u.currentPipeline = p
-		level.Info(u.logger).Log("msg", "update pipeline", "pipeline", p.ID)
+	if u.currentDeployment.get().Number != deployment.Number {
+		u.currentDeployment.set(&deployment)
+		level.Info(u.logger).Log("msg", "update deployment", "number", deployment.Number)
 
-		if err := u.pipelineStatus(signalcd.Progress); err != nil {
-			level.Warn(u.logger).Log(
-				"msg", "failed to update pipeline status",
-				"err", err,
-			)
+		// TODO
+		//if err := u.pipelineStatus(signalcd.Progress); err != nil {
+		//	level.Warn(u.logger).Log(
+		//		"msg", "failed to update pipeline status",
+		//		"err", err,
+		//	)
+		//}
+
+		if err := u.runPipeline(deployment.Pipeline); err != nil {
+			return xerrors.Errorf("failed to run deployment: %w", err)
 		}
 
-		if err := u.runPipeline(p); err != nil {
-			return xerrors.Errorf("failed to run pipeline: %w", err)
-		}
-
-		err := u.savePipeline(p)
+		err := u.saveDeployment(deployment)
 		if err != nil {
-			return xerrors.Errorf("failed to save pipeline: %w", err)
+			return xerrors.Errorf("failed to save deployment: %w", err)
 		}
 
-		level.Info(u.logger).Log("msg", "finished updating pipeline", "pipeline", p.ID)
+		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
 
 		return nil
 	}
@@ -221,43 +275,25 @@ func (u *updater) runPipeline(p signalcd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) pipeline() (signalcd.Pipeline, error) {
-	var w signalcd.Pipeline
-
-	resp, err := http.Get(apiURL + api.PipelineCurrent)
-	if err != nil {
-		return w, err
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&w)
-	if err != nil {
-		return w, err
-	}
-
-	return w, err
-}
-
-func (u *updater) pipelineStatus(status signalcd.DeploymentPhase) error {
-	payload, err := json.Marshal(signalcd.Agent{
-		Name:     u.agentName,
-		Status:   status,
-		Pipeline: u.currentPipeline,
-	})
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.Post(apiURL+api.PipelinesStatus, "application/json", bytes.NewBuffer(payload))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("no 200 OK, but %s", resp.Status)
-	}
-
-	return nil
-}
+//func (u *updater) pipelineStatus(status signalcd.DeploymentPhase) error {
+//	payload, err := json.Marshal(signalcd.Agent{
+//		Name:     u.agentName,
+//		Pipeline: u.currentDeployment,
+//	})
+//	if err != nil {
+//		return err
+//	}
+//
+//	resp, err := http.Post(apiURL+api.PipelinesStatus, "application/json", bytes.NewBuffer(payload))
+//	if err != nil {
+//		return err
+//	}
+//	if resp.StatusCode != http.StatusOK {
+//		return fmt.Errorf("no 200 OK, but %s", resp.Status)
+//	}
+//
+//	return nil
+//}
 
 func (u *updater) runSteps(p signalcd.Pipeline) error {
 	for _, s := range p.Steps {
@@ -295,15 +331,15 @@ func (u *updater) runStep(pipeline signalcd.Pipeline, step signalcd.Step) error 
 		},
 	}
 
-	_, err := u.client.CoreV1().Pods(namespace).Create(&p)
+	_, err := u.klient.CoreV1().Pods(namespace).Create(&p)
 	if err != nil {
 		return err
 	}
 	defer func(p *corev1.Pod) {
-		_ = u.client.CoreV1().Pods(namespace).Delete(p.Name, nil)
+		_ = u.klient.CoreV1().Pods(namespace).Delete(p.Name, nil)
 	}(&p)
 
-	watch, err := u.client.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
+	watch, err := u.klient.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
 		LabelSelector: labelsSelector(p.GetLabels()),
 		Watch:         true,
 	})
@@ -326,7 +362,7 @@ func (u *updater) runStep(pipeline signalcd.Pipeline, step signalcd.Step) error 
 }
 
 func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
-	err := u.client.CoreV1().Pods(namespace).DeleteCollection(nil, metav1.ListOptions{
+	err := u.klient.CoreV1().Pods(namespace).DeleteCollection(nil, metav1.ListOptions{
 		LabelSelector: labelsSelector(checkLabels),
 	})
 	if err != nil {
@@ -377,7 +413,7 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 		},
 	}
 
-	_, err := u.client.CoreV1().Pods(namespace).Create(&p)
+	_, err := u.klient.CoreV1().Pods(namespace).Create(&p)
 	if err != nil {
 		return xerrors.Errorf("failed to create check pod: %w", err)
 	}
@@ -393,28 +429,27 @@ func labelsSelector(ls map[string]string) string {
 	return strings.Join(selectors, ",")
 }
 
-const configMapName = "cd"
-const configMapFilename = "pipeline.json"
+const configMapName = "signalcd"
+const configMapFilename = "deployment.json"
 
-func (u *updater) loadPipeline() (signalcd.Pipeline, error) {
-	cm, err := u.client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+func (u *updater) loadDeployment() (signalcd.Deployment, error) {
+	cm, err := u.klient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 	if err != nil {
-		return signalcd.Pipeline{}, err
+		return signalcd.Deployment{}, err
 	}
 
 	b := cm.Data[configMapFilename]
 
-	var p signalcd.Pipeline
-	err = json.Unmarshal([]byte(b), &p)
-	if err != nil {
-		return signalcd.Pipeline{}, err
+	var d signalcd.Deployment
+	if err := json.Unmarshal([]byte(b), &d); err != nil {
+		return d, err
 	}
 
-	return p, nil
+	return d, nil
 }
 
-func (u *updater) savePipeline(p signalcd.Pipeline) error {
-	b, err := json.Marshal(&p)
+func (u *updater) saveDeployment(d signalcd.Deployment) error {
+	b, err := json.Marshal(&d)
 	if err != nil {
 		return err
 	}
@@ -429,9 +464,9 @@ func (u *updater) savePipeline(p signalcd.Pipeline) error {
 		},
 	}
 
-	_, err = u.client.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+	_, err = u.klient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		_, err = u.client.CoreV1().ConfigMaps(namespace).Create(cm)
+		_, err = u.klient.CoreV1().ConfigMaps(namespace).Create(cm)
 		if err != nil {
 			return xerrors.Errorf("failed to create ConfigMap: %v", err)
 		}
@@ -441,7 +476,7 @@ func (u *updater) savePipeline(p signalcd.Pipeline) error {
 		return xerrors.Errorf("failed to get ConfigMap: %v", err)
 	}
 
-	_, err = u.client.CoreV1().ConfigMaps(namespace).Update(cm)
+	_, err = u.klient.CoreV1().ConfigMaps(namespace).Update(cm)
 	if err != nil {
 		return xerrors.Errorf("failed to update ConfigMap: %v", err)
 	}
