@@ -179,8 +179,39 @@ func deploymentFromAPI(deployment *models.Deployment) signalcd.Deployment {
 		Status: signalcd.DeploymentStatus{
 			Phase: deploymentStatusPhase(deployment.Status.Phase),
 		},
-		Pipeline: signalcd.Pipeline{},
+		Pipeline: pipelineFromAPI(deployment.Pipeline),
 	}
+}
+
+func pipelineFromAPI(pipeline *models.Pipeline) signalcd.Pipeline {
+	p := signalcd.Pipeline{
+		ID:   pipeline.ID.String(),
+		Name: pipeline.Name,
+	}
+
+	for _, step := range pipeline.Steps {
+		p.Steps = append(p.Steps, signalcd.Step{
+			Name:     *step.Name,
+			Image:    *step.Image,
+			Commands: step.Commands,
+		})
+	}
+
+	for _, check := range pipeline.Checks {
+		env := map[string]string{}
+		for _, item := range check.Environment {
+			env[item.Key] = item.Value
+		}
+
+		p.Checks = append(p.Checks, signalcd.Check{
+			Name:        *check.Name,
+			Image:       *check.Image,
+			Duration:    time.Duration(check.Duration) * time.Second,
+			Environment: env,
+		})
+	}
+
+	return p
 }
 
 func (u *updater) poll() error {
