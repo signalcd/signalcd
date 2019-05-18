@@ -40,7 +40,9 @@ func NewCurrentDeploymentParamsWithTimeout(timeout time.Duration) *CurrentDeploy
 // NewCurrentDeploymentParamsWithContext creates a new CurrentDeploymentParams object
 // with the default values initialized, and the ability to set a context for a request
 func NewCurrentDeploymentParamsWithContext(ctx context.Context) *CurrentDeploymentParams {
+
 	return &CurrentDeploymentParams{
+
 		Context: ctx,
 	}
 }
