@@ -34,8 +34,13 @@ func main() {
 	flag.Parse()
 
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.WithPrefix(logger, "ts", log.DefaultTimestampUTC)
+	logger = log.WithPrefix(logger, "caller", log.DefaultCaller)
 
-	transportCfg := client.DefaultTransportConfig().WithSchemes([]string{"http"}).WithHost(apiURL)
+	transportCfg := client.DefaultTransportConfig().
+		WithSchemes([]string{"http"}).
+		WithHost(apiURL)
+
 	client := client.NewHTTPClientWithConfig(nil, transportCfg)
 
 	konfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
