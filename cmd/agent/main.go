@@ -133,7 +133,7 @@ func (u *updater) pollLoop(ctx context.Context) error {
 			ticker.Stop()
 			return nil
 		case <-ticker.C:
-			err := u.poll()
+			err := u.poll(ctx)
 			if err != nil {
 				level.Warn(u.logger).Log(
 					"msg", "failed to poll",
@@ -214,7 +214,7 @@ func pipelineFromAPI(pipeline *models.Pipeline) signalcd.Pipeline {
 	return p
 }
 
-func (u *updater) poll() error {
+func (u *updater) poll(ctx context.Context) error {
 	deploymentOK, err := u.client.Deployments.CurrentDeployment(nil)
 	if err != nil {
 		return xerrors.Errorf("failed to get current deployment: %w", err)
@@ -247,7 +247,7 @@ func (u *updater) poll() error {
 		//	)
 		//}
 
-		if err := u.runPipeline(deployment.Pipeline); err != nil {
+		if err := u.runPipeline(ctx, deployment.Pipeline); err != nil {
 			return xerrors.Errorf("failed to run pipeline: %w", err)
 		}
 
@@ -273,7 +273,7 @@ func (u *updater) poll() error {
 		//	)
 		//}
 
-		if err := u.runPipeline(deployment.Pipeline); err != nil {
+		if err := u.runPipeline(ctx, deployment.Pipeline); err != nil {
 			return xerrors.Errorf("failed to run deployment: %w", err)
 		}
 
@@ -290,15 +290,18 @@ func (u *updater) poll() error {
 	return nil
 }
 
-func (u *updater) runPipeline(p signalcd.Pipeline) error {
-	if err := u.runSteps(p); err != nil {
+func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
+	println("running steps")
+	if err := u.runSteps(ctx, p); err != nil {
 		return err
 	}
 
+	println("cleaning checks")
 	if err := u.cleanChecks(p); err != nil {
 		return xerrors.Errorf("failed to clean old checks: %w", err)
 	}
 
+	println("running checks")
 	if err := u.runChecks(p); err != nil {
 		return err
 	}
@@ -326,9 +329,9 @@ func (u *updater) runPipeline(p signalcd.Pipeline) error {
 //	return nil
 //}
 
-func (u *updater) runSteps(p signalcd.Pipeline) error {
+func (u *updater) runSteps(ctx context.Context, p signalcd.Pipeline) error {
 	for _, s := range p.Steps {
-		if err := u.runStep(p, s); err != nil {
+		if err := u.runStep(ctx, p, s); err != nil {
 			return err
 		}
 	}
@@ -336,7 +339,10 @@ func (u *updater) runSteps(p signalcd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runStep(pipeline signalcd.Pipeline, step signalcd.Step) error {
+func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step signalcd.Step) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
 	args := []string{"-c"}
 	for _, c := range step.Commands {
 		args = append(args, c)
@@ -370,9 +376,11 @@ func (u *updater) runStep(pipeline signalcd.Pipeline, step signalcd.Step) error 
 		_ = u.klient.CoreV1().Pods(namespace).Delete(p.Name, nil)
 	}(&p)
 
+	timeout := int64(time.Minute.Seconds())
 	watch, err := u.klient.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
-		LabelSelector: labelsSelector(p.GetLabels()),
-		Watch:         true,
+		LabelSelector:  labelsSelector(p.GetLabels()),
+		Watch:          true,
+		TimeoutSeconds: &timeout,
 	})
 	if err != nil {
 		return err
