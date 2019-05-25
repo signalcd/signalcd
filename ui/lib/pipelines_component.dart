@@ -1,4 +1,5 @@
 import 'package:angular/angular.dart';
+import 'package:ui/deployments_service.dart';
 import 'package:ui/pipelines_service.dart';
 import 'package:ui/src/api/api.dart';
 
@@ -9,13 +10,15 @@ import 'package:ui/src/api/api.dart';
     coreDirectives,
   ],
   providers: [
+    DeploymentsService,
     PipelinesService,
   ],
 )
 class PipelinesComponent implements OnInit {
+  final DeploymentsService _deploymentsService;
   final PipelinesService _pipelinesService;
 
-  PipelinesComponent(this._pipelinesService);
+  PipelinesComponent(this._deploymentsService, this._pipelinesService);
 
   List<Pipeline> pipelines = [];
 
@@ -27,9 +30,10 @@ class PipelinesComponent implements OnInit {
   }
 
   void deploy(Pipeline pipeline) {
-    _pipelinesService
+    _deploymentsService
         .deploy(pipeline.id)
-        .then((dynamic) => print('pipeline ${pipeline.id} deployed!'))
-        .catchError(() => print('error dpeloying pipeline'));
+        .then((Deployment deployment) =>
+            print('pipeline ${deployment.number} deployed!'))
+        .catchError(() => print('error deploying pipeline'));
   }
 }

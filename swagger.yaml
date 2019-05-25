@@ -44,6 +44,11 @@ paths:
         - "deployments"
       summary: "Schedule a new deployment"
       operationId: "setCurrentDeployment"
+      parameters:
+        - in: query
+          required: true
+          name: "pipeline"
+          type: "string"
       responses:
         200:
           description: "OK"

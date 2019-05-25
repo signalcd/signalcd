@@ -13,7 +13,11 @@ import (
 
 // SetCurrentDeploymentURL generates an URL for the set current deployment operation
 type SetCurrentDeploymentURL struct {
+	Pipeline string
+
 	_basePath string
+	// avoid unkeyed usage
+	_ struct{}
 }
 
 // WithBasePath sets the base path for this url builder, only required when it's different from the
@@ -42,6 +46,15 @@ func (o *SetCurrentDeploymentURL) Build() (*url.URL, error) {
 		_basePath = "/v1"
 	}
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
+
+	qs := make(url.Values)
+
+	pipeline := o.Pipeline
+	if pipeline != "" {
+		qs.Set("pipeline", pipeline)
+	}
+
+	_result.RawQuery = qs.Encode()
 
 	return &_result, nil
 }

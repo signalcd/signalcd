@@ -11,4 +11,8 @@ class DeploymentsService {
   Future<List<Deployment>> deployments() async {
     return await _api.deployments.deployments();
   }
+
+  Future<Deployment> deploy(String pipelineID) async {
+    return await _api.deployments.setCurrentDeployment(pipelineID);
+  }
 }

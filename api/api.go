@@ -254,7 +254,24 @@ func getCurrentDeploymentHandler() deployments.CurrentDeploymentHandlerFunc {
 
 func setCurrentDeploymentHandler() deployments.SetCurrentDeploymentHandlerFunc {
 	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
-		return nil
+		p, err := getPipeline(params.Pipeline)
+		if err != nil {
+			return deployments.NewSetCurrentDeploymentInternalServerError()
+		}
+
+		fakeDeploymentsLock.Lock()
+		defer fakeDeploymentsLock.Unlock()
+
+		d := signalcd.Deployment{
+			Number:   int64(len(fakeDeployments) + 1),
+			Created:  time.Now(),
+			Pipeline: p,
+			Status:   signalcd.DeploymentStatus{},
+		}
+
+		fakeDeployments = append([]signalcd.Deployment{d}, fakeDeployments...)
+
+		return deployments.NewSetCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
 	}
 }
 

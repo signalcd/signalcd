@@ -9,7 +9,11 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/errors"
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/validate"
+
+	strfmt "github.com/go-openapi/strfmt"
 )
 
 // NewSetCurrentDeploymentParams creates a new SetCurrentDeploymentParams object
@@ -27,6 +31,12 @@ type SetCurrentDeploymentParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
+
+	/*
+	  Required: true
+	  In: query
+	*/
+	Pipeline string
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -38,8 +48,36 @@ func (o *SetCurrentDeploymentParams) BindRequest(r *http.Request, route *middlew
 
 	o.HTTPRequest = r
 
+	qs := runtime.Values(r.URL.Query())
+
+	qPipeline, qhkPipeline, _ := qs.GetOK("pipeline")
+	if err := o.bindPipeline(qPipeline, qhkPipeline, route.Formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+// bindPipeline binds and validates parameter Pipeline from query.
+func (o *SetCurrentDeploymentParams) bindPipeline(rawData []string, hasKey bool, formats strfmt.Registry) error {
+	if !hasKey {
+		return errors.Required("pipeline", "query")
+	}
+	var raw string
+	if len(rawData) > 0 {
+		raw = rawData[len(rawData)-1]
+	}
+
+	// Required: true
+	// AllowEmptyValue: false
+	if err := validate.RequiredString("pipeline", "query", raw); err != nil {
+		return err
+	}
+
+	o.Pipeline = raw
+
 	return nil
 }

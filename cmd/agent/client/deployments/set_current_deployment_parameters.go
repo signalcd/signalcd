@@ -20,7 +20,7 @@ import (
 // NewSetCurrentDeploymentParams creates a new SetCurrentDeploymentParams object
 // with the default values initialized.
 func NewSetCurrentDeploymentParams() *SetCurrentDeploymentParams {
-
+	var ()
 	return &SetCurrentDeploymentParams{
 
 		timeout: cr.DefaultTimeout,
@@ -30,7 +30,7 @@ func NewSetCurrentDeploymentParams() *SetCurrentDeploymentParams {
 // NewSetCurrentDeploymentParamsWithTimeout creates a new SetCurrentDeploymentParams object
 // with the default values initialized, and the ability to set a timeout on a request
 func NewSetCurrentDeploymentParamsWithTimeout(timeout time.Duration) *SetCurrentDeploymentParams {
-
+	var ()
 	return &SetCurrentDeploymentParams{
 
 		timeout: timeout,
@@ -40,7 +40,7 @@ func NewSetCurrentDeploymentParamsWithTimeout(timeout time.Duration) *SetCurrent
 // NewSetCurrentDeploymentParamsWithContext creates a new SetCurrentDeploymentParams object
 // with the default values initialized, and the ability to set a context for a request
 func NewSetCurrentDeploymentParamsWithContext(ctx context.Context) *SetCurrentDeploymentParams {
-
+	var ()
 	return &SetCurrentDeploymentParams{
 
 		Context: ctx,
@@ -50,7 +50,7 @@ func NewSetCurrentDeploymentParamsWithContext(ctx context.Context) *SetCurrentDe
 // NewSetCurrentDeploymentParamsWithHTTPClient creates a new SetCurrentDeploymentParams object
 // with the default values initialized, and the ability to set a custom HTTPClient for a request
 func NewSetCurrentDeploymentParamsWithHTTPClient(client *http.Client) *SetCurrentDeploymentParams {
-
+	var ()
 	return &SetCurrentDeploymentParams{
 		HTTPClient: client,
 	}
@@ -60,6 +60,10 @@ func NewSetCurrentDeploymentParamsWithHTTPClient(client *http.Client) *SetCurren
 for the set current deployment operation typically these are written to a http.Request
 */
 type SetCurrentDeploymentParams struct {
+
+	/*Pipeline*/
+	Pipeline string
+
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
@@ -98,6 +102,17 @@ func (o *SetCurrentDeploymentParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithPipeline adds the pipeline to the set current deployment params
+func (o *SetCurrentDeploymentParams) WithPipeline(pipeline string) *SetCurrentDeploymentParams {
+	o.SetPipeline(pipeline)
+	return o
+}
+
+// SetPipeline adds the pipeline to the set current deployment params
+func (o *SetCurrentDeploymentParams) SetPipeline(pipeline string) {
+	o.Pipeline = pipeline
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *SetCurrentDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -105,6 +120,15 @@ func (o *SetCurrentDeploymentParams) WriteToRequest(r runtime.ClientRequest, reg
 		return err
 	}
 	var res []error
+
+	// query param pipeline
+	qrPipeline := o.Pipeline
+	qPipeline := qrPipeline
+	if qPipeline != "" {
+		if err := r.SetQueryParam("pipeline", qPipeline); err != nil {
+			return err
+		}
+	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)

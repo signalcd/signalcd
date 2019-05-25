@@ -77,6 +77,14 @@ func init() {
         ],
         "summary": "Schedule a new deployment",
         "operationId": "setCurrentDeployment",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "pipeline",
+            "in": "query",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -334,6 +342,14 @@ func init() {
         ],
         "summary": "Schedule a new deployment",
         "operationId": "setCurrentDeployment",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "pipeline",
+            "in": "query",
+            "required": true
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",

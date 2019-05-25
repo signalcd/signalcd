@@ -108,10 +108,13 @@ class DeploymentsApi {
   /// Schedule a new deployment
   ///
   /// 
-  Future<Deployment> setCurrentDeployment() async {
+  Future<Deployment> setCurrentDeployment(String pipeline) async {
     Object postBody = null;
 
     // verify required params are set
+    if(pipeline == null) {
+     throw new ApiException(400, "Missing required param: pipeline");
+    }
 
     // create path and map variables
     String path = "/deployments/current".replaceAll("{format}","json");
@@ -120,6 +123,7 @@ class DeploymentsApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
+      queryParams.addAll(_convertParametersForCollectionFormat("", "pipeline", pipeline));
     
     List<String> contentTypes = [];
 
