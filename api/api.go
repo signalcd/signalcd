@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/go-kit/kit/log"
 	"github.com/go-openapi/loads"
 	restmiddleware "github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
@@ -82,7 +83,7 @@ func getPipeline(id string) (signalcd.Pipeline, error) {
 
 var fakeDeploymentsLock sync.RWMutex
 
-var fakeDeployments = []signalcd.Deployment{
+var FakeDeployments = []signalcd.Deployment{
 	{
 		Number:  4,
 		Created: time.Now().Add(-30 * time.Second),
@@ -125,7 +126,13 @@ const (
 	PipelinesStatus       = "/pipelines/status"
 )
 
-func NewV1() (*chi.Mux, error) {
+type SignalDB interface {
+	DeploymentLister
+	DeploymentCreator
+	CurrentDeploymentGetter
+}
+
+func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 	router := chi.NewRouter()
 
 	// load embedded swagger file
@@ -143,9 +150,9 @@ func NewV1() (*chi.Mux, error) {
 		return restmiddleware.Spec("", swaggerSpec.Raw(), api.Context().RoutesHandler(b))
 	}
 
-	api.DeploymentsDeploymentsHandler = getDeploymentsHandler()
-	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler()
-	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler()
+	api.DeploymentsDeploymentsHandler = getDeploymentsHandler(db)
+	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler(db)
+	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler(db, logger)
 	api.PipelinePipelineHandler = getPipelineHandler()
 	api.PipelinePipelinesHandler = getPipelinesHandler()
 
@@ -217,13 +224,21 @@ func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 	}
 }
 
-func getDeploymentsHandler() deployments.DeploymentsHandlerFunc {
+type DeploymentLister interface {
+	List() ([]signalcd.Deployment, error)
+}
+
+func getDeploymentsHandler(lister DeploymentLister) deployments.DeploymentsHandlerFunc {
 	return func(params deployments.DeploymentsParams) restmiddleware.Responder {
 		var payload []*models.Deployment
 
-		for _, fd := range fakeDeployments {
-			d := getModelsDeployment(fd)
-			payload = append(payload, d)
+		list, err := lister.List()
+		if err != nil {
+			return deployments.NewDeploymentsInternalServerError()
+		}
+
+		for _, d := range list {
+			payload = append(payload, getModelsDeployment(d))
 		}
 
 		return deployments.NewDeploymentsOK().WithPayload(payload)
@@ -241,35 +256,38 @@ func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
 	}
 }
 
-func getCurrentDeploymentHandler() deployments.CurrentDeploymentHandlerFunc {
-	return func(params deployments.CurrentDeploymentParams) restmiddleware.Responder {
-		fakeDeploymentsLock.RLock()
-		defer fakeDeploymentsLock.RUnlock()
+type CurrentDeploymentGetter interface {
+	GetCurrentDeployment() (signalcd.Deployment, error)
+}
 
-		d := fakeDeployments[0]
+func getCurrentDeploymentHandler(getter CurrentDeploymentGetter) deployments.CurrentDeploymentHandlerFunc {
+	return func(params deployments.CurrentDeploymentParams) restmiddleware.Responder {
+		d, err := getter.GetCurrentDeployment()
+		if err != nil {
+			return deployments.NewSetCurrentDeploymentInternalServerError()
+		}
 
 		return deployments.NewCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
 	}
 }
 
-func setCurrentDeploymentHandler() deployments.SetCurrentDeploymentHandlerFunc {
+type DeploymentCreator interface {
+	Create(signalcd.Pipeline) (signalcd.Deployment, error)
+}
+
+func setCurrentDeploymentHandler(creator DeploymentCreator, logger log.Logger) deployments.SetCurrentDeploymentHandlerFunc {
 	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
 		p, err := getPipeline(params.Pipeline)
 		if err != nil {
+			logger.Log("msg", "failed to get pipeline", "id", params.Pipeline, "err", err)
 			return deployments.NewSetCurrentDeploymentInternalServerError()
 		}
 
-		fakeDeploymentsLock.Lock()
-		defer fakeDeploymentsLock.Unlock()
-
-		d := signalcd.Deployment{
-			Number:   int64(len(fakeDeployments) + 1),
-			Created:  time.Now(),
-			Pipeline: p,
-			Status:   signalcd.DeploymentStatus{},
+		d, err := creator.Create(p)
+		if err != nil {
+			logger.Log("msg", "failed to create deployment", "err", err)
+			return deployments.NewSetCurrentDeploymentInternalServerError()
 		}
-
-		fakeDeployments = append([]signalcd.Deployment{d}, fakeDeployments...)
 
 		return deployments.NewSetCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
 	}

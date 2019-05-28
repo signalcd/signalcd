@@ -26,6 +26,7 @@ require (
 	github.com/oklog/run v1.0.0
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/urfave/cli v1.20.0
+	go.etcd.io/bbolt v1.3.2
 	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect
 	golang.org/x/net v0.0.0-20190424112056-4829fb13d2c6
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
