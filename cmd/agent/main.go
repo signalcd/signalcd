@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -17,6 +16,7 @@ import (
 	"github.com/signalcd/signalcd/cmd/agent/client"
 	"github.com/signalcd/signalcd/cmd/agent/models"
 	"github.com/signalcd/signalcd/signalcd"
+	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,74 +29,94 @@ const apiURL = "localhost:6660"
 const namespace = "default"
 
 func main() {
-	kubeconfig := flag.String("kubeconfig", "", "Path to kubeconfig")
-	agentName := flag.String("name", "", "Name for this agent")
-	flag.Parse()
-
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 	logger = log.WithPrefix(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.WithPrefix(logger, "caller", log.DefaultCaller)
 
-	transportCfg := client.DefaultTransportConfig().
-		WithSchemes([]string{"http"}).
-		WithHost(apiURL)
-
-	client := client.NewHTTPClientWithConfig(nil, transportCfg)
-
-	konfig, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
-	if err != nil {
-		level.Error(logger).Log(
-			"msg", "failed to read Kubernetes config",
-			"err", err,
-		)
-		os.Exit(2)
+	app := cli.NewApp()
+	app.Action = agentAction(logger)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "name",
+			Usage: "The name for this specific agent instance",
+		},
+		cli.StringFlag{
+			Name:  "kubeconfig",
+			Usage: "Path to the kubeconfig",
+		},
 	}
 
-	klient, err := kubernetes.NewForConfig(konfig)
-	if err != nil {
-		level.Error(logger).Log(
-			"msg", "failed to create Kubernetes client",
-			"err", err,
-		)
-		os.Exit(3)
+	if err := app.Run(os.Args); err != nil {
+		logger.Log("msg", "failed running agent", "err", err)
+		os.Exit(1)
 	}
+}
 
-	ctx, cancel := context.WithCancel(context.Background())
+func agentAction(logger log.Logger) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		transportCfg := client.DefaultTransportConfig().
+			WithSchemes([]string{"http"}).
+			WithHost(apiURL)
 
-	var gr run.Group
-	{
-		u := &updater{
-			client:    client,
-			klient:    klient,
-			logger:    logger,
-			agentName: *agentName,
+		client := client.NewHTTPClientWithConfig(nil, transportCfg)
+
+		konfig, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
+		if err != nil {
+			level.Error(logger).Log(
+				"msg", "failed to read Kubernetes config",
+				"err", err,
+			)
+			os.Exit(2)
 		}
 
-		gr.Add(func() error {
-			return u.pollLoop(ctx)
-		}, func(err error) {
-			cancel()
-		})
-	}
-	{
-		sig := make(chan os.Signal)
+		klient, err := kubernetes.NewForConfig(konfig)
+		if err != nil {
+			level.Error(logger).Log(
+				"msg", "failed to create Kubernetes client",
+				"err", err,
+			)
+			os.Exit(3)
+		}
 
-		gr.Add(func() error {
-			signal.Notify(sig, os.Interrupt)
-			<-sig
-			cancel()
-			return nil
-		}, func(err error) {
-			close(sig)
-		})
-	}
+		ctx, cancel := context.WithCancel(context.Background())
 
-	if err := gr.Run(); err != nil {
-		level.Error(logger).Log(
-			"msg", "error running",
-			"err", err,
-		)
-		os.Exit(1)
+		var gr run.Group
+		{
+			u := &updater{
+				client:    client,
+				klient:    klient,
+				logger:    logger,
+				agentName: c.String("name"),
+			}
+
+			gr.Add(func() error {
+				return u.pollLoop(ctx)
+			}, func(err error) {
+				cancel()
+			})
+		}
+		{
+			sig := make(chan os.Signal)
+
+			gr.Add(func() error {
+				signal.Notify(sig, os.Interrupt)
+				<-sig
+				cancel()
+				return nil
+			}, func(err error) {
+				close(sig)
+			})
+		}
+
+		if err := gr.Run(); err != nil {
+			level.Error(logger).Log(
+				"msg", "error running",
+				"err", err,
+			)
+			os.Exit(1)
+		}
+
+		return nil
 	}
 }
 
