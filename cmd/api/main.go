@@ -9,43 +9,53 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 	"github.com/signalcd/signalcd/api"
+	"github.com/urfave/cli"
+	"golang.org/x/xerrors"
 )
 
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+	logger = log.WithPrefix(logger, "ts", log.DefaultTimestampUTC)
+	logger = log.WithPrefix(logger, "caller", log.DefaultCaller)
 
-	var gr run.Group
-	{
-		router, err := api.NewV1()
-		if err != nil {
-			level.Error(logger).Log(
-				"msg", "failed to initialize api",
-				"err", err,
-			)
-			os.Exit(1)
-		}
+	app := cli.NewApp()
+	app.Action = apiAction(logger)
 
-		s := http.Server{
-			Addr:    ":6660",
-			Handler: router,
-		}
-
-		gr.Add(func() error {
-			level.Info(logger).Log(
-				"msg", "running api",
-				"addr", s.Addr,
-			)
-
-			return s.ListenAndServe()
-		}, func(err error) {
-			_ = s.Shutdown(context.TODO())
-		})
+	if err := app.Run(os.Args); err != nil {
+		logger.Log("msg", "failed running api", "err", err)
+		os.Exit(1)
 	}
+}
 
-	if err := gr.Run(); err != nil {
-		level.Error(logger).Log(
-			"msg", "error running",
-			"err", err,
-		)
+func apiAction(logger log.Logger) cli.ActionFunc {
+	return func(c *cli.Context) error {
+		var gr run.Group
+		{
+			router, err := api.NewV1()
+			if err != nil {
+				return xerrors.Errorf("failed to initialize api: %w", err)
+			}
+
+			s := http.Server{
+				Addr:    ":6660",
+				Handler: router,
+			}
+
+			gr.Add(func() error {
+				level.Info(logger).Log(
+					"msg", "running api",
+					"addr", s.Addr,
+				)
+				return s.ListenAndServe()
+			}, func(err error) {
+				_ = s.Shutdown(context.TODO())
+			})
+		}
+
+		if err := gr.Run(); err != nil {
+			return xerrors.Errorf("error running: %w", err)
+		}
+
+		return nil
 	}
 }
