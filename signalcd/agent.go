@@ -5,11 +5,13 @@ import (
 	"time"
 )
 
+// Agent is a daemon responsible for running the pipelines in namespaces
 type Agent struct {
 	Name     string   `json:"name"`
 	Pipeline Pipeline `json:"pipeline"`
 }
 
+// AgentServer is the Agent plus the timestamp of a last heartbeat
 type AgentServer struct {
 	Agent `json:",inline"`
 
@@ -22,6 +24,8 @@ func (as AgentServer) Ready() bool {
 	return time.Since(as.Heartbeat) < 15*time.Second
 }
 
+// MarshalJSON implements the Marshaler interface to return
+// ready boolean from last heartbeat
 func (as AgentServer) MarshalJSON() ([]byte, error) {
 	s := struct {
 		Agent `json:",inline"`
