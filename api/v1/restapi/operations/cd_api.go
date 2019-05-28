@@ -19,6 +19,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 )
 
@@ -39,23 +40,20 @@ func NewCdAPI(spec *loads.Document) *CdAPI {
 		BearerAuthenticator: security.BearerAuth,
 		JSONConsumer:        runtime.JSONConsumer(),
 		JSONProducer:        runtime.JSONProducer(),
+		DeploymentsCurrentDeploymentHandler: deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams) middleware.Responder {
+			return middleware.NotImplemented("operation DeploymentsCurrentDeployment has not yet been implemented")
+		}),
+		DeploymentsDeploymentsHandler: deployments.DeploymentsHandlerFunc(func(params deployments.DeploymentsParams) middleware.Responder {
+			return middleware.NotImplemented("operation DeploymentsDeployments has not yet been implemented")
+		}),
 		PipelinePipelineHandler: pipeline.PipelineHandlerFunc(func(params pipeline.PipelineParams) middleware.Responder {
 			return middleware.NotImplemented("operation PipelinePipeline has not yet been implemented")
-		}),
-		PipelinePipelineAgentsHandler: pipeline.PipelineAgentsHandlerFunc(func(params pipeline.PipelineAgentsParams) middleware.Responder {
-			return middleware.NotImplemented("operation PipelinePipelineAgents has not yet been implemented")
-		}),
-		PipelinePipelineCurrentHandler: pipeline.PipelineCurrentHandlerFunc(func(params pipeline.PipelineCurrentParams) middleware.Responder {
-			return middleware.NotImplemented("operation PipelinePipelineCurrent has not yet been implemented")
 		}),
 		PipelinePipelinesHandler: pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams) middleware.Responder {
 			return middleware.NotImplemented("operation PipelinePipelines has not yet been implemented")
 		}),
-		PipelineUpdateCurrentPipelineHandler: pipeline.UpdateCurrentPipelineHandlerFunc(func(params pipeline.UpdateCurrentPipelineParams) middleware.Responder {
-			return middleware.NotImplemented("operation PipelineUpdateCurrentPipeline has not yet been implemented")
-		}),
-		PipelineUpdatePipelineAgentsHandler: pipeline.UpdatePipelineAgentsHandlerFunc(func(params pipeline.UpdatePipelineAgentsParams) middleware.Responder {
-			return middleware.NotImplemented("operation PipelineUpdatePipelineAgents has not yet been implemented")
+		DeploymentsSetCurrentDeploymentHandler: deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams) middleware.Responder {
+			return middleware.NotImplemented("operation DeploymentsSetCurrentDeployment has not yet been implemented")
 		}),
 	}
 }
@@ -88,18 +86,16 @@ type CdAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
+	// DeploymentsCurrentDeploymentHandler sets the operation handler for the current deployment operation
+	DeploymentsCurrentDeploymentHandler deployments.CurrentDeploymentHandler
+	// DeploymentsDeploymentsHandler sets the operation handler for the deployments operation
+	DeploymentsDeploymentsHandler deployments.DeploymentsHandler
 	// PipelinePipelineHandler sets the operation handler for the pipeline operation
 	PipelinePipelineHandler pipeline.PipelineHandler
-	// PipelinePipelineAgentsHandler sets the operation handler for the pipeline agents operation
-	PipelinePipelineAgentsHandler pipeline.PipelineAgentsHandler
-	// PipelinePipelineCurrentHandler sets the operation handler for the pipeline current operation
-	PipelinePipelineCurrentHandler pipeline.PipelineCurrentHandler
 	// PipelinePipelinesHandler sets the operation handler for the pipelines operation
 	PipelinePipelinesHandler pipeline.PipelinesHandler
-	// PipelineUpdateCurrentPipelineHandler sets the operation handler for the update current pipeline operation
-	PipelineUpdateCurrentPipelineHandler pipeline.UpdateCurrentPipelineHandler
-	// PipelineUpdatePipelineAgentsHandler sets the operation handler for the update pipeline agents operation
-	PipelineUpdatePipelineAgentsHandler pipeline.UpdatePipelineAgentsHandler
+	// DeploymentsSetCurrentDeploymentHandler sets the operation handler for the set current deployment operation
+	DeploymentsSetCurrentDeploymentHandler deployments.SetCurrentDeploymentHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -163,28 +159,24 @@ func (o *CdAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
+	if o.DeploymentsCurrentDeploymentHandler == nil {
+		unregistered = append(unregistered, "deployments.CurrentDeploymentHandler")
+	}
+
+	if o.DeploymentsDeploymentsHandler == nil {
+		unregistered = append(unregistered, "deployments.DeploymentsHandler")
+	}
+
 	if o.PipelinePipelineHandler == nil {
 		unregistered = append(unregistered, "pipeline.PipelineHandler")
-	}
-
-	if o.PipelinePipelineAgentsHandler == nil {
-		unregistered = append(unregistered, "pipeline.PipelineAgentsHandler")
-	}
-
-	if o.PipelinePipelineCurrentHandler == nil {
-		unregistered = append(unregistered, "pipeline.PipelineCurrentHandler")
 	}
 
 	if o.PipelinePipelinesHandler == nil {
 		unregistered = append(unregistered, "pipeline.PipelinesHandler")
 	}
 
-	if o.PipelineUpdateCurrentPipelineHandler == nil {
-		unregistered = append(unregistered, "pipeline.UpdateCurrentPipelineHandler")
-	}
-
-	if o.PipelineUpdatePipelineAgentsHandler == nil {
-		unregistered = append(unregistered, "pipeline.UpdatePipelineAgentsHandler")
+	if o.DeploymentsSetCurrentDeploymentHandler == nil {
+		unregistered = append(unregistered, "deployments.SetCurrentDeploymentHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -288,32 +280,27 @@ func (o *CdAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/deployments/current"] = deployments.NewCurrentDeployment(o.context, o.DeploymentsCurrentDeploymentHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/deployments"] = deployments.NewDeployments(o.context, o.DeploymentsDeploymentsHandler)
+
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/pipelines/{id}"] = pipeline.NewPipeline(o.context, o.PipelinePipelineHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers["GET"] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/pipelines/status"] = pipeline.NewPipelineAgents(o.context, o.PipelinePipelineAgentsHandler)
-
-	if o.handlers["GET"] == nil {
-		o.handlers["GET"] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/pipeline"] = pipeline.NewPipelineCurrent(o.context, o.PipelinePipelineCurrentHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/pipelines"] = pipeline.NewPipelines(o.context, o.PipelinePipelinesHandler)
 
-	if o.handlers["PATCH"] == nil {
-		o.handlers["PATCH"] = make(map[string]http.Handler)
-	}
-	o.handlers["PATCH"]["/pipeline/{id}"] = pipeline.NewUpdateCurrentPipeline(o.context, o.PipelineUpdateCurrentPipelineHandler)
-
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/pipelines/status"] = pipeline.NewUpdatePipelineAgents(o.context, o.PipelineUpdatePipelineAgentsHandler)
+	o.handlers["POST"]["/deployments/current"] = deployments.NewSetCurrentDeployment(o.context, o.DeploymentsSetCurrentDeploymentHandler)
 
 }
 

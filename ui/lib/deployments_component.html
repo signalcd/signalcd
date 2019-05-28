@@ -1,0 +1,24 @@
+<div>
+    <div class="card" *ngFor="let deployment of deployments">
+        <div class="card-content">
+            <div class="columns">
+                <div class="column">
+                    <div class="media">
+                        <div class="media-left">
+                            <figure class="image is-48x48">
+                                <status-icon status="{{ deployment.status.phase }}"></status-icon>
+                            </figure>
+                        </div>
+                        <div class="media-content">
+                            <p class="title is-4">#{{ deployment.number }}</p>
+                            <p class="subtitle is-5">Pipeline: {{ deployment.pipeline.name }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-narrow">
+                    <p>{{ deployment.created | timeago }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

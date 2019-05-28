@@ -4,7 +4,10 @@
             SignalCD
         </a>
 
-        <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
+        <a role="button" class="navbar-burger burger"
+           aria-label="menu"
+           aria-expanded="false"
+           data-target="navbarBasicExample">
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
@@ -17,21 +20,8 @@
                 Home
             </a>
         </div>
-
-        <!--
-        <div class="navbar-end">
-            <div class="navbar-item">
-                <div class="buttons">
-                    <a class="button is-light" href="#">
-                        Log out
-                    </a>
-                </div>
-            </div>
-        </div>
-        -->
     </div>
 </nav>
-
 
 <section class="section">
     <div class="container">
@@ -39,13 +29,22 @@
             Welcome to SignalCD
         </h1>
         <h2 class="subtitle">
-            The Cloud Native Continuous Delivery
+            Continuous Delivery for Kubernetes reacting to Observability Signals.
         </h2>
     </div>
 </section>
 
 <section>
     <div class="container">
-        <pipelines-list></pipelines-list>
+        <div class="columns">
+            <div class="column is-three-fifths">
+                <h4 class="title is-4">Deployments</h4>
+                <deployments-list></deployments-list>
+            </div>
+            <div class="column">
+                <h4 class="title is-4">Pipelines</h4>
+                <pipelines-list></pipelines-list>
+            </div>
+        </div>
     </div>
 </section>

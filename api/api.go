@@ -9,14 +9,17 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
+	"github.com/go-openapi/loads"
+	restmiddleware "github.com/go-openapi/runtime/middleware"
+	"github.com/go-openapi/strfmt"
+	"github.com/signalcd/signalcd/api/v1/models"
+	"github.com/signalcd/signalcd/api/v1/restapi"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
+	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 	"github.com/signalcd/signalcd/signalcd"
+	"golang.org/x/xerrors"
 )
-
-var fakeCurrentPipeline = struct {
-	mu       sync.RWMutex
-	Pipeline signalcd.Pipeline
-}{}
 
 var fakeChecks = []signalcd.Check{
 	{
@@ -77,6 +80,43 @@ func getPipeline(id string) (signalcd.Pipeline, error) {
 	return signalcd.Pipeline{}, fmt.Errorf("pipeline not found")
 }
 
+var fakeDeploymentsLock sync.RWMutex
+
+var fakeDeployments = []signalcd.Deployment{
+	{
+		Number:  4,
+		Created: time.Now().Add(-30 * time.Second),
+		Status: signalcd.DeploymentStatus{
+			Phase: signalcd.Success,
+		},
+		Pipeline: fakePipelines[2],
+	},
+	{
+		Number:  3,
+		Created: time.Now().Add(-3 * time.Minute),
+		Status: signalcd.DeploymentStatus{
+			Phase: signalcd.Success,
+		},
+		Pipeline: fakePipelines[0],
+	},
+	{
+		Number:  2,
+		Created: time.Now().Add(-8 * time.Minute),
+		Status: signalcd.DeploymentStatus{
+			Phase: signalcd.Failed,
+		},
+		Pipeline: fakePipelines[1],
+	},
+	{
+		Number:  1,
+		Created: time.Now().Add(-10 * time.Minute),
+		Status: signalcd.DeploymentStatus{
+			Phase: signalcd.Success,
+		},
+		Pipeline: fakePipelines[0],
+	},
+}
+
 const (
 	PipelineCurrent       = "/pipeline"
 	PipelineCurrentUpdate = "/pipeline/{id}"
@@ -85,92 +125,163 @@ const (
 	PipelinesStatus       = "/pipelines/status"
 )
 
-func New() *chi.Mux {
-	fakeCurrentPipeline.Pipeline = fakePipelines[0]
-
+func NewV1() (*chi.Mux, error) {
 	router := chi.NewRouter()
-	router.Use(middleware.StripSlashes)
 
-	router.Get("/", index())
+	// load embedded swagger file
+	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
+	if err != nil {
+		return nil, xerrors.Errorf("failed to load embedded swagger file: %w", err.Error())
+	}
 
-	router.Get(PipelineCurrent, pipelineCurrent())
-	router.Patch(PipelineCurrentUpdate, updateCurrentPipeline())
-	router.Get(Pipelines, pipelines())
-	router.Get(Pipeline, pipeline())
-	router.Get(PipelinesStatus, pipelineAgents())
-	router.Post(PipelinesStatus, updatePipelineAgents())
+	api := operations.NewCdAPI(swaggerSpec)
 
-	return router
+	// Skip the  redoc middleware, only serving the OpenAPI specification and
+	// the API itself via RoutesHandler. See:
+	// https://github.com/go-swagger/go-swagger/issues/1779
+	api.Middleware = func(b restmiddleware.Builder) http.Handler {
+		return restmiddleware.Spec("", swaggerSpec.Raw(), api.Context().RoutesHandler(b))
+	}
+
+	api.DeploymentsDeploymentsHandler = getDeploymentsHandler()
+	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler()
+	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler()
+	api.PipelinePipelineHandler = getPipelineHandler()
+	api.PipelinePipelinesHandler = getPipelinesHandler()
+
+	//api.PipelinePipelineAgentsHandler
+	//api.PipelineUpdatePipelineAgentsHandler
+
+	router.Mount("/", api.Serve(nil))
+
+	return router, nil
 }
 
-func index() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "index")
+func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
+	id := strfmt.UUID(p.ID)
+	mp := &models.Pipeline{
+		ID:   &id,
+		Name: p.Name,
+	}
+
+	for _, s := range p.Steps {
+		mp.Steps = append(mp.Steps, &models.Step{
+			Name:     &s.Name,
+			Image:    &s.Image,
+			Commands: s.Commands,
+		})
+	}
+
+	for _, c := range p.Checks {
+		var env []*models.CheckEnvironmentItems0
+		for key, value := range c.Environment {
+			env = append(env, &models.CheckEnvironmentItems0{
+				Key:   key,
+				Value: value,
+			})
+		}
+
+		mp.Checks = append(mp.Checks, &models.Check{
+			Name:        &c.Name,
+			Image:       &c.Image,
+			Duration:    c.Duration.Seconds(),
+			Environment: env,
+		})
+	}
+
+	return mp
+}
+
+func getPipelinesHandler() pipeline.PipelinesHandlerFunc {
+	return func(params pipeline.PipelinesParams) restmiddleware.Responder {
+		var payload []*models.Pipeline
+
+		for _, fp := range fakePipelines {
+			payload = append(payload, getModelsPipeline(fp))
+		}
+
+		return pipeline.NewPipelinesOK().WithPayload(payload)
 	}
 }
 
-func pipelines() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		bytes, err := json.Marshal(fakePipelines)
-		if err != nil {
-			http.Error(w, "failed to marshal", http.StatusInternalServerError)
-			return
-		}
-
-		_, _ = w.Write(bytes)
+func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
+	switch phase {
+	case signalcd.Success:
+		return models.DeploymentstatusPhaseSuccess
+	case signalcd.Failed:
+		return models.DeploymentstatusPhaseFailure
+	case signalcd.Progress:
+		return models.DeploymentstatusPhaseProgress
+	default:
+		return models.DeploymentstatusPhaseUnknown
 	}
 }
 
-func pipeline() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
+func getDeploymentsHandler() deployments.DeploymentsHandlerFunc {
+	return func(params deployments.DeploymentsParams) restmiddleware.Responder {
+		var payload []*models.Deployment
 
-		p, err := getPipeline(id)
-		if err != nil {
-			http.Error(w, "pipeline not found", http.StatusNotFound)
-			return
+		for _, fd := range fakeDeployments {
+			d := getModelsDeployment(fd)
+			payload = append(payload, d)
 		}
 
-		payload, err := json.Marshal(p)
-		if err != nil {
-			http.Error(w, "failed to marshal", http.StatusInternalServerError)
-			return
-		}
-
-		_, _ = w.Write(payload)
+		return deployments.NewDeploymentsOK().WithPayload(payload)
 	}
 }
 
-func pipelineCurrent() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fakeCurrentPipeline.mu.RLock()
-		defer fakeCurrentPipeline.mu.RUnlock()
-
-		bytes, err := json.Marshal(fakeCurrentPipeline.Pipeline)
-		if err != nil {
-			http.Error(w, "failed to marshal", http.StatusInternalServerError)
-			return
-		}
-
-		_, _ = w.Write(bytes)
+func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
+	return &models.Deployment{
+		Number:   &fd.Number,
+		Created:  strfmt.DateTime(fd.Created),
+		Pipeline: getModelsPipeline(fd.Pipeline),
+		Status: &models.Deploymentstatus{
+			Phase: getDeploymentStatusPhase(fd.Status.Phase),
+		},
 	}
 }
 
-func updateCurrentPipeline() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
+func getCurrentDeploymentHandler() deployments.CurrentDeploymentHandlerFunc {
+	return func(params deployments.CurrentDeploymentParams) restmiddleware.Responder {
+		fakeDeploymentsLock.RLock()
+		defer fakeDeploymentsLock.RUnlock()
 
-		p, err := getPipeline(id)
+		d := fakeDeployments[0]
+
+		return deployments.NewCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
+	}
+}
+
+func setCurrentDeploymentHandler() deployments.SetCurrentDeploymentHandlerFunc {
+	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
+		p, err := getPipeline(params.Pipeline)
 		if err != nil {
-			http.Error(w, "pipeline not found", http.StatusNotFound)
-			return
+			return deployments.NewSetCurrentDeploymentInternalServerError()
 		}
 
-		fakeCurrentPipeline.mu.Lock()
-		fakeCurrentPipeline.Pipeline = p
-		fakeCurrentPipeline.mu.Unlock()
+		fakeDeploymentsLock.Lock()
+		defer fakeDeploymentsLock.Unlock()
 
-		w.WriteHeader(http.StatusNoContent)
+		d := signalcd.Deployment{
+			Number:   int64(len(fakeDeployments) + 1),
+			Created:  time.Now(),
+			Pipeline: p,
+			Status:   signalcd.DeploymentStatus{},
+		}
+
+		fakeDeployments = append([]signalcd.Deployment{d}, fakeDeployments...)
+
+		return deployments.NewSetCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
+	}
+}
+
+func getPipelineHandler() pipeline.PipelineHandlerFunc {
+	return func(params pipeline.PipelineParams) restmiddleware.Responder {
+		p, err := getPipeline(params.ID)
+		if err != nil {
+			return pipeline.NewPipelineInternalServerError()
+		}
+		return pipeline.NewPipelineOK().WithPayload(getModelsPipeline(p))
 	}
 }
 
@@ -178,15 +289,15 @@ var agents = sync.Map{}
 
 func pipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var as []signalcd.Agent
+		var as []signalcd.AgentServer
 
 		agents.Range(func(key, value interface{}) bool {
-			as = append(as, value.(signalcd.Agent))
+			as = append(as, value.(signalcd.AgentServer))
 			return true
 		})
 
 		sort.Slice(as, func(i, j int) bool {
-			return as[i].Name < as[j].Name
+			return as[i].Agent.Name < as[j].Agent.Name
 		})
 
 		payload, err := json.Marshal(as)
@@ -201,7 +312,7 @@ func pipelineAgents() http.HandlerFunc {
 
 func updatePipelineAgents() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var agent signalcd.Agent
+		var agent signalcd.AgentServer
 		if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {
 			http.Error(w, "failed to decode", http.StatusBadRequest)
 			return
@@ -210,6 +321,6 @@ func updatePipelineAgents() http.HandlerFunc {
 
 		agent.Heartbeat = time.Now()
 
-		agents.Store(agent.Name, agent)
+		agents.Store(agent.Agent.Name, agent)
 	}
 }

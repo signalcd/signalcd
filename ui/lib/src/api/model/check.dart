@@ -11,7 +11,7 @@ class Check {
   num duration = null;
   
 
-  CheckEnvironment environment = null;
+  List<CheckEnvironment> environment = [];
   
   Check();
 
@@ -32,9 +32,7 @@ class Check {
         json['duration']
     ;
     environment =
-      
-      
-      new CheckEnvironment.fromJson(json['environment'])
+      CheckEnvironment.listFromJson(json['environment'])
 ;
   }
 

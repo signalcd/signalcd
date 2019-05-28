@@ -32,28 +32,22 @@ func init() {
   "host": "localhost:6660",
   "basePath": "/v1",
   "paths": {
-    "/pipeline": {
+    "/deployments": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
-          "pipeline"
+          "deployments"
         ],
-        "summary": "Returns the current executed pipeline",
-        "operationId": "pipelineCurrent",
+        "summary": "Returns the history of deployments",
+        "operationId": "deployments",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/pipeline"
+                "$ref": "#/definitions/deployment"
               }
             }
-          },
-          "400": {
-            "description": "bad request"
           },
           "500": {
             "description": "internal server error"
@@ -61,32 +55,44 @@ func init() {
         }
       }
     },
-    "/pipeline/{id}": {
-      "patch": {
-        "produces": [
-          "application/json"
-        ],
+    "/deployments/current": {
+      "get": {
         "tags": [
-          "pipeline"
+          "deployments"
         ],
-        "summary": "updates the current pipeline",
-        "operationId": "updateCurrentPipeline",
+        "summary": "Returns the currently active deployment",
+        "operationId": "currentDeployment",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/deployment"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "deployments"
+        ],
+        "summary": "Schedule a new deployment",
+        "operationId": "setCurrentDeployment",
         "parameters": [
           {
             "type": "string",
-            "name": "id",
-            "in": "path",
+            "name": "pipeline",
+            "in": "query",
             "required": true
           }
         ],
         "responses": {
-          "202": {
-            "description": "The current pipeline was updated successfully"
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/deployment"
+            }
           },
-          "400": {
-            "description": "bad request"
-          },
-          "default": {
+          "500": {
             "description": "internal server error"
           }
         }
@@ -110,81 +116,6 @@ func init() {
               "items": {
                 "$ref": "#/definitions/pipeline"
               }
-            }
-          },
-          "400": {
-            "description": "bad request"
-          },
-          "500": {
-            "description": "internal server error"
-          }
-        }
-      }
-    },
-    "/pipelines/status": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "pipeline"
-        ],
-        "summary": "returns the status of a running agent",
-        "operationId": "pipelineAgents",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/pipeline"
-            }
-          },
-          "400": {
-            "description": "bad request"
-          },
-          "500": {
-            "description": "internal server error"
-          }
-        }
-      },
-      "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "pipeline"
-        ],
-        "summary": "updates the status of a running agent",
-        "operationId": "updatePipelineAgents",
-        "parameters": [
-          {
-            "name": "options",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "required": [
-                "agent",
-                "healthy"
-              ],
-              "properties": {
-                "agent": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "healthy": {
-                  "type": "boolean"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/pipeline"
             }
           },
           "400": {
@@ -242,13 +173,16 @@ func init() {
           "type": "number"
         },
         "environment": {
-          "type": "object",
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "value": {
-              "type": "string"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
             }
           }
         },
@@ -257,6 +191,40 @@ func init() {
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "deployment": {
+      "required": [
+        "number"
+      ],
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/pipeline"
+        },
+        "status": {
+          "$ref": "#/definitions/deploymentstatus"
+        }
+      }
+    },
+    "deploymentstatus": {
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "success",
+            "failure",
+            "progress"
+          ]
         }
       }
     },
@@ -329,28 +297,22 @@ func init() {
   "host": "localhost:6660",
   "basePath": "/v1",
   "paths": {
-    "/pipeline": {
+    "/deployments": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
-          "pipeline"
+          "deployments"
         ],
-        "summary": "Returns the current executed pipeline",
-        "operationId": "pipelineCurrent",
+        "summary": "Returns the history of deployments",
+        "operationId": "deployments",
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/pipeline"
+                "$ref": "#/definitions/deployment"
               }
             }
-          },
-          "400": {
-            "description": "bad request"
           },
           "500": {
             "description": "internal server error"
@@ -358,32 +320,44 @@ func init() {
         }
       }
     },
-    "/pipeline/{id}": {
-      "patch": {
-        "produces": [
-          "application/json"
-        ],
+    "/deployments/current": {
+      "get": {
         "tags": [
-          "pipeline"
+          "deployments"
         ],
-        "summary": "updates the current pipeline",
-        "operationId": "updateCurrentPipeline",
+        "summary": "Returns the currently active deployment",
+        "operationId": "currentDeployment",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/deployment"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "deployments"
+        ],
+        "summary": "Schedule a new deployment",
+        "operationId": "setCurrentDeployment",
         "parameters": [
           {
             "type": "string",
-            "name": "id",
-            "in": "path",
+            "name": "pipeline",
+            "in": "query",
             "required": true
           }
         ],
         "responses": {
-          "202": {
-            "description": "The current pipeline was updated successfully"
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/deployment"
+            }
           },
-          "400": {
-            "description": "bad request"
-          },
-          "default": {
+          "500": {
             "description": "internal server error"
           }
         }
@@ -407,81 +381,6 @@ func init() {
               "items": {
                 "$ref": "#/definitions/pipeline"
               }
-            }
-          },
-          "400": {
-            "description": "bad request"
-          },
-          "500": {
-            "description": "internal server error"
-          }
-        }
-      }
-    },
-    "/pipelines/status": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "pipeline"
-        ],
-        "summary": "returns the status of a running agent",
-        "operationId": "pipelineAgents",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/pipeline"
-            }
-          },
-          "400": {
-            "description": "bad request"
-          },
-          "500": {
-            "description": "internal server error"
-          }
-        }
-      },
-      "post": {
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "pipeline"
-        ],
-        "summary": "updates the status of a running agent",
-        "operationId": "updatePipelineAgents",
-        "parameters": [
-          {
-            "name": "options",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "required": [
-                "agent",
-                "healthy"
-              ],
-              "properties": {
-                "agent": {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                "healthy": {
-                  "type": "boolean"
-                }
-              }
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/pipeline"
             }
           },
           "400": {
@@ -539,13 +438,16 @@ func init() {
           "type": "number"
         },
         "environment": {
-          "type": "object",
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "value": {
-              "type": "string"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
             }
           }
         },
@@ -554,6 +456,40 @@ func init() {
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "deployment": {
+      "required": [
+        "number"
+      ],
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "number": {
+          "type": "number",
+          "format": "int64"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/pipeline"
+        },
+        "status": {
+          "$ref": "#/definitions/deploymentstatus"
+        }
+      }
+    },
+    "deploymentstatus": {
+      "properties": {
+        "phase": {
+          "type": "string",
+          "enum": [
+            "unknown",
+            "success",
+            "failure",
+            "progress"
+          ]
         }
       }
     },
