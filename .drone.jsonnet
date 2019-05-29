@@ -36,6 +36,9 @@ local docker = {
     branch: [
       'master',
     ],
+    event: [
+      'push',
+    ],
   },
 };
 

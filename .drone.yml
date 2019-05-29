@@ -42,6 +42,8 @@ steps:
   when:
     branch:
     - master
+    event:
+    - push
 
 - name: docker-agent
   image: plugins/docker
@@ -57,6 +59,8 @@ steps:
   when:
     branch:
     - master
+    event:
+    - push
 
 ---
 kind: pipeline
@@ -91,6 +95,8 @@ steps:
   when:
     branch:
     - master
+    event:
+    - push
 
 ---
 kind: pipeline
@@ -117,6 +123,8 @@ steps:
   when:
     branch:
     - master
+    event:
+    - push
 
 - name: docker-examples-cheese1
   image: plugins/docker
@@ -134,6 +142,8 @@ steps:
   when:
     branch:
     - master
+    event:
+    - push
 
 - name: docker-examples-cheese2
   image: plugins/docker
@@ -151,5 +161,7 @@ steps:
   when:
     branch:
     - master
+    event:
+    - push
 
 ...
