@@ -86,7 +86,7 @@ packages:
     source: hosted
     version: "0.3.2"
   build_daemon:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: build_daemon
       url: "https://pub.dartlang.org"
