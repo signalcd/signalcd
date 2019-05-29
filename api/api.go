@@ -21,14 +21,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const (
-	PipelineCurrent       = "/pipeline"
-	PipelineCurrentUpdate = "/pipeline/{id}"
-	Pipelines             = "/pipelines"
-	Pipeline              = "/pipelines/{id}"
-	PipelinesStatus       = "/pipelines/status"
-)
-
+// SignalDB is the union of all necessary interfaces for the API
 type SignalDB interface {
 	DeploymentLister
 	DeploymentCreator
@@ -36,6 +29,7 @@ type SignalDB interface {
 	PipelinesLister
 }
 
+// NewV1 creates a new v1 API
 func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 	router := chi.NewRouter()
 
@@ -103,6 +97,7 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 	return mp
 }
 
+// PipelinesLister returns a list of Pipelines
 type PipelinesLister interface {
 	ListPipelines() ([]signalcd.Pipeline, error)
 }
@@ -137,15 +132,16 @@ func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 	}
 }
 
+// DeploymentLister lists all Deployments
 type DeploymentLister interface {
-	List() ([]signalcd.Deployment, error)
+	ListDeployments() ([]signalcd.Deployment, error)
 }
 
 func getDeploymentsHandler(lister DeploymentLister) deployments.DeploymentsHandlerFunc {
 	return func(params deployments.DeploymentsParams) restmiddleware.Responder {
 		var payload []*models.Deployment
 
-		list, err := lister.List()
+		list, err := lister.ListDeployments()
 		if err != nil {
 			return deployments.NewDeploymentsInternalServerError()
 		}
@@ -169,6 +165,7 @@ func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
 	}
 }
 
+// CurrentDeploymentGetter gets the current Deployment
 type CurrentDeploymentGetter interface {
 	GetCurrentDeployment() (signalcd.Deployment, error)
 }
@@ -184,6 +181,7 @@ func getCurrentDeploymentHandler(getter CurrentDeploymentGetter) deployments.Cur
 	}
 }
 
+// DeploymentCreator gets a Pipeline and then creates a new Deployments
 type DeploymentCreator interface {
 	PipelineGetter
 	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
@@ -207,6 +205,7 @@ func setCurrentDeploymentHandler(creator DeploymentCreator, logger log.Logger) d
 	}
 }
 
+// PipelineGetter gets a new Pipeline
 type PipelineGetter interface {
 	GetPipeline(id string) (signalcd.Pipeline, error)
 }

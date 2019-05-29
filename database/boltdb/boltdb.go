@@ -15,10 +15,12 @@ const (
 	bucketPipelines   = `pipelines`
 )
 
+// BoltDB has a connection to the database and implements the needed interfaces.
 type BoltDB struct {
 	db *bolt.DB
 }
 
+// New creates a new BoltDB instance
 func New() (*BoltDB, func() error, error) {
 	// TODO: Make path configurable
 	db, err := bolt.Open("./development/data", 0666, nil)
@@ -64,7 +66,8 @@ func New() (*BoltDB, func() error, error) {
 	return &BoltDB{db: db}, db.Close, nil
 }
 
-func (bdb *BoltDB) List() ([]signalcd.Deployment, error) {
+// ListDeployments lists all Deployments
+func (bdb *BoltDB) ListDeployments() ([]signalcd.Deployment, error) {
 	var ds []signalcd.Deployment
 
 	err := bdb.db.View(func(tx *bolt.Tx) error {
@@ -86,6 +89,7 @@ func (bdb *BoltDB) List() ([]signalcd.Deployment, error) {
 	return ds, nil
 }
 
+// CreateDeployment creates a new Deployment from a Pipeline
 func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deployment, error) {
 	var d signalcd.Deployment
 
@@ -116,6 +120,7 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 	return d, err
 }
 
+// GetCurrentDeployment gets the current Deployment
 func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	var value []byte
 
@@ -147,6 +152,7 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	return d, err
 }
 
+// GetPipeline gets a Pipeline by its ID
 func (bdb *BoltDB) GetPipeline(id string) (signalcd.Pipeline, error) {
 	var p signalcd.Pipeline
 
@@ -163,6 +169,7 @@ func (bdb *BoltDB) GetPipeline(id string) (signalcd.Pipeline, error) {
 	return p, err
 }
 
+// ListPipelines returns a list of Pipelines
 func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
 	var pipelines []signalcd.Pipeline
 
