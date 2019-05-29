@@ -5,10 +5,14 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/signalcd"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
+)
+
+const (
+	bucketDeployments = `deployments`
+	bucketPipelines   = `pipelines`
 )
 
 type BoltDB struct {
@@ -23,16 +27,30 @@ func New() (*BoltDB, func() error, error) {
 	}
 
 	err = db.Batch(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(`deployments`))
+		bucket, err := tx.CreateBucketIfNotExists([]byte(bucketDeployments))
 		if err != nil {
 			return err
 		}
 
-		for _, d := range api.FakeDeployments {
+		for _, d := range fakeDeployments {
 			key := strconv.Itoa(int(d.Number))
 			value, _ := json.Marshal(d)
 
 			if err := bucket.Put([]byte(key), value); err != nil {
+				return err
+			}
+		}
+
+		bucket, err = tx.CreateBucketIfNotExists([]byte(bucketPipelines))
+		if err != nil {
+			return err
+		}
+
+		for _, p := range fakePipelines {
+			key := []byte(p.ID)
+			value, _ := json.Marshal(p)
+
+			if err := bucket.Put(key, value); err != nil {
 				return err
 			}
 		}
@@ -50,7 +68,7 @@ func (bdb *BoltDB) List() ([]signalcd.Deployment, error) {
 	var ds []signalcd.Deployment
 
 	err := bdb.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(`deployments`))
+		b := tx.Bucket([]byte(bucketDeployments))
 		c := b.Cursor()
 
 		for k, v := c.Last(); k != nil; k, v = c.Prev() {
@@ -68,11 +86,11 @@ func (bdb *BoltDB) List() ([]signalcd.Deployment, error) {
 	return ds, nil
 }
 
-func (bdb *BoltDB) Create(pipeline signalcd.Pipeline) (signalcd.Deployment, error) {
+func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deployment, error) {
 	var d signalcd.Deployment
 
 	err := bdb.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(`deployments`))
+		b := tx.Bucket([]byte(bucketDeployments))
 		c := b.Cursor()
 
 		num := 0
@@ -102,7 +120,7 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	var value []byte
 
 	err := bdb.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(`deployments`))
+		b := tx.Bucket([]byte(bucketDeployments))
 		c := b.Cursor()
 
 		num := 0
@@ -127,4 +145,41 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	var d signalcd.Deployment
 	err = json.Unmarshal(value, &d)
 	return d, err
+}
+
+func (bdb *BoltDB) GetPipeline(id string) (signalcd.Pipeline, error) {
+	var p signalcd.Pipeline
+
+	err := bdb.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketPipelines))
+		bytes := b.Get([]byte(id))
+
+		if err := json.Unmarshal(bytes, &p); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return p, err
+}
+
+func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
+	var pipelines []signalcd.Pipeline
+
+	err := bdb.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketPipelines))
+		c := b.Cursor()
+
+		for k, v := c.Last(); k != nil; k, v = c.Prev() {
+			var p signalcd.Pipeline
+			if err := json.Unmarshal(v, &p); err != nil {
+				return err
+			}
+			pipelines = append(pipelines, p)
+		}
+
+		return nil
+	})
+
+	return pipelines, err
 }

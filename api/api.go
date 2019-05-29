@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sort"
 	"sync"
@@ -22,102 +21,6 @@ import (
 	"golang.org/x/xerrors"
 )
 
-var fakeChecks = []signalcd.Check{
-	{
-		Name:     "kubernetes-status",
-		Image:    "quay.io/signalcd/kubernetes-status",
-		Duration: time.Minute,
-		Environment: map[string]string{
-			"PLUGIN_LABELS": "app=cheese",
-		},
-	},
-}
-
-var fakePipelines = []signalcd.Pipeline{
-	{
-		ID:   "eee4047d-3826-4bf0-a7f1-b0b339521a52",
-		Name: "cheese0",
-		Steps: []signalcd.Step{
-			{
-				Name:     "cheese0",
-				Image:    "quay.io/signalcd/examples:cheese0",
-				Commands: []string{"kubectl apply -f /data"},
-			},
-		},
-		Checks: fakeChecks,
-	},
-	{
-		ID:   "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
-		Name: "cheese1",
-		Steps: []signalcd.Step{
-			{
-				Name:     "cheese1",
-				Image:    "quay.io/signalcd/examples:cheese1",
-				Commands: []string{"kubectl apply -f /data"},
-			},
-		},
-		Checks: fakeChecks,
-	},
-	{
-		ID:   "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
-		Name: "cheese2",
-		Steps: []signalcd.Step{
-			{
-				Name:     "cheese2",
-				Image:    "quay.io/signalcd/examples:cheese2",
-				Commands: []string{"kubectl apply -f /data"},
-			},
-		},
-		Checks: fakeChecks,
-	},
-}
-
-func getPipeline(id string) (signalcd.Pipeline, error) {
-	for _, p := range fakePipelines {
-		if p.ID == id {
-			return p, nil
-		}
-	}
-	return signalcd.Pipeline{}, fmt.Errorf("pipeline not found")
-}
-
-var fakeDeploymentsLock sync.RWMutex
-
-var FakeDeployments = []signalcd.Deployment{
-	{
-		Number:  4,
-		Created: time.Now().Add(-30 * time.Second),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Success,
-		},
-		Pipeline: fakePipelines[2],
-	},
-	{
-		Number:  3,
-		Created: time.Now().Add(-3 * time.Minute),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Success,
-		},
-		Pipeline: fakePipelines[0],
-	},
-	{
-		Number:  2,
-		Created: time.Now().Add(-8 * time.Minute),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Failed,
-		},
-		Pipeline: fakePipelines[1],
-	},
-	{
-		Number:  1,
-		Created: time.Now().Add(-10 * time.Minute),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Success,
-		},
-		Pipeline: fakePipelines[0],
-	},
-}
-
 const (
 	PipelineCurrent       = "/pipeline"
 	PipelineCurrentUpdate = "/pipeline/{id}"
@@ -130,6 +33,7 @@ type SignalDB interface {
 	DeploymentLister
 	DeploymentCreator
 	CurrentDeploymentGetter
+	PipelinesLister
 }
 
 func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
@@ -153,8 +57,8 @@ func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 	api.DeploymentsDeploymentsHandler = getDeploymentsHandler(db)
 	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler(db)
 	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler(db, logger)
-	api.PipelinePipelineHandler = getPipelineHandler()
-	api.PipelinePipelinesHandler = getPipelinesHandler()
+	api.PipelinePipelineHandler = getPipelineHandler(db)
+	api.PipelinePipelinesHandler = getPipelinesHandler(db)
 
 	//api.PipelinePipelineAgentsHandler
 	//api.PipelineUpdatePipelineAgentsHandler
@@ -199,12 +103,21 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 	return mp
 }
 
-func getPipelinesHandler() pipeline.PipelinesHandlerFunc {
+type PipelinesLister interface {
+	ListPipelines() ([]signalcd.Pipeline, error)
+}
+
+func getPipelinesHandler(lister PipelinesLister) pipeline.PipelinesHandlerFunc {
 	return func(params pipeline.PipelinesParams) restmiddleware.Responder {
 		var payload []*models.Pipeline
 
-		for _, fp := range fakePipelines {
-			payload = append(payload, getModelsPipeline(fp))
+		pipelines, err := lister.ListPipelines()
+		if err != nil {
+			return pipeline.NewPipelinesInternalServerError()
+		}
+
+		for _, p := range pipelines {
+			payload = append(payload, getModelsPipeline(p))
 		}
 
 		return pipeline.NewPipelinesOK().WithPayload(payload)
@@ -272,18 +185,19 @@ func getCurrentDeploymentHandler(getter CurrentDeploymentGetter) deployments.Cur
 }
 
 type DeploymentCreator interface {
-	Create(signalcd.Pipeline) (signalcd.Deployment, error)
+	PipelineGetter
+	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
 }
 
 func setCurrentDeploymentHandler(creator DeploymentCreator, logger log.Logger) deployments.SetCurrentDeploymentHandlerFunc {
 	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
-		p, err := getPipeline(params.Pipeline)
+		p, err := creator.GetPipeline(params.Pipeline)
 		if err != nil {
 			logger.Log("msg", "failed to get pipeline", "id", params.Pipeline, "err", err)
 			return deployments.NewSetCurrentDeploymentInternalServerError()
 		}
 
-		d, err := creator.Create(p)
+		d, err := creator.CreateDeployment(p)
 		if err != nil {
 			logger.Log("msg", "failed to create deployment", "err", err)
 			return deployments.NewSetCurrentDeploymentInternalServerError()
@@ -293,9 +207,13 @@ func setCurrentDeploymentHandler(creator DeploymentCreator, logger log.Logger) d
 	}
 }
 
-func getPipelineHandler() pipeline.PipelineHandlerFunc {
+type PipelineGetter interface {
+	GetPipeline(id string) (signalcd.Pipeline, error)
+}
+
+func getPipelineHandler(getter PipelineGetter) pipeline.PipelineHandlerFunc {
 	return func(params pipeline.PipelineParams) restmiddleware.Responder {
-		p, err := getPipeline(params.ID)
+		p, err := getter.GetPipeline(params.ID)
 		if err != nil {
 			return pipeline.NewPipelineInternalServerError()
 		}
