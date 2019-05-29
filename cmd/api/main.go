@@ -9,6 +9,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 	"github.com/signalcd/signalcd/api"
+	"github.com/signalcd/signalcd/database/boltdb"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 )
@@ -29,9 +30,17 @@ func main() {
 
 func apiAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
+		var db api.SignalDB
+
+		db, dbClose, err := boltdb.New()
+		if err != nil {
+			return xerrors.Errorf("failed to create bolt db: %w", err)
+		}
+		defer dbClose()
+
 		var gr run.Group
 		{
-			router, err := api.NewV1()
+			router, err := api.NewV1(db, log.WithPrefix(logger, "component", "api"))
 			if err != nil {
 				return xerrors.Errorf("failed to initialize api: %w", err)
 			}
