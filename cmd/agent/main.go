@@ -316,17 +316,17 @@ func (u *updater) poll(ctx context.Context) error {
 }
 
 func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
-	println("running steps")
+	level.Info(u.logger).Log("msg", "running steps")
 	if err := u.runSteps(ctx, p); err != nil {
 		return err
 	}
 
-	println("cleaning checks")
+	level.Info(u.logger).Log("msg", "cleaning checks")
 	if err := u.cleanChecks(p); err != nil {
 		return xerrors.Errorf("failed to clean old checks: %w", err)
 	}
 
-	println("running checks")
+	level.Info(u.logger).Log("msg", "running checks")
 	if err := u.runChecks(p); err != nil {
 		return err
 	}
