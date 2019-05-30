@@ -125,16 +125,16 @@ type currentDeployment struct {
 	deployment *signalcd.Deployment
 }
 
-func (cd currentDeployment) get() *signalcd.Deployment {
+func (cd *currentDeployment) get() *signalcd.Deployment {
 	cd.mu.RLock()
 	defer cd.mu.RUnlock()
 	return cd.deployment
 }
 
-func (cd currentDeployment) set(deployment *signalcd.Deployment) {
+func (cd *currentDeployment) set(d signalcd.Deployment) {
 	cd.mu.Lock()
 	defer cd.mu.Unlock()
-	cd.deployment = deployment
+	cd.deployment = &d
 }
 
 type updater struct {
@@ -253,7 +253,7 @@ func (u *updater) poll(ctx context.Context) error {
 		}
 		level.Debug(u.logger).Log("msg", "loaded pipeline from ConfigMap")
 
-		u.currentDeployment.set(&deployment)
+		u.currentDeployment.set(deployment)
 
 		// if running deployment id in cluster equals to wanted deployment
 		// we don't need to run the pipeline
@@ -287,7 +287,7 @@ func (u *updater) poll(ctx context.Context) error {
 	}
 
 	if u.currentDeployment.get().Number != deployment.Number {
-		u.currentDeployment.set(&deployment)
+		u.currentDeployment.set(deployment)
 		level.Info(u.logger).Log("msg", "update deployment", "number", deployment.Number)
 
 		// TODO
