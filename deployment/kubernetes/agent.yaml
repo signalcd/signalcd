@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signalcd-agent
+  namespace: myapplication
+  labels:
+    app: signalcd-agent
+spec:
+  selector:
+    matchLabels:
+      app: signalcd-agent
+  template:
+    metadata:
+      labels:
+        app: signalcd-agent
+    spec:
+      containers:
+        - name: api
+          image: quay.io/signalcd/agent:latest
+          imagePullPolicy: Always
+          args:
+            - -name=myapplication
