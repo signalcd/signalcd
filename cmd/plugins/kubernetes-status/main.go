@@ -66,12 +66,12 @@ func run(c *cli.Context) error {
 
 	konfig, err := clientcmd.BuildConfigFromFlags("", "")
 	if err != nil {
-		return xerrors.Errorf("failed to create kuberentes config: %w", err)
+		return xerrors.Errorf("failed to create kubernetes config: %w", err)
 	}
 
 	klient, err := kubernetes.NewForConfig(konfig)
 	if err != nil {
-		return xerrors.Errorf("failed to create kuberentes client: %w", err)
+		return xerrors.Errorf("failed to create kubernetes client: %w", err)
 	}
 
 	watch, err := klient.AppsV1().Deployments("default").Watch(metav1.ListOptions{
