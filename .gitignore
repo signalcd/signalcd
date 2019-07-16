@@ -13,6 +13,8 @@
 /cmd/agent/agent
 /cmd/api/api
 /cmd/plugins/kubernetes-status/kubernetes-status
+/cmd/ui/assets/*
+/cmd/ui/ui
 /development/caddy
 /development/data
 /vendor/
