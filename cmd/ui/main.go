@@ -62,7 +62,7 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 	}
 }
 
-func file(name string, mime string) http.HandlerFunc {
+func file(name, mime string) http.HandlerFunc {
 	file, _ := ioutil.ReadFile("/assets/" + name)
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mime)
