@@ -50,6 +50,7 @@ local docker = {
         commands: [
           'make cmd/agent/agent',
           'make cmd/api/api',
+          'make cmd/ui/ui',
         ],
       },
       {
@@ -73,7 +74,7 @@ local docker = {
           context: './cmd/%s/' % name,
         },
       }
-      for name in ['api', 'agent']
+      for name in ['api', 'agent', 'ui']
     ],
   },
 
