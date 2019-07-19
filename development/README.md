@@ -1,5 +1,11 @@
 # Development
 
+Start the API and Agent locally:
+```bash
+make cmd/api/api && ./cmd/api/api
+make cmd/agent/agent && ./cmd/agent/agent -kubeconfig ~/.kube/some-cluster -name local
+```
+
 ## UI
 
 If you want to start the UI and develop in Dart, you need to run a proxy in front of the API and UI
