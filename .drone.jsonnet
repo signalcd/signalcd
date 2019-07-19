@@ -63,6 +63,7 @@ local docker = {
           'pub global activate webdev',
           '~/.pub-cache/bin/webdev build',
           'rm -rf build/packages',
+          'cp build/{bulma.min.css,index.html,main.dart.js} ../cmd/ui/assets/',
         ],
       },
     ] + [
