@@ -13,7 +13,7 @@ http://swagger.io/terms/
       http
       https
     Host: localhost:6660
-    BasePath: /v1
+    BasePath: /api/v1
     Version: v0.0.0
 
     Consumes:
