@@ -32,6 +32,8 @@ spec:
         - name: api
           image: quay.io/signalcd/api:latest
           imagePullPolicy: Always
+          args:
+            - --bolt.path=/tmp/signalcd-data
           ports:
             - containerPort: 6660
               name: http
