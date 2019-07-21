@@ -24,6 +24,12 @@ func main() {
 
 	app := cli.NewApp()
 	app.Action = apiAction(logger)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "bolt.path",
+			Value: "./development/data",
+		},
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		logger.Log("msg", "failed running api", "err", err)
@@ -35,7 +41,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
 		var db api.SignalDB
 
-		db, dbClose, err := boltdb.New()
+		db, dbClose, err := boltdb.New(c.String("bolt.path"))
 		if err != nil {
 			return xerrors.Errorf("failed to create bolt db: %w", err)
 		}

@@ -21,9 +21,9 @@ type BoltDB struct {
 }
 
 // New creates a new BoltDB instance
-func New() (*BoltDB, func() error, error) {
+func New(path string) (*BoltDB, func() error, error) {
 	// TODO: Make path configurable
-	db, err := bolt.Open("./development/data", 0666, nil)
+	db, err := bolt.Open(path, 0666, nil)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to open bolt db: %w", err)
 	}
