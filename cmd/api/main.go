@@ -4,7 +4,10 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
@@ -40,14 +43,18 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var gr run.Group
 		{
-			router, err := api.NewV1(db, log.WithPrefix(logger, "component", "api"))
+			apiV1, err := api.NewV1(db, log.WithPrefix(logger, "component", "api"))
 			if err != nil {
 				return xerrors.Errorf("failed to initialize api: %w", err)
 			}
 
+			r := chi.NewRouter()
+			r.Use(Logger(logger))
+			r.Mount("/", apiV1)
+
 			s := http.Server{
 				Addr:    ":6660",
-				Handler: router,
+				Handler: r,
 			}
 
 			gr.Add(func() error {
@@ -66,5 +73,25 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 		}
 
 		return nil
+	}
+}
+
+func Logger(logger log.Logger) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
+
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			next.ServeHTTP(ww, r)
+
+			level.Debug(logger).Log(
+				"proto", r.Proto,
+				"method", r.Method,
+				"status", ww.Status(),
+				"path", r.URL.Path,
+				"duration", time.Since(start),
+				"bytes", ww.BytesWritten(),
+			)
+		})
 	}
 }
