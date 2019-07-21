@@ -50,6 +50,7 @@ local docker = {
         commands: [
           'make cmd/agent/agent',
           'make cmd/api/api',
+          'make cmd/ui/ui',
         ],
       },
       {
@@ -62,6 +63,7 @@ local docker = {
           'pub global activate webdev',
           '~/.pub-cache/bin/webdev build',
           'rm -rf build/packages',
+          'cp -r build/ ../cmd/ui/assets/',
         ],
       },
     ] + [
@@ -73,7 +75,7 @@ local docker = {
           context: './cmd/%s/' % name,
         },
       }
-      for name in ['api', 'agent']
+      for name in ['api', 'agent', 'ui']
     ],
   },
 

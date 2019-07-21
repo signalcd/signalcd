@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: signalcd-api
   namespace: signalcd
+  labels:
+    app: signalcd-api
 spec:
   selector:
     app: signalcd-api
@@ -30,6 +32,8 @@ spec:
         - name: api
           image: quay.io/signalcd/api:latest
           imagePullPolicy: Always
+          args:
+            - --bolt.path=/tmp/signalcd-data
           ports:
             - containerPort: 6660
               name: http

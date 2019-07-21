@@ -7,7 +7,7 @@ spec:
   selector:
     app: signalcd-ui
   ports:
-    - port: 6660
+    - port: 6662
       name: http
 ---
 apiVersion: apps/v1
@@ -31,5 +31,5 @@ spec:
           image: quay.io/signalcd/ui:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 6660
+            - containerPort: 6662
               name: http

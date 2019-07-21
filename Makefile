@@ -30,7 +30,7 @@ ui/lib/src/api: swagger.yaml
 	-rm -rf tmp/
 
 .PHONY: build
-build: cmd/agent/agent cmd/api/api
+build: cmd/agent/agent cmd/api/api cmd/ui/ui
 
 .PHONY: cmd/agent/agent
 cmd/agent/agent:
@@ -40,9 +40,17 @@ cmd/agent/agent:
 cmd/api/api:
 	$(GO) build -v -o ./cmd/api/api ./cmd/api
 
+.PHONY: cmd/ui/ui
+cmd/ui/ui:
+	$(GO) build -v -o ./cmd/ui/ui ./cmd/ui
+
 .PHONY: cmd/plugins/kubernetes-status/kubernetes-status
 cmd/plugins/kubernetes-status/kubernetes-status:
 	$(GO) build -v -o ./cmd/plugins/kubernetes-status/kubernetes-status ./cmd/plugins/kubernetes-status
+
+.PHONY: ui
+ui:
+	cd ui && webdev build
 
 .PHONY: ui-serve
 ui-serve:
@@ -57,6 +65,11 @@ container-agent: cmd/agent/agent
 .PHONY: container-api
 container-api: cmd/api/api
 	docker build -t cd-api ./cmd/api
+
+.PHONY: container-ui
+container-ui: ui cmd/ui/ui
+	cp ui/build/{bulma.min.css,index.html,main.dart.js} ./cmd/ui/assets/
+	docker build -t cd-ui ./cmd/ui
 
 .PHONY: container-kubernetes-status
 container-kubernetes-status: cmd/plugins/kubernetes-status/kubernetes-status

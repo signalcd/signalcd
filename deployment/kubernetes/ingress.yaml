@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: signalcd
+  namespace: signalcd
+  labels:
+    app: signalcd
+  annotations:
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: signalcd-auth # You need to create this secret
+spec:
+  rules:
+    - host: signalcd.example.com
+      http:
+        paths:
+          - path: /api
+            backend:
+              serviceName: signalcd-api
+              servicePort: 6660
+          - path: /
+            backend:
+              serviceName: signalcd-ui
+              servicePort: 6662
+  tls:
+    - secretName: signalcd-tls
+      hosts:
+        - signalcd.example.com
+---
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: Certificate
+metadata:
+  name: signalcd
+  namespace: signalcd
+  labels:
+    app: signalcd
+spec:
+  acme:
+    config:
+      - domains:
+          - signalcd.example.com
+        http01:
+          ingressClass: nginx
+  commonName: signalcd.example.com
+  dnsNames:
+    - signalcd.example.com
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: signalcd-tls

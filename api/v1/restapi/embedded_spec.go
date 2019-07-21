@@ -30,7 +30,7 @@ func init() {
     "version": "v0.0.0"
   },
   "host": "localhost:6660",
-  "basePath": "/v1",
+  "basePath": "/api/v1",
   "paths": {
     "/deployments": {
       "get": {
@@ -295,7 +295,7 @@ func init() {
     "version": "v0.0.0"
   },
   "host": "localhost:6660",
-  "basePath": "/v1",
+  "basePath": "/api/v1",
   "paths": {
     "/deployments": {
       "get": {

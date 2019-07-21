@@ -5,7 +5,7 @@ info:
   title: "SignalCD Swagger Spec"
   termsOfService: "http://swagger.io/terms/"
 host: "localhost:6660"
-basePath: "/v1"
+basePath: "/api/v1"
 tags:
   - name: "pipeline"
     description: "manage pipelines"

@@ -13,6 +13,7 @@ steps:
   commands:
   - make cmd/agent/agent
   - make cmd/api/api
+  - make cmd/ui/ui
   environment:
     CGO_ENABLED: 0
     GO111MODULE: on
@@ -27,6 +28,7 @@ steps:
   - pub global activate webdev
   - ~/.pub-cache/bin/webdev build
   - rm -rf build/packages
+  - cp -r build/ ../cmd/ui/assets/
 
 - name: docker-api
   image: plugins/docker
@@ -54,6 +56,23 @@ steps:
       from_secret: quay_password
     registry: quay.io
     repo: quay.io/signalcd/agent
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+    event:
+    - push
+
+- name: docker-ui
+  image: plugins/docker
+  settings:
+    context: ./cmd/ui/
+    dockerfile: cmd/ui/Dockerfile
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/ui
     username:
       from_secret: quay_username
   when:
