@@ -35,6 +35,11 @@ func configureAPI(api *operations.CdAPI) http.Handler {
 
 	api.JSONProducer = runtime.JSONProducer()
 
+	if api.PipelineCreateHandler == nil {
+		api.PipelineCreateHandler = pipeline.CreateHandlerFunc(func(params pipeline.CreateParams) middleware.Responder {
+			return middleware.NotImplemented("operation pipeline.Create has not yet been implemented")
+		})
+	}
 	if api.DeploymentsCurrentDeploymentHandler == nil {
 		api.DeploymentsCurrentDeploymentHandler = deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams) middleware.Responder {
 			return middleware.NotImplemented("operation deployments.CurrentDeployment has not yet been implemented")

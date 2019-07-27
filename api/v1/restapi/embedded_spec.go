@@ -125,6 +125,35 @@ func init() {
             "description": "internal server error"
           }
         }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "pipeline"
+        ],
+        "summary": "creates a new pipeline",
+        "operationId": "create",
+        "parameters": [
+          {
+            "description": "The pipeline to be created",
+            "name": "pipeline",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          },
+          "400": {}
+        }
       }
     },
     "/pipelines/{id}": {
@@ -389,6 +418,35 @@ func init() {
           "500": {
             "description": "internal server error"
           }
+        }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "pipeline"
+        ],
+        "summary": "creates a new pipeline",
+        "operationId": "create",
+        "parameters": [
+          {
+            "description": "The pipeline to be created",
+            "name": "pipeline",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          },
+          "400": {}
         }
       }
     },
