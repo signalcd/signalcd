@@ -106,13 +106,18 @@ local swagger = {
   },
 
   pipeline {
-    name: 'swagger-apiv1',
+    name: 'code-generation',
     steps+: [
       swagger {
-        name: 'apiv1',
+        name: 'swagger-apiv1',
+        environment: {
+          GOSWAGGER: '/usr/bin/swagger',
+        },
         commands: [
-          'make apiv1',
-          'git diff --exit-diff',
+          // TOOD: Can we use the Makefile here?
+          'generate server -f swagger.yaml --exclude-main -A cd --target api/v1',
+          'generate client -f swagger.yaml --target api/v1',
+          'git diff --exit-code',
         ],
       },
     ],
