@@ -13,7 +13,7 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	models "github.com/signalcd/signalcd/cmd/agent/models"
+	models "github.com/signalcd/signalcd/api/v1/models"
 )
 
 // SetCurrentDeploymentReader is a Reader for the SetCurrentDeployment structure.

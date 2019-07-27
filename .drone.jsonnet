@@ -42,6 +42,11 @@ local docker = {
   },
 };
 
+local swagger = {
+  name: 'swagger',
+  image: 'quay.io/goswagger/swagger:v0.19.0',
+};
+
 [
   pipeline {
     steps+: [
@@ -96,6 +101,22 @@ local docker = {
           dockerfile: 'cmd/checks/kubernetes-status/Dockerfile',
           context: 'cmd/checks/kubernetes-status',
         },
+      },
+    ],
+  },
+
+  pipeline {
+    name: 'code-generation',
+    steps+: [
+      swagger {
+        name: 'swagger-apiv1',
+        environment: {
+          GOSWAGGER: '/usr/bin/swagger',
+        },
+        commands: [
+          'make apiv1',
+          'git diff --exit-code',
+        ],
       },
     ],
   },

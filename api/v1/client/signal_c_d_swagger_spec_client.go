@@ -11,8 +11,8 @@ import (
 
 	strfmt "github.com/go-openapi/strfmt"
 
-	"github.com/signalcd/signalcd/cmd/agent/client/deployments"
-	"github.com/signalcd/signalcd/cmd/agent/client/pipeline"
+	"github.com/signalcd/signalcd/api/v1/client/deployments"
+	"github.com/signalcd/signalcd/api/v1/client/pipeline"
 )
 
 // Default signal c d swagger spec HTTP client.
