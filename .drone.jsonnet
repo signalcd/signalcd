@@ -114,9 +114,7 @@ local swagger = {
           GOSWAGGER: '/usr/bin/swagger',
         },
         commands: [
-          // TOOD: Can we use the Makefile here?
-          'generate server -f swagger.yaml --exclude-main -A cd --target api/v1',
-          'generate client -f swagger.yaml --target api/v1',
+          'make apiv1',
           'git diff --exit-code',
         ],
       },
