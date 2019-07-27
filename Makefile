@@ -44,9 +44,9 @@ cmd/api/api:
 cmd/ui/ui:
 	$(GO) build -v -o ./cmd/ui/ui ./cmd/ui
 
-.PHONY: cmd/plugins/kubernetes-status/kubernetes-status
-cmd/plugins/kubernetes-status/kubernetes-status:
-	$(GO) build -v -o ./cmd/plugins/kubernetes-status/kubernetes-status ./cmd/plugins/kubernetes-status
+.PHONY: cmd/checks/kubernetes-status/kubernetes-status
+cmd/checks/kubernetes-status/kubernetes-status:
+	$(GO) build -v -o ./cmd/checks/kubernetes-status/kubernetes-status ./cmd/checks/kubernetes-status
 
 .PHONY: ui
 ui:
@@ -72,8 +72,8 @@ container-ui: ui cmd/ui/ui
 	docker build -t cd-ui ./cmd/ui
 
 .PHONY: container-kubernetes-status
-container-kubernetes-status: cmd/plugins/kubernetes-status/kubernetes-status
-	docker build -t quay.io/metalmatze/cd:kubernetes-status ./cmd/plugins/kubernetes-status
+container-kubernetes-status: cmd/checks/kubernetes-status/kubernetes-status
+	docker build -t quay.io/metalmatze/cd:kubernetes-status ./cmd/checks/kubernetes-status
 
 .PHONY: container-cheese0
 container-cheese0:
