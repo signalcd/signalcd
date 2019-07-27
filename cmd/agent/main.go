@@ -451,7 +451,7 @@ var checkLabels = map[string]string{
 }
 
 func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) error {
-	// Add PLUGIN_API for plugins to find the API
+	// Add PLUGIN_API for checks to find the API
 	check.Environment["PLUGIN_API"] = apiURL
 
 	var env []corev1.EnvVar
