@@ -80,21 +80,21 @@ local docker = {
   },
 
   pipeline {
-    name: 'plugins',
+    name: 'checks',
 
     steps+: [
       golang {
         name: 'build-kubernetes-status',
         commands: [
-          'make cmd/plugins/kubernetes-status/kubernetes-status',
+          'make cmd/checks/kubernetes-status/kubernetes-status',
         ],
       },
       docker {
         name: 'docker-kubernetes-status',
         settings+: {
           repo: 'quay.io/signalcd/kubernetes-status',
-          dockerfile: 'cmd/plugins/kubernetes-status/Dockerfile',
-          context: 'cmd/plugins/kubernetes-status',
+          dockerfile: 'cmd/checks/kubernetes-status/Dockerfile',
+          context: 'cmd/checks/kubernetes-status',
         },
       },
     ],
