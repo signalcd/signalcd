@@ -258,6 +258,8 @@ func updatePipelineAgents() http.HandlerFunc {
 	}
 }
 
-func createPipelineHandler(db SignalDB) pipeline.CreateHandler {
-	return func() {}
+func createPipelineHandler(db SignalDB) pipeline.CreateHandlerFunc {
+	return func(params pipeline.CreateParams) restmiddleware.Responder {
+		return pipeline.NewCreateOK()
+	}
 }
