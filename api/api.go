@@ -53,9 +53,7 @@ func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler(db, logger)
 	api.PipelinePipelineHandler = getPipelineHandler(db)
 	api.PipelinePipelinesHandler = getPipelinesHandler(db)
-
-	//api.PipelinePipelineAgentsHandler
-	//api.PipelineUpdatePipelineAgentsHandler
+	api.PipelineCreateHandler = createPipelineHandler(db)
 
 	router.Mount("/", api.Serve(nil))
 
@@ -258,4 +256,8 @@ func updatePipelineAgents() http.HandlerFunc {
 
 		agents.Store(agent.Agent.Name, agent)
 	}
+}
+
+func createPipelineHandler(db SignalDB) pipeline.CreateHandler {
+	return func() {}
 }

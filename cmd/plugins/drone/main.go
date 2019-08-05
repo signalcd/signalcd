@@ -2,9 +2,10 @@ package main
 
 import (
 	stdlog "log"
+	"net/url"
 	"os"
 
-	"github.com/go-openapi/strfmt"
+	"golang.org/x/xerrors"
 
 	"github.com/signalcd/signalcd/api/v1/client/pipeline"
 	"github.com/signalcd/signalcd/api/v1/models"
@@ -31,18 +32,26 @@ func main() {
 }
 
 func action(c *cli.Context) error {
+	apiURLFlag := c.String("api.url")
+	if apiURLFlag == "" {
+		return xerrors.New("no API URL provided")
+	}
+
+	apiURL, err := url.Parse(apiURLFlag)
+	if err != nil {
+		return xerrors.Errorf("failed to parse API URL: %w", err)
+	}
+
 	client := client.NewHTTPClientWithConfig(
 		nil,
 		client.DefaultTransportConfig().
-			WithSchemes([]string{"http"}).
-			WithHost(c.String("api.url")),
+			WithSchemes([]string{apiURL.Scheme}).
+			WithHost(apiURL.Host).
+			WithBasePath(apiURL.Path),
 	)
-
-	id := strfmt.UUID("f05ae07b-7f6d-4ffe-82ba-30dc4c5e1e31")
 
 	ok, err := client.Pipeline.Create(&pipeline.CreateParams{
 		Pipeline: &models.Pipeline{
-			ID:   &id,
 			Name: "foobar",
 		},
 	})
