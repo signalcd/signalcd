@@ -61,9 +61,8 @@ func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 }
 
 func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
-	id := strfmt.UUID(p.ID)
 	mp := &models.Pipeline{
-		ID:   &id,
+		ID:   strfmt.UUID(p.ID),
 		Name: p.Name,
 	}
 
@@ -260,6 +259,11 @@ func updatePipelineAgents() http.HandlerFunc {
 
 func createPipelineHandler(db SignalDB) pipeline.CreateHandlerFunc {
 	return func(params pipeline.CreateParams) restmiddleware.Responder {
-		return pipeline.NewCreateOK()
+		return pipeline.NewCreateOK().WithPayload(&models.Pipeline{
+			Checks: nil,
+			ID:     strfmt.UUID("e43e0bbd-f95a-4448-a9fe-082155348b94"),
+			Name:   "foobar",
+			Steps:  nil,
+		})
 	}
 }

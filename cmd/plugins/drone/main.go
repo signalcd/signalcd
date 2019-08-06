@@ -4,14 +4,13 @@ import (
 	stdlog "log"
 	"net/url"
 	"os"
-
-	"golang.org/x/xerrors"
-
-	"github.com/signalcd/signalcd/api/v1/client/pipeline"
-	"github.com/signalcd/signalcd/api/v1/models"
+	"time"
 
 	"github.com/signalcd/signalcd/api/v1/client"
+	"github.com/signalcd/signalcd/api/v1/client/pipeline"
+	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/urfave/cli"
+	"golang.org/x/xerrors"
 )
 
 func main() {
@@ -50,16 +49,17 @@ func action(c *cli.Context) error {
 			WithBasePath(apiURL.Path),
 	)
 
-	ok, err := client.Pipeline.Create(&pipeline.CreateParams{
-		Pipeline: &models.Pipeline{
-			Name: "foobar",
-		},
-	})
+	p := models.Pipeline{Name: "foobar"}
+
+	params := &pipeline.CreateParams{Pipeline: &p}
+	params = params.WithTimeout(15 * time.Second)
+
+	ok, err := client.Pipeline.Create(params)
 	if err != nil {
 		return err
 	}
 
-	stdlog.Println("Create pipeline:", ok.Payload.ID)
+	stdlog.Printf("Created pipeline: %+v\n", ok.Payload)
 
 	return nil
 }
