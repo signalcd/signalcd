@@ -12,6 +12,10 @@ tags:
 schemes:
   - "https"
   - "http"
+consumes:
+  - application/json
+produces:
+  - application/json
 paths:
   /deployments:
     get:
@@ -62,8 +66,6 @@ paths:
         - "pipeline"
       summary: "returns a list of all pipelines"
       operationId: "pipelines"
-      produces:
-        - "application/json"
       responses:
         200:
           description: "OK"
@@ -80,8 +82,6 @@ paths:
         - "pipeline"
       summary: "creates a new pipeline"
       operationId: "create"
-      produces:
-        - "application/json"
       parameters:
         - in: body
           name: pipeline
@@ -93,16 +93,14 @@ paths:
           description: "OK"
           schema:
             $ref: '#/definitions/pipeline'
-        400:
-          description: ""
+        500:
+          description: "internal server error"
   /pipelines/{id}:
     get:
       tags:
         - "pipeline"
       summary: "returns a pipeline by id"
       operationId: "pipeline"
-      produces:
-        - "application/json"
       parameters:
         - in: "path"
           required: true
@@ -142,8 +140,6 @@ definitions:
           - failure
           - progress
   pipeline:
-    required:
-      - id
     properties:
       id:
         type: string

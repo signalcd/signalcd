@@ -18,6 +18,12 @@ var (
 
 func init() {
 	SwaggerJSON = json.RawMessage([]byte(`{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "schemes": [
     "https",
     "http"
@@ -100,9 +106,6 @@ func init() {
     },
     "/pipelines": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -127,9 +130,6 @@ func init() {
         }
       },
       "post": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -152,15 +152,14 @@ func init() {
               "$ref": "#/definitions/pipeline"
             }
           },
-          "400": {}
+          "500": {
+            "description": "internal server error"
+          }
         }
       }
     },
     "/pipelines/{id}": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -258,9 +257,6 @@ func init() {
       }
     },
     "pipeline": {
-      "required": [
-        "id"
-      ],
       "properties": {
         "checks": {
           "type": "array",
@@ -312,6 +308,12 @@ func init() {
   ]
 }`))
 	FlatSwaggerJSON = json.RawMessage([]byte(`{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "schemes": [
     "https",
     "http"
@@ -394,9 +396,6 @@ func init() {
     },
     "/pipelines": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -421,9 +420,6 @@ func init() {
         }
       },
       "post": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -446,15 +442,14 @@ func init() {
               "$ref": "#/definitions/pipeline"
             }
           },
-          "400": {}
+          "500": {
+            "description": "internal server error"
+          }
         }
       }
     },
     "/pipelines/{id}": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -552,9 +547,6 @@ func init() {
       }
     },
     "pipeline": {
-      "required": [
-        "id"
-      ],
       "properties": {
         "checks": {
           "type": "array",

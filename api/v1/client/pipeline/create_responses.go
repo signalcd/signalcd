@@ -32,8 +32,8 @@ func (o *CreateReader) ReadResponse(response runtime.ClientResponse, consumer ru
 		}
 		return result, nil
 
-	case 400:
-		result := NewCreateBadRequest()
+	case 500:
+		result := NewCreateInternalServerError()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -73,23 +73,23 @@ func (o *CreateOK) readResponse(response runtime.ClientResponse, consumer runtim
 	return nil
 }
 
-// NewCreateBadRequest creates a CreateBadRequest with default headers values
-func NewCreateBadRequest() *CreateBadRequest {
-	return &CreateBadRequest{}
+// NewCreateInternalServerError creates a CreateInternalServerError with default headers values
+func NewCreateInternalServerError() *CreateInternalServerError {
+	return &CreateInternalServerError{}
 }
 
-/*CreateBadRequest handles this case with default header values.
+/*CreateInternalServerError handles this case with default header values.
 
-CreateBadRequest create bad request
+internal server error
 */
-type CreateBadRequest struct {
+type CreateInternalServerError struct {
 }
 
-func (o *CreateBadRequest) Error() string {
-	return fmt.Sprintf("[POST /pipelines][%d] createBadRequest ", 400)
+func (o *CreateInternalServerError) Error() string {
+	return fmt.Sprintf("[POST /pipelines][%d] createInternalServerError ", 500)
 }
 
-func (o *CreateBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+func (o *CreateInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }

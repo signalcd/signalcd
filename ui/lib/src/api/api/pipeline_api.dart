@@ -23,7 +23,7 @@ class PipelineApi {
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
     
-    List<String> contentTypes = [];
+    List<String> contentTypes = ["application/json"];
 
     String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
     List<String> authNames = [];
@@ -75,7 +75,7 @@ class PipelineApi {
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
     
-    List<String> contentTypes = [];
+    List<String> contentTypes = ["application/json"];
 
     String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
     List<String> authNames = [];
@@ -124,7 +124,7 @@ class PipelineApi {
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
     
-    List<String> contentTypes = [];
+    List<String> contentTypes = ["application/json"];
 
     String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
     List<String> authNames = [];

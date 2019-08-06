@@ -57,26 +57,26 @@ func (o *CreateOK) WriteResponse(rw http.ResponseWriter, producer runtime.Produc
 	}
 }
 
-// CreateBadRequestCode is the HTTP code returned for type CreateBadRequest
-const CreateBadRequestCode int = 400
+// CreateInternalServerErrorCode is the HTTP code returned for type CreateInternalServerError
+const CreateInternalServerErrorCode int = 500
 
-/*CreateBadRequest create bad request
+/*CreateInternalServerError internal server error
 
-swagger:response createBadRequest
+swagger:response createInternalServerError
 */
-type CreateBadRequest struct {
+type CreateInternalServerError struct {
 }
 
-// NewCreateBadRequest creates CreateBadRequest with default headers values
-func NewCreateBadRequest() *CreateBadRequest {
+// NewCreateInternalServerError creates CreateInternalServerError with default headers values
+func NewCreateInternalServerError() *CreateInternalServerError {
 
-	return &CreateBadRequest{}
+	return &CreateInternalServerError{}
 }
 
 // WriteResponse to the client
-func (o *CreateBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+func (o *CreateInternalServerError) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
 	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
 
-	rw.WriteHeader(400)
+	rw.WriteHeader(500)
 }
