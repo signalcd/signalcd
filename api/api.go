@@ -1,11 +1,7 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
-	"sort"
-	"sync"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
@@ -217,45 +213,6 @@ func getPipelineHandler(getter PipelineGetter) pipeline.PipelineHandlerFunc {
 	}
 }
 
-var agents = sync.Map{}
-
-func pipelineAgents() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var as []signalcd.AgentServer
-
-		agents.Range(func(key, value interface{}) bool {
-			as = append(as, value.(signalcd.AgentServer))
-			return true
-		})
-
-		sort.Slice(as, func(i, j int) bool {
-			return as[i].Agent.Name < as[j].Agent.Name
-		})
-
-		payload, err := json.Marshal(as)
-		if err != nil {
-			http.Error(w, "failed to marshal", http.StatusInternalServerError)
-			return
-		}
-
-		w.Write(payload)
-	}
-}
-
-func updatePipelineAgents() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var agent signalcd.AgentServer
-		if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {
-			http.Error(w, "failed to decode", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-
-		agent.Heartbeat = time.Now()
-
-		agents.Store(agent.Agent.Name, agent)
-	}
-}
 
 func createPipelineHandler(db SignalDB) pipeline.CreateHandlerFunc {
 	return func(params pipeline.CreateParams) restmiddleware.Responder {
