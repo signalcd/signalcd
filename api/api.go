@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
@@ -23,6 +24,7 @@ type SignalDB interface {
 	DeploymentCreator
 	CurrentDeploymentGetter
 	PipelinesLister
+	PipelineCreator
 }
 
 // NewV1 creates a new v1 API
@@ -213,14 +215,51 @@ func getPipelineHandler(getter PipelineGetter) pipeline.PipelineHandlerFunc {
 	}
 }
 
+// PipelineCreator creates a new Pipeline
+type PipelineCreator interface {
+	CreatePipeline(signalcd.Pipeline) (signalcd.Pipeline, error)
+}
 
-func createPipelineHandler(db SignalDB) pipeline.CreateHandlerFunc {
+func createPipelineHandler(creator PipelineCreator) pipeline.CreateHandlerFunc {
 	return func(params pipeline.CreateParams) restmiddleware.Responder {
-		return pipeline.NewCreateOK().WithPayload(&models.Pipeline{
-			Checks: nil,
-			ID:     strfmt.UUID("e43e0bbd-f95a-4448-a9fe-082155348b94"),
-			Name:   "foobar",
-			Steps:  nil,
-		})
+		p, err := creator.CreatePipeline(fromModelPipeline(params.Pipeline))
+		if err != nil {
+			return pipeline.NewCreateInternalServerError()
+		}
+
+		return pipeline.NewCreateOK().WithPayload(getModelsPipeline(p))
 	}
+}
+
+func fromModelPipeline(m *models.Pipeline) signalcd.Pipeline {
+	p := signalcd.Pipeline{
+		ID:   m.ID.String(),
+		Name: m.Name,
+	}
+
+	for _, c := range m.Checks {
+		check := signalcd.Check{
+			Name:     *c.Name,
+			Image:    *c.Image,
+			Duration: time.Duration(c.Duration) * time.Second,
+		}
+
+		for _, env := range c.Environment {
+			check.Environment[env.Key] = env.Value
+		}
+
+		p.Checks = append(p.Checks, check)
+	}
+
+	for _, s := range m.Steps {
+		step := signalcd.Step{
+			Name:     *s.Name,
+			Image:    *s.Image,
+			Commands: s.Commands,
+		}
+
+		p.Steps = append(p.Steps, step)
+	}
+
+	return p
 }
