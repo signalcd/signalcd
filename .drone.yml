@@ -119,6 +119,25 @@ steps:
 
 ---
 kind: pipeline
+name: plugins
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build-drone
+  pull: always
+  image: golang:1.12
+  commands:
+  - make cmd/plugins/drone/drone
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
+---
+kind: pipeline
 name: code-generation
 
 platform:

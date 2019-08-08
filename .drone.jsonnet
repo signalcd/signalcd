@@ -106,6 +106,19 @@ local swagger = {
   },
 
   pipeline {
+    name: 'plugins',
+
+    steps+:[
+      golang {
+        name: 'build-drone',
+        commands: [
+          'make cmd/plugins/drone/drone',
+        ],
+      },
+    ],
+  },
+
+  pipeline {
     name: 'code-generation',
     steps+: [
       swagger {
