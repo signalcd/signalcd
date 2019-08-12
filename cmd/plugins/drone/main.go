@@ -9,6 +9,7 @@ import (
 	"github.com/signalcd/signalcd/api/v1/client"
 	"github.com/signalcd/signalcd/api/v1/client/pipeline"
 	"github.com/signalcd/signalcd/api/v1/models"
+	"github.com/signalcd/signalcd/signalcd"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 )
@@ -23,6 +24,12 @@ func main() {
 			Usage:  "The URL to talk to the SignalCD API at",
 			EnvVar: "PLUGIN_API_URL",
 		},
+		cli.StringFlag{
+			Name:   "signalcd.file",
+			Usage:  "The path to the SignalCD file to use",
+			EnvVar: "PLUGIN_SIGNALCD_FILE",
+			Value:  ".signalcd.yaml",
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -31,6 +38,17 @@ func main() {
 }
 
 func action(c *cli.Context) error {
+	path := c.String("signalcd.file")
+	file, err := os.Open(path)
+	if err != nil {
+		return xerrors.Errorf("failed to read SignalCD file from: %s", path)
+	}
+
+	config, err := signalcd.ParseConfig(file)
+	if err != nil {
+		return xerrors.Errorf("failed to parse SignalCD config: %w", err)
+	}
+
 	apiURLFlag := c.String("api.url")
 	if apiURLFlag == "" {
 		return xerrors.New("no API URL provided")
@@ -49,17 +67,37 @@ func action(c *cli.Context) error {
 			WithBasePath(apiURL.Path),
 	)
 
-	p := models.Pipeline{Name: "foobar"}
-
-	params := &pipeline.CreateParams{Pipeline: &p}
+	params := &pipeline.CreateParams{Pipeline: configToPipeline(config)}
 	params = params.WithTimeout(15 * time.Second)
 
 	ok, err := client.Pipeline.Create(params)
 	if err != nil {
-		return err
+		return xerrors.Errorf("failed creating pipeline with the API: %w", err)
 	}
 
 	stdlog.Printf("Created pipeline: %+v\n", ok.Payload)
 
 	return nil
+}
+
+func configToPipeline(config signalcd.Config) *models.Pipeline {
+	p := models.Pipeline{Name: config.Name}
+
+	for _, s := range config.Steps {
+		p.Steps = append(p.Steps, &models.Step{
+			Name:     &s.Name,
+			Image:    &s.Image,
+			Commands: s.Commands,
+		})
+	}
+	for _, c := range config.Checks {
+		p.Checks = append(p.Checks, &models.Check{
+			Name:        &c.Name,
+			Image:       &c.Image,
+			Duration:    c.Duration.Seconds(),
+			Environment: nil,
+		})
+	}
+
+	return &p
 }
