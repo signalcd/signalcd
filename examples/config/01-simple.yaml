@@ -1,0 +1,14 @@
+kind: Pipeline
+name: example
+
+steps:
+  - name: deploy
+    image: quay.io/signalcd/example
+    commands:
+      - kubectl apply -f /manifests
+
+checks:
+  - name: kubernetes-status
+    image: quay.io/signalcd/kubernetes-status
+    labels: app=cheese
+    duration: 10m

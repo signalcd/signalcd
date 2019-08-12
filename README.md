@@ -10,19 +10,20 @@ This will drastically reduce the chance of human errors when deploying business 
 
 ## Example
 
+[embedmd]:# (examples/config/01-simple.yaml)
 ```yaml
-kind: Delivery
+kind: Pipeline
 name: example
 
 steps:
-  name: deploy
-  image: quay.io/signalcd/example:$DRONE_COMMIT
-  commands:
-    - kubectl apply -f /manifests
+  - name: deploy
+    image: quay.io/signalcd/example
+    commands:
+      - kubectl apply -f /manifests
 
 checks:
-  name: kubernetes-status
-  image: quay.io/signalcd/kubernetes-status
-  labels: app=cheese
-  duration: 60
+  - name: kubernetes-status
+    image: quay.io/signalcd/kubernetes-status
+    labels: app=cheese
+    duration: 10m
 ```
