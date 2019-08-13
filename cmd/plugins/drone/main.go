@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/signalcd/signalcd/api/v1/client"
+	"github.com/signalcd/signalcd/api/v1/client/deployments"
 	"github.com/signalcd/signalcd/api/v1/client/pipeline"
 	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/signalcd"
@@ -67,15 +68,21 @@ func action(c *cli.Context) error {
 			WithBasePath(apiURL.Path),
 	)
 
-	params := &pipeline.CreateParams{Pipeline: configToPipeline(config)}
-	params = params.WithTimeout(15 * time.Second)
-
-	ok, err := client.Pipeline.Create(params)
+	pipelineParams := &pipeline.CreateParams{Pipeline: configToPipeline(config)}
+	pipelineParams = pipelineParams.WithTimeout(15 * time.Second)
+	pipeline, err := client.Pipeline.Create(pipelineParams)
 	if err != nil {
-		return xerrors.Errorf("failed creating pipeline with the API: %w", err)
+		return xerrors.Errorf("failed to create pipeline: %w", err)
 	}
 
-	stdlog.Printf("Created pipeline: %+v\n", ok.Payload)
+	deploymentParams := &deployments.SetCurrentDeploymentParams{
+		Pipeline: pipeline.Payload.ID.String(),
+	}
+	deploymentParams.WithTimeout(15 * time.Second)
+	_, err = client.Deployments.SetCurrentDeployment(deploymentParams)
+	if err != nil {
+		return xerrors.Errorf("failed to set current deployment: %w", err)
+	}
 
 	return nil
 }
