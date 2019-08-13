@@ -2,12 +2,10 @@ package boltdb
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-
 	"github.com/signalcd/signalcd/signalcd"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
@@ -195,8 +193,16 @@ func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
 }
 
 func (bdb *BoltDB) CreatePipeline(p signalcd.Pipeline) (signalcd.Pipeline, error) {
-	fmt.Printf("saving pipeline to boltdb: %+v\n", p)
-
 	p.ID = uuid.New().String()
-	return p, nil
+
+	err := bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketPipelines))
+
+		key := p.ID
+		value, _ := json.Marshal(p)
+
+		return b.Put([]byte(key), value)
+	})
+
+	return p, err
 }
