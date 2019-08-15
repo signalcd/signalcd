@@ -2,9 +2,11 @@ package boltdb
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/signalcd/signalcd/signalcd"
 	bolt "go.etcd.io/bbolt"
 	"golang.org/x/xerrors"
@@ -85,6 +87,10 @@ func (bdb *BoltDB) ListDeployments() ([]signalcd.Deployment, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(ds, func(i, j int) bool {
+		return ds[j].Created.Before(ds[i].Created)
+	})
 
 	return ds, nil
 }
@@ -188,5 +194,25 @@ func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
 		return nil
 	})
 
+	sort.Slice(pipelines, func(i, j int) bool {
+		return pipelines[j].Created.Before(pipelines[i].Created)
+	})
+
 	return pipelines, err
+}
+
+// CreatePipeline saves a Pipeline and returns the saved Pipeline
+func (bdb *BoltDB) CreatePipeline(p signalcd.Pipeline) (signalcd.Pipeline, error) {
+	p.ID = uuid.New().String()
+
+	err := bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketPipelines))
+
+		key := p.ID
+		value, _ := json.Marshal(p)
+
+		return b.Put([]byte(key), value)
+	})
+
+	return p, err
 }

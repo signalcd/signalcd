@@ -45,6 +45,10 @@ cmd/ui/ui:
 cmd/checks/kubernetes-status/kubernetes-status:
 	$(GO) build -v -o ./cmd/checks/kubernetes-status/kubernetes-status ./cmd/checks/kubernetes-status
 
+.PHONY: cmd/plugins/drone/drone
+cmd/plugins/drone/drone:
+	$(GO) build -v -o ./cmd/plugins/drone/drone ./cmd/plugins/drone
+
 .PHONY: ui
 ui:
 	cd ui && webdev build

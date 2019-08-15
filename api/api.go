@@ -1,10 +1,7 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
-	"sort"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -27,6 +24,7 @@ type SignalDB interface {
 	DeploymentCreator
 	CurrentDeploymentGetter
 	PipelinesLister
+	PipelineCreator
 }
 
 // NewV1 creates a new v1 API
@@ -53,9 +51,7 @@ func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler(db, logger)
 	api.PipelinePipelineHandler = getPipelineHandler(db)
 	api.PipelinePipelinesHandler = getPipelinesHandler(db)
-
-	//api.PipelinePipelineAgentsHandler
-	//api.PipelineUpdatePipelineAgentsHandler
+	api.PipelineCreateHandler = createPipelineHandler(db)
 
 	router.Mount("/", api.Serve(nil))
 
@@ -63,9 +59,8 @@ func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 }
 
 func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
-	id := strfmt.UUID(p.ID)
 	mp := &models.Pipeline{
-		ID:   &id,
+		ID:   strfmt.UUID(p.ID),
 		Name: p.Name,
 	}
 
@@ -220,42 +215,51 @@ func getPipelineHandler(getter PipelineGetter) pipeline.PipelineHandlerFunc {
 	}
 }
 
-var agents = sync.Map{}
+// PipelineCreator creates a new Pipeline
+type PipelineCreator interface {
+	CreatePipeline(signalcd.Pipeline) (signalcd.Pipeline, error)
+}
 
-func pipelineAgents() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var as []signalcd.AgentServer
-
-		agents.Range(func(key, value interface{}) bool {
-			as = append(as, value.(signalcd.AgentServer))
-			return true
-		})
-
-		sort.Slice(as, func(i, j int) bool {
-			return as[i].Agent.Name < as[j].Agent.Name
-		})
-
-		payload, err := json.Marshal(as)
+func createPipelineHandler(creator PipelineCreator) pipeline.CreateHandlerFunc {
+	return func(params pipeline.CreateParams) restmiddleware.Responder {
+		p, err := creator.CreatePipeline(fromModelPipeline(params.Pipeline))
 		if err != nil {
-			http.Error(w, "failed to marshal", http.StatusInternalServerError)
-			return
+			return pipeline.NewCreateInternalServerError()
 		}
 
-		w.Write(payload)
+		return pipeline.NewCreateOK().WithPayload(getModelsPipeline(p))
 	}
 }
 
-func updatePipelineAgents() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var agent signalcd.AgentServer
-		if err := json.NewDecoder(r.Body).Decode(&agent); err != nil {
-			http.Error(w, "failed to decode", http.StatusBadRequest)
-			return
-		}
-		defer r.Body.Close()
-
-		agent.Heartbeat = time.Now()
-
-		agents.Store(agent.Agent.Name, agent)
+func fromModelPipeline(m *models.Pipeline) signalcd.Pipeline {
+	p := signalcd.Pipeline{
+		ID:   m.ID.String(),
+		Name: m.Name,
 	}
+
+	for _, c := range m.Checks {
+		check := signalcd.Check{
+			Name:     *c.Name,
+			Image:    *c.Image,
+			Duration: time.Duration(c.Duration) * time.Second,
+		}
+
+		for _, env := range c.Environment {
+			check.Environment[env.Key] = env.Value
+		}
+
+		p.Checks = append(p.Checks, check)
+	}
+
+	for _, s := range m.Steps {
+		step := signalcd.Step{
+			Name:     *s.Name,
+			Image:    *s.Image,
+			Commands: s.Commands,
+		}
+
+		p.Steps = append(p.Steps, step)
+	}
+
+	return p
 }

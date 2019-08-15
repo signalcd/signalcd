@@ -23,9 +23,8 @@ type Pipeline struct {
 	Checks []*Check `json:"checks"`
 
 	// id
-	// Required: true
 	// Format: uuid
-	ID *strfmt.UUID `json:"id"`
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -83,8 +82,8 @@ func (m *Pipeline) validateChecks(formats strfmt.Registry) error {
 
 func (m *Pipeline) validateID(formats strfmt.Registry) error {
 
-	if err := validate.Required("id", "body", m.ID); err != nil {
-		return err
+	if swag.IsZero(m.ID) { // not required
+		return nil
 	}
 
 	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {

@@ -119,6 +119,25 @@ steps:
 
 ---
 kind: pipeline
+name: plugins
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build-drone
+  pull: always
+  image: golang:1.12
+  commands:
+  - make cmd/plugins/drone/drone
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
+---
+kind: pipeline
 name: code-generation
 
 platform:
@@ -126,10 +145,10 @@ platform:
   arch: amd64
 
 steps:
-- name: swagger-apiv1
+- name: goswagger-apiv1
   image: quay.io/goswagger/swagger:v0.19.0
   commands:
-  - make apiv1
+  - make api/v1/client api/v1/models api/v1/restapi
   - git diff --exit-code
   environment:
     GOSWAGGER: /usr/bin/swagger

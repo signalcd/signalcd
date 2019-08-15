@@ -18,6 +18,12 @@ var (
 
 func init() {
 	SwaggerJSON = json.RawMessage([]byte(`{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "schemes": [
     "https",
     "http"
@@ -100,9 +106,6 @@ func init() {
     },
     "/pipelines": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -125,13 +128,38 @@ func init() {
             "description": "internal server error"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "pipeline"
+        ],
+        "summary": "creates a new pipeline",
+        "operationId": "create",
+        "parameters": [
+          {
+            "description": "The pipeline to be created",
+            "name": "pipeline",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          },
+          "500": {
+            "description": "internal server error"
+          }
+        }
       }
     },
     "/pipelines/{id}": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -229,9 +257,6 @@ func init() {
       }
     },
     "pipeline": {
-      "required": [
-        "id"
-      ],
       "properties": {
         "checks": {
           "type": "array",
@@ -283,6 +308,12 @@ func init() {
   ]
 }`))
 	FlatSwaggerJSON = json.RawMessage([]byte(`{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
   "schemes": [
     "https",
     "http"
@@ -365,9 +396,6 @@ func init() {
     },
     "/pipelines": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -390,13 +418,38 @@ func init() {
             "description": "internal server error"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "pipeline"
+        ],
+        "summary": "creates a new pipeline",
+        "operationId": "create",
+        "parameters": [
+          {
+            "description": "The pipeline to be created",
+            "name": "pipeline",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/pipeline"
+            }
+          },
+          "500": {
+            "description": "internal server error"
+          }
+        }
       }
     },
     "/pipelines/{id}": {
       "get": {
-        "produces": [
-          "application/json"
-        ],
         "tags": [
           "pipeline"
         ],
@@ -494,9 +547,6 @@ func init() {
       }
     },
     "pipeline": {
-      "required": [
-        "id"
-      ],
       "properties": {
         "checks": {
           "type": "array",

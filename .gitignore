@@ -12,6 +12,8 @@
 *.out
 /cmd/agent/agent
 /cmd/api/api
+/cmd/checks/kubernetes-status/kubernetes-status
+/cmd/plugins/drone/drone
 /cmd/plugins/kubernetes-status/kubernetes-status
 /cmd/ui/assets/*
 /cmd/ui/ui

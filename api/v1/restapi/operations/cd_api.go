@@ -40,6 +40,9 @@ func NewCdAPI(spec *loads.Document) *CdAPI {
 		BearerAuthenticator: security.BearerAuth,
 		JSONConsumer:        runtime.JSONConsumer(),
 		JSONProducer:        runtime.JSONProducer(),
+		PipelineCreateHandler: pipeline.CreateHandlerFunc(func(params pipeline.CreateParams) middleware.Responder {
+			return middleware.NotImplemented("operation PipelineCreate has not yet been implemented")
+		}),
 		DeploymentsCurrentDeploymentHandler: deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams) middleware.Responder {
 			return middleware.NotImplemented("operation DeploymentsCurrentDeployment has not yet been implemented")
 		}),
@@ -86,6 +89,8 @@ type CdAPI struct {
 	// JSONProducer registers a producer for a "application/json" mime type
 	JSONProducer runtime.Producer
 
+	// PipelineCreateHandler sets the operation handler for the create operation
+	PipelineCreateHandler pipeline.CreateHandler
 	// DeploymentsCurrentDeploymentHandler sets the operation handler for the current deployment operation
 	DeploymentsCurrentDeploymentHandler deployments.CurrentDeploymentHandler
 	// DeploymentsDeploymentsHandler sets the operation handler for the deployments operation
@@ -157,6 +162,10 @@ func (o *CdAPI) Validate() error {
 
 	if o.JSONProducer == nil {
 		unregistered = append(unregistered, "JSONProducer")
+	}
+
+	if o.PipelineCreateHandler == nil {
+		unregistered = append(unregistered, "pipeline.CreateHandler")
 	}
 
 	if o.DeploymentsCurrentDeploymentHandler == nil {
@@ -276,6 +285,11 @@ func (o *CdAPI) initHandlerCache() {
 	if o.handlers == nil {
 		o.handlers = make(map[string]map[string]http.Handler)
 	}
+
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/pipelines"] = pipeline.NewCreate(o.context, o.PipelineCreateHandler)
 
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)

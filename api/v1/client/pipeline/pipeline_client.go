@@ -25,6 +25,34 @@ type Client struct {
 }
 
 /*
+Create creates a new pipeline
+*/
+func (a *Client) Create(params *CreateParams) (*CreateOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewCreateParams()
+	}
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "create",
+		Method:             "POST",
+		PathPattern:        "/pipelines",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &CreateReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*CreateOK), nil
+
+}
+
+/*
 Pipeline returns a pipeline by id
 */
 func (a *Client) Pipeline(params *PipelineParams) (*PipelineOK, error) {
@@ -38,7 +66,7 @@ func (a *Client) Pipeline(params *PipelineParams) (*PipelineOK, error) {
 		Method:             "GET",
 		PathPattern:        "/pipelines/{id}",
 		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{""},
+		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &PipelineReader{formats: a.formats},
@@ -66,7 +94,7 @@ func (a *Client) Pipelines(params *PipelinesParams) (*PipelinesOK, error) {
 		Method:             "GET",
 		PathPattern:        "/pipelines",
 		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{""},
+		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &PipelinesReader{formats: a.formats},

@@ -106,15 +106,28 @@ local swagger = {
   },
 
   pipeline {
+    name: 'plugins',
+
+    steps+:[
+      golang {
+        name: 'build-drone',
+        commands: [
+          'make cmd/plugins/drone/drone',
+        ],
+      },
+    ],
+  },
+
+  pipeline {
     name: 'code-generation',
     steps+: [
       swagger {
-        name: 'swagger-apiv1',
+        name: 'goswagger-apiv1',
         environment: {
           GOSWAGGER: '/usr/bin/swagger',
         },
         commands: [
-          'make apiv1',
+          'make api/v1/client api/v1/models api/v1/restapi',
           'git diff --exit-code',
         ],
       },
