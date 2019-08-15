@@ -4,10 +4,11 @@ import "time"
 
 // Pipeline is the definition on how to run steps and long running checks
 type Pipeline struct {
-	ID     string  `json:"id"`
-	Name   string  `json:"name"`
-	Steps  []Step  `json:"steps"`
-	Checks []Check `json:"checks"`
+	ID      string    `json:"id"`
+	Name    string    `json:"name"`
+	Steps   []Step    `json:"steps"`
+	Checks  []Check   `json:"checks"`
+	Created time.Time `json:"created"`
 }
 
 // Step is a synchronous execution step in a Pipeline

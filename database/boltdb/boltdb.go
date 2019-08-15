@@ -2,6 +2,7 @@ package boltdb
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 	"time"
 
@@ -86,6 +87,10 @@ func (bdb *BoltDB) ListDeployments() ([]signalcd.Deployment, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(ds, func(i, j int) bool {
+		return ds[j].Created.Before(ds[i].Created)
+	})
 
 	return ds, nil
 }
@@ -187,6 +192,10 @@ func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
 		}
 
 		return nil
+	})
+
+	sort.Slice(pipelines, func(i, j int) bool {
+		return pipelines[j].Created.Before(pipelines[i].Created)
 	})
 
 	return pipelines, err

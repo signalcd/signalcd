@@ -52,7 +52,8 @@ var fakePipelines = []signalcd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
-		Checks: fakeChecks,
+		Checks:  fakeChecks,
+		Created: time.Now().Add(-10 * time.Minute),
 	},
 	{
 		ID:   "6151e283-99b6-4611-bbc4-8aa4d3ddf8fd",
@@ -64,7 +65,8 @@ var fakePipelines = []signalcd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
-		Checks: fakeChecks,
+		Checks:  fakeChecks,
+		Created: time.Now().Add(-8 * time.Minute),
 	},
 	{
 		ID:   "a7cae189-400e-4d8c-a982-f0e9a5b4901f",
@@ -76,7 +78,8 @@ var fakePipelines = []signalcd.Pipeline{
 				Commands: []string{"kubectl apply -f /data"},
 			},
 		},
-		Checks: fakeChecks,
+		Checks:  fakeChecks,
+		Created: time.Now().Add(-45 * time.Second),
 	},
 }
 
