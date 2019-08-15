@@ -125,6 +125,7 @@ local swagger = {
         name: 'swagger-apiv1',
         environment: {
           GOSWAGGER: '/usr/bin/swagger',
+          SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
         },
         commands: [
           'make apiv1',

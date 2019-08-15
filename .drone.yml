@@ -152,6 +152,7 @@ steps:
   - git diff --exit-code
   environment:
     GOSWAGGER: /usr/bin/swagger
+    SWAGGER: /usr/local/bin/docker-entrypoint.sh
 
 ---
 kind: pipeline
