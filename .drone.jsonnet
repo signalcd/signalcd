@@ -122,13 +122,12 @@ local swagger = {
     name: 'code-generation',
     steps+: [
       swagger {
-        name: 'swagger-apiv1',
+        name: 'goswagger-apiv1',
         environment: {
           GOSWAGGER: '/usr/bin/swagger',
-          SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
         },
         commands: [
-          'make apiv1',
+          'make api/v1/client api/v1/models api/v1/restapi',
           'git diff --exit-code',
         ],
       },
