@@ -13,11 +13,12 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
-	"github.com/signalcd/signalcd/api/v1/client"
 	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +26,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const apiURL = "localhost:6660"
+const apiURL = "localhost:6661"
 const namespace = "default"
 
 func main() {
@@ -54,11 +55,17 @@ func main() {
 
 func agentAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
-		transportCfg := client.DefaultTransportConfig().
-			WithSchemes([]string{"http"}).
-			WithHost(apiURL)
+		conn, err := grpc.Dial(apiURL, grpc.WithInsecure())
+		if err != nil {
+			level.Error(logger).Log(
+				"msg", "failed to dial gRPC target",
+				"err", err,
+			)
+			os.Exit(2)
+		}
+		defer conn.Close()
 
-		client := client.NewHTTPClientWithConfig(nil, transportCfg)
+		client := signalcdproto.NewAgentServiceClient(conn)
 
 		konfig, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
 		if err != nil {
@@ -138,7 +145,7 @@ func (cd *currentDeployment) set(d signalcd.Deployment) {
 }
 
 type updater struct {
-	client    *client.SignalCDSwaggerSpec
+	client    signalcdproto.AgentServiceClient
 	klient    *kubernetes.Clientset
 	logger    log.Logger
 	agentName string
@@ -197,14 +204,10 @@ func deploymentStatusPhase(phase string) signalcd.DeploymentPhase {
 	}
 }
 
-func deploymentFromAPI(deployment *models.Deployment) signalcd.Deployment {
+func deploymentFromRPC(deployment *signalcdproto.Deployment) signalcd.Deployment {
 	return signalcd.Deployment{
-		Number:  *deployment.Number,
-		Created: time.Time(deployment.Created),
-		Status: signalcd.DeploymentStatus{
-			Phase: deploymentStatusPhase(deployment.Status.Phase),
-		},
-		Pipeline: pipelineFromAPI(deployment.Pipeline),
+		Number:  deployment.GetNumber(),
+		Created: time.Unix(deployment.Created, 0),
 	}
 }
 
@@ -240,11 +243,12 @@ func pipelineFromAPI(pipeline *models.Pipeline) signalcd.Pipeline {
 }
 
 func (u *updater) poll(ctx context.Context) error {
-	deploymentOK, err := u.client.Deployments.CurrentDeployment(nil)
+	resp, err := u.client.CurrentDeployment(ctx, &signalcdproto.CurrentDeploymentRequest{})
 	if err != nil {
 		return xerrors.Errorf("failed to get current deployment: %w", err)
 	}
-	deployment := deploymentFromAPI(deploymentOK.Payload)
+
+	deployment := deploymentFromRPC(resp.GetCurrentDeployment())
 
 	if u.currentDeployment.get() == nil {
 		loaded, err := u.loadDeployment()
