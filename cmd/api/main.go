@@ -68,7 +68,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 			gr.Add(func() error {
 				level.Info(logger).Log(
-					"msg", "running api",
+					"msg", "running HTTP API",
 					"addr", s.Addr,
 				)
 				return s.ListenAndServe()
@@ -89,10 +89,18 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 				api.NewRPC(db, log.WithPrefix(logger, "component", "api")),
 			)
 
-			if err := s.Serve(l); err != nil {
-				return xerrors.Errorf("failed to serve: %w", err)
-			}
-
+			gr.Add(func() error {
+				level.Info(logger).Log(
+					"msg", "running gRPC API",
+					"addr", l.Addr().String(),
+				)
+				if err := s.Serve(l); err != nil {
+					return xerrors.Errorf("failed to serve: %w", err)
+				}
+				return nil
+			}, func(err error) {
+				_ = l.Close()
+			})
 		}
 
 		if err := gr.Run(); err != nil {
