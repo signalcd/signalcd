@@ -27,7 +27,12 @@ ui/lib/src/api: swagger.yaml
 	-rm -rf tmp/
 
 .PHONY: build
-build: cmd/agent/agent cmd/api/api cmd/ui/ui
+build: \
+	cmd/agent/agent \
+	cmd/api/api \
+	cmd/ui/ui \
+	cmd/checks/kubernetes-status/kubernetes-status \
+	cmd/plugins/drone/drone
 
 .PHONY: cmd/agent/agent
 cmd/agent/agent:
