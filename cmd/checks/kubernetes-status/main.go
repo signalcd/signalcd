@@ -8,8 +8,6 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/golang/protobuf/proto"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -95,14 +93,12 @@ func run(c *cli.Context) error {
 		defer conn.Close()
 	}
 
-	message, err := proto.Marshal(&signalcdproto.CheckMessage{
-		Message: "OK",
-	})
-	if err != nil {
-		// TODO
-	}
-
-	fmt.Printf("proto: %v", message)
+	//message, err := proto.Marshal(&signalcdproto.CheckMessage{
+	//	Message: "OK",
+	//})
+	//if err != nil {
+	//	// TODO
+	//}
 
 	//message := proto.CheckMessage{Message: "OK"}
 	//proto.
