@@ -172,7 +172,7 @@ func (u *updater) pollLoop(ctx context.Context) error {
 					"err", err,
 				)
 				// TODO
-				//if err := u.pipelineStatus(signalcd.Failed); err != nil {
+				//if err := u.pipelineStatus(signalcd.Failure); err != nil {
 				//	level.Warn(u.logger).Log(
 				//		"msg", "failed to update deployment status",
 				//		"err", err,
@@ -196,7 +196,7 @@ func deploymentStatusPhase(phase string) signalcd.DeploymentPhase {
 	case models.DeploymentstatusPhaseSuccess:
 		return signalcd.Success
 	case models.DeploymentstatusPhaseFailure:
-		return signalcd.Failed
+		return signalcd.Failure
 	case models.DeploymentstatusPhaseProgress:
 		return signalcd.Progress
 	default:

@@ -10,8 +10,8 @@ const (
 	Unknown DeploymentPhase = "unknown"
 	//Success is the state of a Deployment that was successfully executed
 	Success DeploymentPhase = "success"
-	//Failed is the state of a Deployment that failed to execute
-	Failed DeploymentPhase = "failure"
+	//Failure is the state of a Deployment that failed to execute
+	Failure DeploymentPhase = "failure"
 	//Progress is the state of a Deployment that is currently running
 	Progress DeploymentPhase = "progress"
 )
