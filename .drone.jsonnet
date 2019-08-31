@@ -131,6 +131,14 @@ local swagger = {
           'git diff --exit-code',
         ],
       },
+      {
+        name: 'grpc',
+        image: 'grpc/go',
+        commands: [
+          'make signalcd/proto/agent.pb.go',
+          'git diff --exit-code',
+        ],
+      }
     ],
   },
 
