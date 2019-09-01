@@ -127,6 +127,7 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 	return d, err
 }
 
+// SetDeploymentStatus finds a Deployment by its number and sets its phase
 func (bdb *BoltDB) SetDeploymentStatus(ctx context.Context, number int64, phase signalcd.DeploymentPhase) error {
 	return bdb.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDeployments))

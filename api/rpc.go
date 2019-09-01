@@ -8,11 +8,13 @@ import (
 	"golang.org/x/xerrors"
 )
 
+// RPC implement the gRPC server connecting it to a SignalDB
 type RPC struct {
 	DB     SignalDB
 	logger log.Logger
 }
 
+// NewRPC creates a new gRPC Server
 func NewRPC(db SignalDB, logger log.Logger) *RPC {
 	return &RPC{
 		DB:     db,
@@ -20,6 +22,7 @@ func NewRPC(db SignalDB, logger log.Logger) *RPC {
 	}
 }
 
+// CurrentDeployment returns the current Deployment
 func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentDeploymentRequest) (*signalcdproto.CurrentDeploymentResponse, error) {
 	deployment, err := r.DB.GetCurrentDeployment()
 	if err != nil {
@@ -34,10 +37,12 @@ func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentD
 	}, nil
 }
 
+// DeploymentStatusSetter sets the phase for a specific Deployment by its number
 type DeploymentStatusSetter interface {
 	SetDeploymentStatus(context.Context, int64, signalcd.DeploymentPhase) error
 }
 
+// DeploymentStatus sets the phase for a specific Deployment when receiving a request
 func (r *RPC) DeploymentStatus(ctx context.Context, req *signalcdproto.SetDeploymentStatusRequest) (*signalcdproto.SetDeploymentStatusResponse, error) {
 	var phase signalcd.DeploymentPhase
 
