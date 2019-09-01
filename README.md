@@ -27,3 +27,7 @@ checks:
     labels: app=cheese
     duration: 10m
 ```
+
+## Architecture
+
+![architecture.svg](documentation/architecture.svg)
