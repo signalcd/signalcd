@@ -23,6 +23,41 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
+type SetDeploymentStatusRequest_Phase int32
+
+const (
+	SetDeploymentStatusRequest_UNKNOWN  SetDeploymentStatusRequest_Phase = 0
+	SetDeploymentStatusRequest_SUCCESS  SetDeploymentStatusRequest_Phase = 1
+	SetDeploymentStatusRequest_FAILURE  SetDeploymentStatusRequest_Phase = 2
+	SetDeploymentStatusRequest_PROGRESS SetDeploymentStatusRequest_Phase = 3
+	SetDeploymentStatusRequest_PENDING  SetDeploymentStatusRequest_Phase = 4
+	SetDeploymentStatusRequest_KILLED   SetDeploymentStatusRequest_Phase = 5
+)
+
+var SetDeploymentStatusRequest_Phase_name = map[int32]string{
+	0: "UNKNOWN",
+	1: "SUCCESS",
+	2: "FAILURE",
+	3: "PROGRESS",
+	4: "PENDING",
+	5: "KILLED",
+}
+var SetDeploymentStatusRequest_Phase_value = map[string]int32{
+	"UNKNOWN":  0,
+	"SUCCESS":  1,
+	"FAILURE":  2,
+	"PROGRESS": 3,
+	"PENDING":  4,
+	"KILLED":   5,
+}
+
+func (x SetDeploymentStatusRequest_Phase) String() string {
+	return proto.EnumName(SetDeploymentStatusRequest_Phase_name, int32(x))
+}
+func (SetDeploymentStatusRequest_Phase) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_agent_b4908308a44ed821, []int{3, 0}
+}
+
 type Deployment struct {
 	Number               int64    `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
 	Created              int64    `protobuf:"varint,2,opt,name=created,proto3" json:"created,omitempty"`
@@ -35,7 +70,7 @@ func (m *Deployment) Reset()         { *m = Deployment{} }
 func (m *Deployment) String() string { return proto.CompactTextString(m) }
 func (*Deployment) ProtoMessage()    {}
 func (*Deployment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_df70d1e74320f3b9, []int{0}
+	return fileDescriptor_agent_b4908308a44ed821, []int{0}
 }
 func (m *Deployment) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Deployment.Unmarshal(m, b)
@@ -79,7 +114,7 @@ func (m *CurrentDeploymentRequest) Reset()         { *m = CurrentDeploymentReque
 func (m *CurrentDeploymentRequest) String() string { return proto.CompactTextString(m) }
 func (*CurrentDeploymentRequest) ProtoMessage()    {}
 func (*CurrentDeploymentRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_df70d1e74320f3b9, []int{1}
+	return fileDescriptor_agent_b4908308a44ed821, []int{1}
 }
 func (m *CurrentDeploymentRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CurrentDeploymentRequest.Unmarshal(m, b)
@@ -110,7 +145,7 @@ func (m *CurrentDeploymentResponse) Reset()         { *m = CurrentDeploymentResp
 func (m *CurrentDeploymentResponse) String() string { return proto.CompactTextString(m) }
 func (*CurrentDeploymentResponse) ProtoMessage()    {}
 func (*CurrentDeploymentResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_df70d1e74320f3b9, []int{2}
+	return fileDescriptor_agent_b4908308a44ed821, []int{2}
 }
 func (m *CurrentDeploymentResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CurrentDeploymentResponse.Unmarshal(m, b)
@@ -137,10 +172,89 @@ func (m *CurrentDeploymentResponse) GetCurrentDeployment() *Deployment {
 	return nil
 }
 
+type SetDeploymentStatusRequest struct {
+	Number               int64                            `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
+	Phase                SetDeploymentStatusRequest_Phase `protobuf:"varint,2,opt,name=phase,proto3,enum=signalcd.SetDeploymentStatusRequest_Phase" json:"phase,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
+	XXX_unrecognized     []byte                           `json:"-"`
+	XXX_sizecache        int32                            `json:"-"`
+}
+
+func (m *SetDeploymentStatusRequest) Reset()         { *m = SetDeploymentStatusRequest{} }
+func (m *SetDeploymentStatusRequest) String() string { return proto.CompactTextString(m) }
+func (*SetDeploymentStatusRequest) ProtoMessage()    {}
+func (*SetDeploymentStatusRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_b4908308a44ed821, []int{3}
+}
+func (m *SetDeploymentStatusRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetDeploymentStatusRequest.Unmarshal(m, b)
+}
+func (m *SetDeploymentStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetDeploymentStatusRequest.Marshal(b, m, deterministic)
+}
+func (dst *SetDeploymentStatusRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetDeploymentStatusRequest.Merge(dst, src)
+}
+func (m *SetDeploymentStatusRequest) XXX_Size() int {
+	return xxx_messageInfo_SetDeploymentStatusRequest.Size(m)
+}
+func (m *SetDeploymentStatusRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetDeploymentStatusRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetDeploymentStatusRequest proto.InternalMessageInfo
+
+func (m *SetDeploymentStatusRequest) GetNumber() int64 {
+	if m != nil {
+		return m.Number
+	}
+	return 0
+}
+
+func (m *SetDeploymentStatusRequest) GetPhase() SetDeploymentStatusRequest_Phase {
+	if m != nil {
+		return m.Phase
+	}
+	return SetDeploymentStatusRequest_UNKNOWN
+}
+
+type SetDeploymentStatusResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *SetDeploymentStatusResponse) Reset()         { *m = SetDeploymentStatusResponse{} }
+func (m *SetDeploymentStatusResponse) String() string { return proto.CompactTextString(m) }
+func (*SetDeploymentStatusResponse) ProtoMessage()    {}
+func (*SetDeploymentStatusResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_agent_b4908308a44ed821, []int{4}
+}
+func (m *SetDeploymentStatusResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetDeploymentStatusResponse.Unmarshal(m, b)
+}
+func (m *SetDeploymentStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetDeploymentStatusResponse.Marshal(b, m, deterministic)
+}
+func (dst *SetDeploymentStatusResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetDeploymentStatusResponse.Merge(dst, src)
+}
+func (m *SetDeploymentStatusResponse) XXX_Size() int {
+	return xxx_messageInfo_SetDeploymentStatusResponse.Size(m)
+}
+func (m *SetDeploymentStatusResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetDeploymentStatusResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetDeploymentStatusResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*Deployment)(nil), "signalcd.Deployment")
 	proto.RegisterType((*CurrentDeploymentRequest)(nil), "signalcd.CurrentDeploymentRequest")
 	proto.RegisterType((*CurrentDeploymentResponse)(nil), "signalcd.CurrentDeploymentResponse")
+	proto.RegisterType((*SetDeploymentStatusRequest)(nil), "signalcd.SetDeploymentStatusRequest")
+	proto.RegisterType((*SetDeploymentStatusResponse)(nil), "signalcd.SetDeploymentStatusResponse")
+	proto.RegisterEnum("signalcd.SetDeploymentStatusRequest_Phase", SetDeploymentStatusRequest_Phase_name, SetDeploymentStatusRequest_Phase_value)
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -156,6 +270,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type AgentServiceClient interface {
 	CurrentDeployment(ctx context.Context, in *CurrentDeploymentRequest, opts ...grpc.CallOption) (*CurrentDeploymentResponse, error)
+	DeploymentStatus(ctx context.Context, in *SetDeploymentStatusRequest, opts ...grpc.CallOption) (*SetDeploymentStatusResponse, error)
 }
 
 type agentServiceClient struct {
@@ -175,9 +290,19 @@ func (c *agentServiceClient) CurrentDeployment(ctx context.Context, in *CurrentD
 	return out, nil
 }
 
+func (c *agentServiceClient) DeploymentStatus(ctx context.Context, in *SetDeploymentStatusRequest, opts ...grpc.CallOption) (*SetDeploymentStatusResponse, error) {
+	out := new(SetDeploymentStatusResponse)
+	err := c.cc.Invoke(ctx, "/signalcd.AgentService/DeploymentStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AgentServiceServer is the server API for AgentService service.
 type AgentServiceServer interface {
 	CurrentDeployment(context.Context, *CurrentDeploymentRequest) (*CurrentDeploymentResponse, error)
+	DeploymentStatus(context.Context, *SetDeploymentStatusRequest) (*SetDeploymentStatusResponse, error)
 }
 
 func RegisterAgentServiceServer(s *grpc.Server, srv AgentServiceServer) {
@@ -202,6 +327,24 @@ func _AgentService_CurrentDeployment_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AgentService_DeploymentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetDeploymentStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).DeploymentStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/signalcd.AgentService/DeploymentStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).DeploymentStatus(ctx, req.(*SetDeploymentStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _AgentService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "signalcd.AgentService",
 	HandlerType: (*AgentServiceServer)(nil),
@@ -210,26 +353,39 @@ var _AgentService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "CurrentDeployment",
 			Handler:    _AgentService_CurrentDeployment_Handler,
 		},
+		{
+			MethodName: "DeploymentStatus",
+			Handler:    _AgentService_DeploymentStatus_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "signalcd/proto/agent.proto",
 }
 
-func init() { proto.RegisterFile("signalcd/proto/agent.proto", fileDescriptor_agent_df70d1e74320f3b9) }
+func init() { proto.RegisterFile("signalcd/proto/agent.proto", fileDescriptor_agent_b4908308a44ed821) }
 
-var fileDescriptor_agent_df70d1e74320f3b9 = []byte{
-	// 202 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2a, 0xce, 0x4c, 0xcf,
-	0x4b, 0xcc, 0x49, 0x4e, 0xd1, 0x2f, 0x28, 0xca, 0x2f, 0xc9, 0xd7, 0x4f, 0x4c, 0x4f, 0xcd, 0x2b,
-	0xd1, 0x03, 0xb3, 0x85, 0x38, 0x60, 0x72, 0x4a, 0x76, 0x5c, 0x5c, 0x2e, 0xa9, 0x05, 0x39, 0xf9,
-	0x95, 0xb9, 0xa9, 0x79, 0x25, 0x42, 0x62, 0x5c, 0x6c, 0x79, 0xa5, 0xb9, 0x49, 0xa9, 0x45, 0x12,
-	0x8c, 0x0a, 0x8c, 0x1a, 0xcc, 0x41, 0x50, 0x9e, 0x90, 0x04, 0x17, 0x7b, 0x72, 0x51, 0x6a, 0x62,
-	0x49, 0x6a, 0x8a, 0x04, 0x13, 0x58, 0x02, 0xc6, 0x55, 0x92, 0xe2, 0x92, 0x70, 0x2e, 0x2d, 0x2a,
-	0x4a, 0xcd, 0x2b, 0x41, 0x18, 0x13, 0x94, 0x5a, 0x58, 0x9a, 0x5a, 0x5c, 0xa2, 0x14, 0xcf, 0x25,
-	0x89, 0x45, 0xae, 0xb8, 0x20, 0x3f, 0xaf, 0x38, 0x55, 0xc8, 0x89, 0x4b, 0x30, 0x19, 0x5d, 0x12,
-	0x6c, 0x2b, 0xb7, 0x91, 0x88, 0x1e, 0xcc, 0x79, 0x7a, 0x48, 0x1a, 0x31, 0x95, 0x1b, 0xe5, 0x70,
-	0xf1, 0x38, 0x82, 0x7c, 0x15, 0x9c, 0x5a, 0x54, 0x96, 0x99, 0x9c, 0x2a, 0x14, 0xc3, 0x25, 0x88,
-	0x61, 0xa1, 0x90, 0x12, 0xc2, 0x34, 0x5c, 0x2e, 0x95, 0x52, 0xc6, 0xab, 0x06, 0xe2, 0x62, 0x27,
-	0xfe, 0x28, 0x5e, 0x98, 0x2a, 0x70, 0x28, 0x26, 0xb1, 0x81, 0x29, 0x63, 0x40, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0x22, 0x6a, 0xdb, 0xbe, 0x6a, 0x01, 0x00, 0x00,
+var fileDescriptor_agent_b4908308a44ed821 = []byte{
+	// 343 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x5b, 0x4b, 0xf3, 0x40,
+	0x10, 0xfd, 0xd2, 0x7e, 0xbd, 0x30, 0xad, 0x9a, 0x2e, 0x22, 0x31, 0x22, 0xc8, 0xaa, 0x20, 0x3e,
+	0xa4, 0x50, 0xdf, 0xc5, 0x5e, 0x62, 0x29, 0x2d, 0x69, 0x49, 0x08, 0x82, 0x08, 0x25, 0x4d, 0x87,
+	0x5a, 0x68, 0x93, 0x98, 0xdd, 0x08, 0xfe, 0xc8, 0xfe, 0x27, 0xd9, 0x6d, 0x43, 0x4b, 0x2f, 0xea,
+	0xd3, 0xee, 0xd9, 0x73, 0x66, 0xce, 0x5c, 0x16, 0x74, 0x36, 0x9d, 0x04, 0xde, 0xcc, 0x1f, 0x57,
+	0xa3, 0x38, 0xe4, 0x61, 0xd5, 0x9b, 0x60, 0xc0, 0x0d, 0x79, 0x27, 0xc5, 0x94, 0xa3, 0x8f, 0x00,
+	0x2d, 0x8c, 0x66, 0xe1, 0xd7, 0x1c, 0x03, 0x4e, 0xce, 0x20, 0x1f, 0x24, 0xf3, 0x11, 0xc6, 0x9a,
+	0x72, 0xa5, 0xdc, 0x65, 0xed, 0x15, 0x22, 0x1a, 0x14, 0xfc, 0x18, 0x3d, 0x8e, 0x63, 0x2d, 0x23,
+	0x89, 0x14, 0x52, 0x1d, 0xb4, 0x66, 0x12, 0xc7, 0x18, 0xf0, 0x75, 0x1a, 0x1b, 0x3f, 0x12, 0x64,
+	0x9c, 0x0e, 0xe1, 0x7c, 0x0f, 0xc7, 0xa2, 0x30, 0x60, 0x48, 0x1a, 0x50, 0xf1, 0xb7, 0x49, 0xe9,
+	0x5a, 0xaa, 0x9d, 0x1a, 0x69, 0x79, 0xc6, 0x46, 0xe0, 0xae, 0x9c, 0x2e, 0x14, 0xd0, 0x1d, 0xdc,
+	0x78, 0x71, 0xb8, 0xc7, 0x13, 0xb6, 0xf2, 0x3f, 0xd8, 0xcd, 0x13, 0xe4, 0xa2, 0x77, 0x8f, 0xa1,
+	0xec, 0xe5, 0xb8, 0x76, 0xbf, 0xb6, 0x3b, 0x9c, 0xcc, 0x18, 0x88, 0x08, 0x7b, 0x19, 0x48, 0x5d,
+	0xc8, 0x49, 0x4c, 0x4a, 0x50, 0x70, 0xad, 0xae, 0xd5, 0x7f, 0xb1, 0xd4, 0x7f, 0x02, 0x38, 0x6e,
+	0xb3, 0x69, 0x3a, 0x8e, 0xaa, 0x08, 0xf0, 0x5c, 0xef, 0xf4, 0x5c, 0xdb, 0x54, 0x33, 0xa4, 0x0c,
+	0xc5, 0x81, 0xdd, 0x6f, 0xdb, 0x82, 0xca, 0x0a, 0x6a, 0x60, 0x5a, 0xad, 0x8e, 0xd5, 0x56, 0xff,
+	0x13, 0x80, 0x7c, 0xb7, 0xd3, 0xeb, 0x99, 0x2d, 0x35, 0x47, 0x2f, 0xe1, 0x62, 0x6f, 0x05, 0xcb,
+	0x91, 0xd5, 0x16, 0x0a, 0x94, 0xeb, 0x62, 0x8b, 0x0e, 0xc6, 0x9f, 0x53, 0x1f, 0xc9, 0x1b, 0x54,
+	0x76, 0x06, 0x4c, 0xe8, 0xba, 0x9d, 0x43, 0x9b, 0xd1, 0xaf, 0x7f, 0xd4, 0xac, 0x36, 0x34, 0x04,
+	0x75, 0xbb, 0x14, 0x72, 0xf3, 0x97, 0x59, 0xe9, 0xb7, 0xbf, 0xa8, 0x96, 0x06, 0x8d, 0x93, 0xd7,
+	0xa3, 0x54, 0x27, 0xbf, 0xe5, 0x28, 0x2f, 0x8f, 0x87, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0x34,
+	0xb8, 0x15, 0x42, 0xbb, 0x02, 0x00, 0x00,
 }
