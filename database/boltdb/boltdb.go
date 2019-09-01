@@ -37,14 +37,14 @@ func New(path string) (*BoltDB, func() error, error) {
 			return err
 		}
 
-		for _, d := range fakeDeployments {
-			key := strconv.Itoa(int(d.Number))
-			value, _ := json.Marshal(d)
-
-			if err := bucket.Put([]byte(key), value); err != nil {
-				return err
-			}
-		}
+		//for _, d := range fakeDeployments {
+		//	key := strconv.Itoa(int(d.Number))
+		//	value, _ := json.Marshal(d)
+		//
+		//	if err := bucket.Put([]byte(key), value); err != nil {
+		//		return err
+		//	}
+		//}
 
 		bucket, err = tx.CreateBucketIfNotExists([]byte(bucketPipelines))
 		if err != nil {
@@ -172,6 +172,10 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	})
 	if err != nil {
 		return signalcd.Deployment{}, err
+	}
+
+	if len(value) == 0 {
+		return signalcd.Deployment{}, nil
 	}
 
 	var d signalcd.Deployment
