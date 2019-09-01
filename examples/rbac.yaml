@@ -1,13 +1,13 @@
 kind: ServiceAccount
 apiVersion: v1
 metadata:
-  name: cd
+  name: signalcd
   namespace: default
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: cd
+  name: signalcd
   namespace: default
 rules:
   - apiGroups:
@@ -34,13 +34,13 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: cd
+  name: signalcd
   namespace: default
 roleRef:
   apiGroup: ''
   kind: Role
-  name: cd
+  name: signalcd
 subjects:
   - kind: ServiceAccount
-    name: cd
+    name: signalcd
     namespace: default
