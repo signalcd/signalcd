@@ -10,6 +10,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -18,12 +19,20 @@ import (
 
 var (
 	config = struct {
-		API      string
-		Duration time.Duration
-		Labels   string
+		API        string
+		KubeConfig string
+		Duration   time.Duration
+		Labels     string
 	}{}
 
 	flags = []cli.Flag{
+		cli.StringFlag{
+			Name:        "kubeconfig",
+			Usage:       "Path to the kubeconfig which should be sued",
+			EnvVar:      "PLUGIN_KUBECONFIG",
+			Value:       "",
+			Destination: &config.KubeConfig,
+		},
 		cli.StringFlag{
 			Name:        "api",
 			EnvVar:      "PLUGIN_API",
@@ -64,15 +73,35 @@ func run(c *cli.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), config.Duration)
 	defer cancel()
 
-	konfig, err := clientcmd.BuildConfigFromFlags("", "")
-	if err != nil {
-		return xerrors.Errorf("failed to create kubernetes config: %w", err)
+	var klient kubernetes.Interface
+	{
+		konfig, err := clientcmd.BuildConfigFromFlags("", config.KubeConfig)
+		if err != nil {
+			return xerrors.Errorf("failed to create kubernetes config: %w", err)
+		}
+
+		klient, err = kubernetes.NewForConfig(konfig)
+		if err != nil {
+			return xerrors.Errorf("failed to create kubernetes client: %w", err)
+		}
+	}
+	{
+		conn, err := grpc.Dial(config.API)
+		if err != nil {
+			return xerrors.Errorf("failed to create gRPC connection to API: %w", err)
+		}
+		defer conn.Close()
 	}
 
-	klient, err := kubernetes.NewForConfig(konfig)
-	if err != nil {
-		return xerrors.Errorf("failed to create kubernetes client: %w", err)
-	}
+	//message, err := proto.Marshal(&signalcdproto.CheckMessage{
+	//	Message: "OK",
+	//})
+	//if err != nil {
+	//	// TODO
+	//}
+
+	//message := proto.CheckMessage{Message: "OK"}
+	//proto.
 
 	watch, err := klient.AppsV1().Deployments("default").Watch(metav1.ListOptions{
 		LabelSelector: config.Labels,

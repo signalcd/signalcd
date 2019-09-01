@@ -1,6 +1,7 @@
 package boltdb
 
 import (
+	"context"
 	"encoding/json"
 	"sort"
 	"strconv"
@@ -124,6 +125,26 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 	})
 
 	return d, err
+}
+
+// SetDeploymentStatus finds a Deployment by its number and sets its phase
+func (bdb *BoltDB) SetDeploymentStatus(ctx context.Context, number int64, phase signalcd.DeploymentPhase) error {
+	return bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketDeployments))
+		key := []byte(strconv.Itoa(int(number)))
+		value := b.Get(key)
+
+		var d signalcd.Deployment
+		err := json.Unmarshal(value, &d)
+		if err != nil {
+			return err
+		}
+
+		d.Status.Phase = phase
+
+		value, err = json.Marshal(d)
+		return b.Put(key, value)
+	})
 }
 
 // GetCurrentDeployment gets the current Deployment

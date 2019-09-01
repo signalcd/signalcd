@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -13,8 +14,10 @@ import (
 	"github.com/oklog/run"
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -65,12 +68,38 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 			gr.Add(func() error {
 				level.Info(logger).Log(
-					"msg", "running api",
+					"msg", "running HTTP API",
 					"addr", s.Addr,
 				)
 				return s.ListenAndServe()
 			}, func(err error) {
 				_ = s.Shutdown(context.TODO())
+			})
+		}
+		{
+			const addr = ":6661"
+			l, err := net.Listen("tcp", addr)
+			if err != nil {
+				return xerrors.Errorf("failed to listen on %s: %w", addr, err)
+			}
+
+			s := grpc.NewServer()
+
+			signalcdproto.RegisterAgentServiceServer(s,
+				api.NewRPC(db, log.WithPrefix(logger, "component", "api")),
+			)
+
+			gr.Add(func() error {
+				level.Info(logger).Log(
+					"msg", "running gRPC API",
+					"addr", l.Addr().String(),
+				)
+				if err := s.Serve(l); err != nil {
+					return xerrors.Errorf("failed to serve: %w", err)
+				}
+				return nil
+			}, func(err error) {
+				_ = l.Close()
 			})
 		}
 

@@ -153,6 +153,12 @@ steps:
   environment:
     GOSWAGGER: /usr/bin/swagger
 
+- name: grpc
+  image: grpc/go
+  commands:
+  - make signalcd/proto/agent.pb.go
+  - git diff --exit-code
+
 ---
 kind: pipeline
 name: examples

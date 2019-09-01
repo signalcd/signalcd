@@ -10,10 +10,14 @@ const (
 	Unknown DeploymentPhase = "unknown"
 	//Success is the state of a Deployment that was successfully executed
 	Success DeploymentPhase = "success"
-	//Failed is the state of a Deployment that failed to execute
-	Failed DeploymentPhase = "failure"
+	//Failure is the state of a Deployment that failed to execute
+	Failure DeploymentPhase = "failure"
 	//Progress is the state of a Deployment that is currently running
 	Progress DeploymentPhase = "progress"
+	//Pending is the state of a Deployment that is schedule but not yet progressing
+	Pending DeploymentPhase = "pending"
+	//Killed is the state of a Deployment that was killed during execution
+	Killed DeploymentPhase = "killed"
 )
 
 //Deployment is a specific execution of a Pipeline with more meta data

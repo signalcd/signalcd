@@ -27,7 +27,7 @@ var fakeDeployments = []signalcd.Deployment{
 		Number:  2,
 		Created: time.Now().Add(-8 * time.Minute),
 		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Failed,
+			Phase: signalcd.Failure,
 		},
 		Pipeline: fakePipelines[1],
 	},

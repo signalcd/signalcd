@@ -26,8 +26,16 @@ ui/lib/src/api: swagger.yaml
 	mv tmp/dart/lib ui/lib/src/api
 	-rm -rf tmp/
 
+signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
+	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:.
+
 .PHONY: build
-build: cmd/agent/agent cmd/api/api cmd/ui/ui
+build: \
+	cmd/agent/agent \
+	cmd/api/api \
+	cmd/ui/ui \
+	cmd/checks/kubernetes-status/kubernetes-status \
+	cmd/plugins/drone/drone
 
 .PHONY: cmd/agent/agent
 cmd/agent/agent:
