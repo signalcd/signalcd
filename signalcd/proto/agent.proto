@@ -24,6 +24,20 @@ service AgentService {
 message Deployment {
     int64 number = 1;
     int64 created = 2;
+    DeploymentStatus status = 3;
+    Pipeline pipeline = 4;
+}
+
+message DeploymentStatus {
+    enum Phase {
+        UNKNOWN = 0;
+        SUCCESS = 1;
+        FAILURE = 2;
+        PROGRESS = 3;
+        PENDING = 4;
+        KILLED = 5;
+    }
+    Phase phase = 1;
 }
 
 message CurrentDeploymentRequest {
@@ -34,18 +48,28 @@ message CurrentDeploymentResponse {
 }
 
 message SetDeploymentStatusRequest {
-    enum Phase {
-        UNKNOWN = 0;
-        SUCCESS = 1;
-        FAILURE = 2;
-        PROGRESS = 3;
-        PENDING = 4;
-        KILLED = 5;
-    }
-
     int64 number = 1;
-    Phase phase = 2;
+    DeploymentStatus status = 2;
 }
 
 message SetDeploymentStatusResponse {
+}
+
+message Pipeline {
+    string id = 1;
+    string name = 2;
+    repeated Step steps = 3;
+    repeated Check checks = 4;
+}
+
+message Step {
+    string name = 1;
+    string image = 2;
+    repeated string commands = 3;
+}
+
+message Check {
+    string name = 1;
+    string image = 2;
+    int64 duration = 3;
 }

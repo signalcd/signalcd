@@ -13,7 +13,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
-	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
@@ -28,6 +27,7 @@ import (
 
 const apiURL = "localhost:6661"
 const namespace = "default"
+const serviceAccountName = "signalcd"
 
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
@@ -171,34 +171,23 @@ func (u *updater) pollLoop(ctx context.Context) error {
 					"msg", "failed to poll",
 					"err", err,
 				)
-				// TODO
-				//if err := u.pipelineStatus(signalcd.Failure); err != nil {
-				//	level.Warn(u.logger).Log(
-				//		"msg", "failed to update deployment status",
-				//		"err", err,
-				//	)
-				//}
-			} else {
-				// TODO
-				//if err := u.pipelineStatus(signalcd.Success); err != nil {
-				//	level.Warn(u.logger).Log(
-				//		"msg", "failed to update deployment status",
-				//		"err", err,
-				//	)
-				//}
 			}
 		}
 	}
 }
 
-func deploymentStatusPhase(phase string) signalcd.DeploymentPhase {
+func deploymentStatusPhase(phase signalcdproto.DeploymentStatus_Phase) signalcd.DeploymentPhase {
 	switch phase {
-	case models.DeploymentstatusPhaseSuccess:
+	case signalcdproto.DeploymentStatus_SUCCESS:
 		return signalcd.Success
-	case models.DeploymentstatusPhaseFailure:
+	case signalcdproto.DeploymentStatus_FAILURE:
 		return signalcd.Failure
-	case models.DeploymentstatusPhaseProgress:
+	case signalcdproto.DeploymentStatus_PROGRESS:
 		return signalcd.Progress
+	case signalcdproto.DeploymentStatus_PENDING:
+		return signalcd.Pending
+	case signalcdproto.DeploymentStatus_KILLED:
+		return signalcd.Killed
 	default:
 		return signalcd.Unknown
 	}
@@ -206,36 +195,40 @@ func deploymentStatusPhase(phase string) signalcd.DeploymentPhase {
 
 func deploymentFromRPC(deployment *signalcdproto.Deployment) signalcd.Deployment {
 	return signalcd.Deployment{
-		Number:  deployment.GetNumber(),
-		Created: time.Unix(deployment.Created, 0),
+		Number:   deployment.GetNumber(),
+		Created:  time.Unix(deployment.GetCreated(), 0),
+		Pipeline: pipelineFromRPC(deployment.GetPipeline()),
+		Status: signalcd.DeploymentStatus{
+			Phase: deploymentStatusPhase(deployment.GetStatus().GetPhase()),
+		},
 	}
 }
 
-func pipelineFromAPI(pipeline *models.Pipeline) signalcd.Pipeline {
+func pipelineFromRPC(pipeline *signalcdproto.Pipeline) signalcd.Pipeline {
 	p := signalcd.Pipeline{
-		ID:   pipeline.ID.String(),
-		Name: pipeline.Name,
+		ID:   pipeline.GetId(),
+		Name: pipeline.GetName(),
 	}
 
-	for _, step := range pipeline.Steps {
+	for _, step := range pipeline.GetSteps() {
 		p.Steps = append(p.Steps, signalcd.Step{
-			Name:     *step.Name,
-			Image:    *step.Image,
-			Commands: step.Commands,
+			Name:     step.GetName(),
+			Image:    step.GetImage(),
+			Commands: step.GetCommands(),
 		})
 	}
 
-	for _, check := range pipeline.Checks {
-		env := map[string]string{}
-		for _, item := range check.Environment {
-			env[item.Key] = item.Value
-		}
+	for _, check := range pipeline.GetChecks() {
+		//env := map[string]string{}
+		//for _, item := range check.Environment {
+		//	env[item.Key] = item.Value
+		//}
 
 		p.Checks = append(p.Checks, signalcd.Check{
-			Name:        *check.Name,
-			Image:       *check.Image,
+			Name:        check.GetName(),
+			Image:       check.GetImage(),
 			Duration:    time.Duration(check.Duration) * time.Second,
-			Environment: env,
+			Environment: map[string]string{},
 		})
 	}
 
@@ -270,7 +263,9 @@ func (u *updater) poll(ctx context.Context) error {
 
 		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
-			Phase:  signalcdproto.SetDeploymentStatusRequest_PROGRESS,
+			Status: &signalcdproto.DeploymentStatus{
+				Phase: signalcdproto.DeploymentStatus_PROGRESS,
+			},
 		})
 		if err != nil {
 			return xerrors.Errorf("failed to update deployment status: %w", err)
@@ -285,14 +280,6 @@ func (u *updater) poll(ctx context.Context) error {
 			return xerrors.Errorf("failed to save pipeline: %w", err)
 		}
 
-		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-			Number: deployment.Number,
-			Phase:  signalcdproto.SetDeploymentStatusRequest_SUCCESS,
-		})
-		if err != nil {
-			return xerrors.Errorf("failed to update deployment status: %w", err)
-		}
-
 		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
 
 		return nil
@@ -304,7 +291,9 @@ func (u *updater) poll(ctx context.Context) error {
 
 		_, err := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
-			Phase:  signalcdproto.SetDeploymentStatusRequest_PROGRESS,
+			Status: &signalcdproto.DeploymentStatus{
+				Phase: signalcdproto.DeploymentStatus_PROGRESS,
+			},
 		})
 		if err != nil {
 			return xerrors.Errorf("failed to update deployment status: %w", err)
@@ -320,7 +309,9 @@ func (u *updater) poll(ctx context.Context) error {
 
 		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
-			Phase:  signalcdproto.SetDeploymentStatusRequest_SUCCESS,
+			Status: &signalcdproto.DeploymentStatus{
+				Phase: signalcdproto.DeploymentStatus_SUCCESS,
+			},
 		})
 		if err != nil {
 			return xerrors.Errorf("failed to update deployment status: %w", err)
@@ -355,6 +346,11 @@ func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
 
 func (u *updater) runSteps(ctx context.Context, p signalcd.Pipeline) error {
 	for _, s := range p.Steps {
+		level.Debug(u.logger).Log(
+			"msg", "running step",
+			"pipeline", p.Name,
+			"step", s.Name,
+		)
 		if err := u.runStep(ctx, p, s); err != nil {
 			return err
 		}
@@ -380,7 +376,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 			Namespace: namespace,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: "cd",
+			ServiceAccountName: serviceAccountName,
 			Containers: []corev1.Container{{
 				Name:            step.Name,
 				Image:           step.Image,
@@ -392,13 +388,18 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 		},
 	}
 
+	podLogger := log.With(u.logger, "namespace", namespace, "pod", p.Name)
+
 	_, err := u.klient.CoreV1().Pods(namespace).Create(&p)
 	if err != nil {
 		return err
 	}
 	defer func(p *corev1.Pod) {
 		_ = u.klient.CoreV1().Pods(namespace).Delete(p.Name, nil)
+		level.Debug(podLogger).Log("msg", "deleted pod")
 	}(&p)
+
+	level.Debug(podLogger).Log("msg", "created pod")
 
 	timeout := int64(time.Minute.Seconds())
 	watch, err := u.klient.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
@@ -465,7 +466,7 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 			Labels:    checkLabels,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: "cd",
+			ServiceAccountName: serviceAccountName,
 			Containers: []corev1.Container{{
 				Name:            strings.ToLower(check.Name),
 				Image:           check.Image,

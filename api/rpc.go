@@ -29,10 +29,41 @@ func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentD
 		return nil, xerrors.Errorf("failed to get current deployment: %w", err)
 	}
 
+	steps := func(steps1 []signalcd.Step) []*signalcdproto.Step {
+		var steps2 []*signalcdproto.Step
+		for _, s := range steps1 {
+			steps2 = append(steps2, &signalcdproto.Step{
+				Name:     s.Name,
+				Image:    s.Image,
+				Commands: s.Commands,
+			})
+		}
+		return steps2
+	}
+
+	checks := func(checks1 []signalcd.Check) []*signalcdproto.Check {
+		var checks2 []*signalcdproto.Check
+		for _, c := range checks1 {
+			checks2 = append(checks2, &signalcdproto.Check{
+				Name:     c.Name,
+				Image:    c.Image,
+				Duration: int64(c.Duration.Seconds()),
+			})
+		}
+		return checks2
+	}
+
 	return &signalcdproto.CurrentDeploymentResponse{
 		CurrentDeployment: &signalcdproto.Deployment{
 			Number:  deployment.Number,
 			Created: deployment.Created.Unix(),
+
+			Pipeline: &signalcdproto.Pipeline{
+				Id:     deployment.Pipeline.ID,
+				Name:   deployment.Pipeline.Name,
+				Steps:  steps(deployment.Pipeline.Steps),
+				Checks: checks(deployment.Pipeline.Checks),
+			},
 		},
 	}, nil
 }
@@ -46,18 +77,18 @@ type DeploymentStatusSetter interface {
 func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDeploymentStatusRequest) (*signalcdproto.SetDeploymentStatusResponse, error) {
 	var phase signalcd.DeploymentPhase
 
-	switch req.Phase {
-	case signalcdproto.SetDeploymentStatusRequest_UNKNOWN:
+	switch req.Status.Phase {
+	case signalcdproto.DeploymentStatus_UNKNOWN:
 		phase = signalcd.Unknown
-	case signalcdproto.SetDeploymentStatusRequest_SUCCESS:
+	case signalcdproto.DeploymentStatus_SUCCESS:
 		phase = signalcd.Success
-	case signalcdproto.SetDeploymentStatusRequest_FAILURE:
+	case signalcdproto.DeploymentStatus_FAILURE:
 		phase = signalcd.Failure
-	case signalcdproto.SetDeploymentStatusRequest_PROGRESS:
+	case signalcdproto.DeploymentStatus_PROGRESS:
 		phase = signalcd.Progress
-	case signalcdproto.SetDeploymentStatusRequest_PENDING:
+	case signalcdproto.DeploymentStatus_PENDING:
 		phase = signalcd.Pending
-	case signalcdproto.SetDeploymentStatusRequest_KILLED:
+	case signalcdproto.DeploymentStatus_KILLED:
 		phase = signalcd.Killed
 	}
 
