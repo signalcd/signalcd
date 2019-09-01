@@ -268,7 +268,7 @@ func (u *updater) poll(ctx context.Context) error {
 
 		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
 
-		_, err = u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
 			Phase:  signalcdproto.SetDeploymentStatusRequest_PROGRESS,
 		})
@@ -285,7 +285,7 @@ func (u *updater) poll(ctx context.Context) error {
 			return xerrors.Errorf("failed to save pipeline: %w", err)
 		}
 
-		_, err = u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
 			Phase:  signalcdproto.SetDeploymentStatusRequest_SUCCESS,
 		})
@@ -302,7 +302,7 @@ func (u *updater) poll(ctx context.Context) error {
 		u.currentDeployment.set(deployment)
 		level.Info(u.logger).Log("msg", "update deployment", "number", deployment.Number)
 
-		_, err := u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		_, err := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
 			Phase:  signalcdproto.SetDeploymentStatusRequest_PROGRESS,
 		})
@@ -318,7 +318,7 @@ func (u *updater) poll(ctx context.Context) error {
 			return xerrors.Errorf("failed to save deployment: %w", err)
 		}
 
-		_, err = u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 			Number: deployment.Number,
 			Phase:  signalcdproto.SetDeploymentStatusRequest_SUCCESS,
 		})

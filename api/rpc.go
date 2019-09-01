@@ -42,8 +42,8 @@ type DeploymentStatusSetter interface {
 	SetDeploymentStatus(context.Context, int64, signalcd.DeploymentPhase) error
 }
 
-// DeploymentStatus sets the phase for a specific Deployment when receiving a request
-func (r *RPC) DeploymentStatus(ctx context.Context, req *signalcdproto.SetDeploymentStatusRequest) (*signalcdproto.SetDeploymentStatusResponse, error) {
+// SetDeploymentStatus sets the phase for a specific Deployment when receiving a request
+func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDeploymentStatusRequest) (*signalcdproto.SetDeploymentStatusResponse, error) {
 	var phase signalcd.DeploymentPhase
 
 	switch req.Phase {
