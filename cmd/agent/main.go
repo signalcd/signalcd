@@ -268,13 +268,13 @@ func (u *updater) poll(ctx context.Context) error {
 
 		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
 
-		// TODO
-		//if err := u.pipelineStatus(signalcd.Progress); err != nil {
-		//	level.Warn(u.logger).Log(
-		//		"msg", "failed to update pipeline status",
-		//		"err", err,
-		//	)
-		//}
+		_, err = u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+			Number: deployment.Number,
+			Phase:  signalcdproto.SetDeploymentStatusRequest_PROGRESS,
+		})
+		if err != nil {
+			return xerrors.Errorf("failed to update deployment status: %w", err)
+		}
 
 		if err := u.runPipeline(ctx, deployment.Pipeline); err != nil {
 			return xerrors.Errorf("failed to run pipeline: %w", err)
@@ -283,6 +283,14 @@ func (u *updater) poll(ctx context.Context) error {
 		err = u.saveDeployment(deployment)
 		if err != nil {
 			return xerrors.Errorf("failed to save pipeline: %w", err)
+		}
+
+		_, err = u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+			Number: deployment.Number,
+			Phase:  signalcdproto.SetDeploymentStatusRequest_SUCCESS,
+		})
+		if err != nil {
+			return xerrors.Errorf("failed to update deployment status: %w", err)
 		}
 
 		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
@@ -294,21 +302,28 @@ func (u *updater) poll(ctx context.Context) error {
 		u.currentDeployment.set(deployment)
 		level.Info(u.logger).Log("msg", "update deployment", "number", deployment.Number)
 
-		// TODO
-		//if err := u.pipelineStatus(signalcd.Progress); err != nil {
-		//	level.Warn(u.logger).Log(
-		//		"msg", "failed to update pipeline status",
-		//		"err", err,
-		//	)
-		//}
+		_, err := u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+			Number: deployment.Number,
+			Phase:  signalcdproto.SetDeploymentStatusRequest_PROGRESS,
+		})
+		if err != nil {
+			return xerrors.Errorf("failed to update deployment status: %w", err)
+		}
 
 		if err := u.runPipeline(ctx, deployment.Pipeline); err != nil {
 			return xerrors.Errorf("failed to run deployment: %w", err)
 		}
 
-		err := u.saveDeployment(deployment)
-		if err != nil {
+		if err := u.saveDeployment(deployment); err != nil {
 			return xerrors.Errorf("failed to save deployment: %w", err)
+		}
+
+		_, err = u.client.DeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+			Number: deployment.Number,
+			Phase:  signalcdproto.SetDeploymentStatusRequest_SUCCESS,
+		})
+		if err != nil {
+			return xerrors.Errorf("failed to update deployment status: %w", err)
 		}
 
 		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
@@ -337,26 +352,6 @@ func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
 
 	return nil
 }
-
-//func (u *updater) pipelineStatus(status signalcd.DeploymentPhase) error {
-//	payload, err := json.Marshal(signalcd.Agent{
-//		Name:     u.agentName,
-//		Pipeline: u.currentDeployment,
-//	})
-//	if err != nil {
-//		return err
-//	}
-//
-//	resp, err := http.Post(apiURL+api.PipelinesStatus, "application/json", bytes.NewBuffer(payload))
-//	if err != nil {
-//		return err
-//	}
-//	if resp.StatusCode != http.StatusOK {
-//		return fmt.Errorf("no 200 OK, but %s", resp.Status)
-//	}
-//
-//	return nil
-//}
 
 func (u *updater) runSteps(ctx context.Context, p signalcd.Pipeline) error {
 	for _, s := range p.Steps {

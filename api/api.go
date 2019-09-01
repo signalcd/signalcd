@@ -22,6 +22,7 @@ import (
 type SignalDB interface {
 	DeploymentLister
 	DeploymentCreator
+	DeploymentStatusSetter
 	CurrentDeploymentGetter
 	PipelinesLister
 	PipelineCreator

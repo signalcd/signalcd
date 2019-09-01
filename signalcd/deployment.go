@@ -14,6 +14,10 @@ const (
 	Failure DeploymentPhase = "failure"
 	//Progress is the state of a Deployment that is currently running
 	Progress DeploymentPhase = "progress"
+	//Pending is the state of a Deployment that is schedule but not yet progressing
+	Pending DeploymentPhase = "pending"
+	//Killed is the state of a Deployment that was killed during execution
+	Killed DeploymentPhase = "killed"
 )
 
 //Deployment is a specific execution of a Pipeline with more meta data
