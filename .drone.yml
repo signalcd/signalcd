@@ -9,7 +9,7 @@ platform:
 steps:
 - name: build
   pull: always
-  image: golang:1.12
+  image: golang:1.13
   commands:
   - make cmd/agent/agent
   - make cmd/api/api
@@ -92,7 +92,7 @@ platform:
 steps:
 - name: build-kubernetes-status
   pull: always
-  image: golang:1.12
+  image: golang:1.13
   commands:
   - make cmd/checks/kubernetes-status/kubernetes-status
   environment:
@@ -128,7 +128,7 @@ platform:
 steps:
 - name: build-drone
   pull: always
-  image: golang:1.12
+  image: golang:1.13
   commands:
   - make cmd/plugins/drone/drone
   environment:

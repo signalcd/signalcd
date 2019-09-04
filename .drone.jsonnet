@@ -10,7 +10,7 @@ local pipeline = {
 
 local golang = {
   name: 'golang',
-  image: 'golang:1.12',
+  image: 'golang:1.13',
   pull: 'always',
   environment: {
     CGO_ENABLED: '0',
@@ -108,7 +108,7 @@ local swagger = {
   pipeline {
     name: 'plugins',
 
-    steps+:[
+    steps+: [
       golang {
         name: 'build-drone',
         commands: [
@@ -138,7 +138,7 @@ local swagger = {
           'make signalcd/proto/agent.pb.go',
           'git diff --exit-code',
         ],
-      }
+      },
     ],
   },
 
