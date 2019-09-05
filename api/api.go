@@ -177,13 +177,13 @@ func getCurrentDeploymentHandler(getter CurrentDeploymentGetter) deployments.Cur
 	}
 }
 
-// DeploymentCreator gets a Pipeline and then creates a new Deployments
-type DeploymentCreator interface {
+// CurrentDeploymentSetter gets a Pipeline and then creates a new Deployments
+type CurrentDeploymentSetter interface {
 	PipelineGetter
 	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
 }
 
-func setCurrentDeploymentHandler(creator DeploymentCreator, logger log.Logger) deployments.SetCurrentDeploymentHandlerFunc {
+func setCurrentDeploymentHandler(creator CurrentDeploymentSetter, logger log.Logger) deployments.SetCurrentDeploymentHandlerFunc {
 	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
 		p, err := creator.GetPipeline(params.Pipeline)
 		if err != nil {

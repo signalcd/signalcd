@@ -109,7 +109,7 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 			num++
 		}
 
-		d := signalcd.Deployment{
+		d = signalcd.Deployment{
 			Number:  int64(num + 1),
 			Created: time.Now(),
 			Status: signalcd.DeploymentStatus{
@@ -128,23 +128,29 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 }
 
 // SetDeploymentStatus finds a Deployment by its number and sets its phase
-func (bdb *BoltDB) SetDeploymentStatus(ctx context.Context, number int64, phase signalcd.DeploymentPhase) error {
-	return bdb.db.Update(func(tx *bolt.Tx) error {
+func (bdb *BoltDB) SetDeploymentStatus(ctx context.Context, number int64, phase signalcd.DeploymentPhase) (signalcd.Deployment, error) {
+	var d signalcd.Deployment
+
+	err := bdb.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketDeployments))
 		key := []byte(strconv.Itoa(int(number)))
 		value := b.Get(key)
 
-		var d signalcd.Deployment
-		err := json.Unmarshal(value, &d)
-		if err != nil {
+		if err := json.Unmarshal(value, &d); err != nil {
 			return err
 		}
 
 		d.Status.Phase = phase
 
-		value, err = json.Marshal(d)
+		value, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
 		return b.Put(key, value)
 	})
+
+	return d, err
 }
 
 // GetCurrentDeployment gets the current Deployment

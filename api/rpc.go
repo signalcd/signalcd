@@ -70,7 +70,7 @@ func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentD
 
 // DeploymentStatusSetter sets the phase for a specific Deployment by its number
 type DeploymentStatusSetter interface {
-	SetDeploymentStatus(context.Context, int64, signalcd.DeploymentPhase) error
+	SetDeploymentStatus(context.Context, int64, signalcd.DeploymentPhase) (signalcd.Deployment, error)
 }
 
 // SetDeploymentStatus sets the phase for a specific Deployment when receiving a request
@@ -92,7 +92,8 @@ func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDep
 		phase = signalcd.Killed
 	}
 
-	err := r.DB.SetDeploymentStatus(ctx, req.Number, phase)
+	// TODO: Use returned Deployment in SetDeploymentStatusResponse
+	_, err := r.DB.SetDeploymentStatus(ctx, req.Number, phase)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to update status: %w", err)
 	}
