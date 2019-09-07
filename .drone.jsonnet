@@ -85,6 +85,22 @@ local swagger = {
   },
 
   pipeline {
+    name: 'test',
+
+    steps+: [
+      golang {
+        name: 'test-unit',
+        commands: [
+          'make test-unit',
+        ],
+        environment+: {
+          CGO_ENABLED: 1,  // for -race
+        },
+      },
+    ],
+  },
+
+  pipeline {
     name: 'checks',
 
     steps+: [

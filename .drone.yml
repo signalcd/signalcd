@@ -83,6 +83,25 @@ steps:
 
 ---
 kind: pipeline
+name: test
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: test-unit
+  pull: always
+  image: golang:1.13
+  commands:
+  - make test-unit
+  environment:
+    CGO_ENABLED: 1
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
+---
+kind: pipeline
 name: checks
 
 platform:
