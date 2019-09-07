@@ -101,6 +101,30 @@ local swagger = {
   },
 
   pipeline {
+    name: 'code-generation',
+    steps+: [
+      swagger {
+        name: 'goswagger-apiv1',
+        environment: {
+          GOSWAGGER: '/usr/bin/swagger',
+        },
+        commands: [
+          'make api/v1/client api/v1/models api/v1/restapi',
+          'git diff --exit-code',
+        ],
+      },
+      {
+        name: 'grpc',
+        image: 'grpc/go',
+        commands: [
+          'make signalcd/proto/agent.pb.go',
+          'git diff --exit-code',
+        ],
+      },
+    ],
+  },
+
+  pipeline {
     name: 'checks',
 
     steps+: [
@@ -129,30 +153,6 @@ local swagger = {
         name: 'build-drone',
         commands: [
           'make cmd/plugins/drone/drone',
-        ],
-      },
-    ],
-  },
-
-  pipeline {
-    name: 'code-generation',
-    steps+: [
-      swagger {
-        name: 'goswagger-apiv1',
-        environment: {
-          GOSWAGGER: '/usr/bin/swagger',
-        },
-        commands: [
-          'make api/v1/client api/v1/models api/v1/restapi',
-          'git diff --exit-code',
-        ],
-      },
-      {
-        name: 'grpc',
-        image: 'grpc/go',
-        commands: [
-          'make signalcd/proto/agent.pb.go',
-          'git diff --exit-code',
         ],
       },
     ],
