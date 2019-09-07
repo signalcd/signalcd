@@ -65,6 +65,12 @@ ui:
 ui-serve:
 	cd ui && webdev serve
 
+test: test-unit
+
+.PHONY: test-unit
+test-unit:
+	go test -v -race ./...
+
 container: container-agent container-api container-kubernetes-status
 
 .PHONY: container-agent

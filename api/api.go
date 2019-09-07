@@ -21,9 +21,9 @@ import (
 // SignalDB is the union of all necessary interfaces for the API
 type SignalDB interface {
 	DeploymentLister
-	DeploymentCreator
 	DeploymentStatusSetter
 	CurrentDeploymentGetter
+	CurrentDeploymentSetter
 	PipelinesLister
 	PipelineCreator
 }
