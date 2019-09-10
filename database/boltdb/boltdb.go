@@ -111,7 +111,7 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 
 		d = signalcd.Deployment{
 			Number:  int64(num + 1),
-			Created: time.Now(),
+			Created: time.Now().UTC(),
 			Status: signalcd.DeploymentStatus{
 				Phase: signalcd.Unknown,
 			},
@@ -141,6 +141,13 @@ func (bdb *BoltDB) SetDeploymentStatus(ctx context.Context, number int64, phase 
 		}
 
 		d.Status.Phase = phase
+
+		switch phase {
+		case signalcd.Progress:
+			d.Started = time.Now().UTC()
+		case signalcd.Success, signalcd.Failure, signalcd.Killed:
+			d.Finished = time.Now().UTC()
+		}
 
 		value, err := json.Marshal(d)
 		if err != nil {

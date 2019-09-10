@@ -21,12 +21,20 @@ type Deployment struct {
 	// Format: date-time
 	Created strfmt.DateTime `json:"created,omitempty"`
 
+	// finished
+	// Format: date-time
+	Finished strfmt.DateTime `json:"finished,omitempty"`
+
 	// number
 	// Required: true
 	Number *int64 `json:"number"`
 
 	// pipeline
 	Pipeline *Pipeline `json:"pipeline,omitempty"`
+
+	// started
+	// Format: date-time
+	Started strfmt.DateTime `json:"started,omitempty"`
 
 	// status
 	Status *Deploymentstatus `json:"status,omitempty"`
@@ -40,11 +48,19 @@ func (m *Deployment) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateFinished(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateNumber(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validatePipeline(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStarted(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -65,6 +81,19 @@ func (m *Deployment) validateCreated(formats strfmt.Registry) error {
 	}
 
 	if err := validate.FormatOf("created", "body", "date-time", m.Created.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Deployment) validateFinished(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Finished) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("finished", "body", "date-time", m.Finished.String(), formats); err != nil {
 		return err
 	}
 
@@ -93,6 +122,19 @@ func (m *Deployment) validatePipeline(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Deployment) validateStarted(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Started) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("started", "body", "date-time", m.Started.String(), formats); err != nil {
+		return err
 	}
 
 	return nil
