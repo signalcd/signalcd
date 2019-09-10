@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -110,24 +109,6 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			}, func(err error) {
 				_ = l.Close()
 			})
-		}
-		{
-			for i := 0; i < 3; i++ {
-				deployments := make(chan signalcd.Deployment)
-				subscription := events.SubscribeDeployments(deployments)
-
-				gr.Add(func(i int) func() error {
-					return func() error {
-						for d := range deployments {
-							fmt.Printf("deployment event %d: %+v\n", i, d)
-						}
-						return nil
-					}
-				}(i), func(err error) {
-					events.UnsubscribeDeployments(subscription)
-				},
-				)
-			}
 		}
 
 		if err := gr.Run(); err != nil {
