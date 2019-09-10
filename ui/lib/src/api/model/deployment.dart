@@ -8,6 +8,12 @@ class Deployment {
   DateTime created = null;
   
 
+  DateTime started = null;
+  
+
+  DateTime finished = null;
+  
+
   Deploymentstatus status = null;
   
 
@@ -17,7 +23,7 @@ class Deployment {
 
   @override
   String toString() {
-    return 'Deployment[number=$number, created=$created, status=$status, pipeline=$pipeline, ]';
+    return 'Deployment[number=$number, created=$created, started=$started, finished=$finished, status=$status, pipeline=$pipeline, ]';
   }
 
   Deployment.fromJson(Map<String, dynamic> json) {
@@ -26,6 +32,8 @@ class Deployment {
         json['number']
     ;
     created = json['created'] == null ? null : DateTime.parse(json['created']);
+    started = json['started'] == null ? null : DateTime.parse(json['started']);
+    finished = json['finished'] == null ? null : DateTime.parse(json['finished']);
     status =
       
       
@@ -42,6 +50,8 @@ class Deployment {
     return {
       'number': number,
       'created': created == null ? '' : created.toUtc().toIso8601String(),
+      'started': started == null ? '' : started.toUtc().toIso8601String(),
+      'finished': finished == null ? '' : finished.toUtc().toIso8601String(),
       'status': status,
       'pipeline': pipeline
      };

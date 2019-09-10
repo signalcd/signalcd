@@ -154,6 +154,8 @@ func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
 	return &models.Deployment{
 		Number:   &fd.Number,
 		Created:  strfmt.DateTime(fd.Created),
+		Started:  strfmt.DateTime(fd.Started),
+		Finished: strfmt.DateTime(fd.Finished),
 		Pipeline: getModelsPipeline(fd.Pipeline),
 		Status: &models.Deploymentstatus{
 			Phase: getDeploymentStatusPhase(fd.Status.Phase),

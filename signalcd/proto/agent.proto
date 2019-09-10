@@ -24,8 +24,10 @@ service AgentService {
 message Deployment {
     int64 number = 1;
     int64 created = 2;
-    DeploymentStatus status = 3;
-    Pipeline pipeline = 4;
+    int64 started = 3;
+    int64 finished = 4;
+    DeploymentStatus status = 5;
+    Pipeline pipeline = 6;
 }
 
 message DeploymentStatus {

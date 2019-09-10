@@ -22,9 +22,11 @@ const (
 
 //Deployment is a specific execution of a Pipeline with more meta data
 type Deployment struct {
-	Number  int64
-	Created time.Time
-	Status  DeploymentStatus
+	Number   int64
+	Created  time.Time
+	Started  time.Time
+	Finished time.Time
+	Status   DeploymentStatus
 
 	Pipeline Pipeline
 }

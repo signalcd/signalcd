@@ -231,12 +231,20 @@ func init() {
           "type": "string",
           "format": "date-time"
         },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
         "number": {
           "type": "number",
           "format": "int64"
         },
         "pipeline": {
           "$ref": "#/definitions/pipeline"
+        },
+        "started": {
+          "type": "string",
+          "format": "date-time"
         },
         "status": {
           "$ref": "#/definitions/deploymentstatus"
@@ -521,12 +529,20 @@ func init() {
           "type": "string",
           "format": "date-time"
         },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
         "number": {
           "type": "number",
           "format": "int64"
         },
         "pipeline": {
           "$ref": "#/definitions/pipeline"
+        },
+        "started": {
+          "type": "string",
+          "format": "date-time"
         },
         "status": {
           "$ref": "#/definitions/deploymentstatus"

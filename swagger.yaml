@@ -126,6 +126,12 @@ definitions:
       created:
         type: string
         format: 'date-time'
+      started:
+        type: string
+        format: 'date-time'
+      finished:
+        type: string
+        format: 'date-time'
       status:
         $ref: '#/definitions/deploymentstatus'
       pipeline:
