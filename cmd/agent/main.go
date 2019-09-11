@@ -45,6 +45,10 @@ func main() {
 			Name:  "kubeconfig",
 			Usage: "Path to the kubeconfig",
 		},
+		cli.StringFlag{
+			Name:  "api.url",
+			Usage: "Full URL to API, like http://localhost:6661",
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -55,7 +59,7 @@ func main() {
 
 func agentAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
-		conn, err := grpc.Dial(apiURL, grpc.WithInsecure())
+		conn, err := grpc.Dial(c.String("api.url"), grpc.WithInsecure())
 		if err != nil {
 			level.Error(logger).Log(
 				"msg", "failed to dial gRPC target",
