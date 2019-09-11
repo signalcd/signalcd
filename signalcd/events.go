@@ -4,25 +4,25 @@ import (
 	"sync"
 )
 
+// Events fan out updates to Deployments to all subscribers
 type Events struct {
 	deploymentSubscribers map[int64]chan Deployment
 	deploymentLock        sync.RWMutex
-
-	pipelineSubscribers map[int64]chan Pipeline
-	pipelineLock        sync.RWMutex
 }
 
+// NewEvents creates a new Event bus for SignalCD
 func NewEvents() *Events {
 	return &Events{
 		deploymentSubscribers: make(map[int64]chan Deployment),
-		pipelineSubscribers:   make(map[int64]chan Pipeline),
 	}
 }
 
+// Subscription identifies a specific registered channel
 type Subscription struct {
 	id int64
 }
 
+// SubscribeDeployments adds a channel to subscribers and  returns a Subscription
 func (e *Events) SubscribeDeployments(channel chan Deployment) Subscription {
 	e.deploymentLock.Lock()
 	defer e.deploymentLock.Unlock()
@@ -32,6 +32,7 @@ func (e *Events) SubscribeDeployments(channel chan Deployment) Subscription {
 	return Subscription{id: id}
 }
 
+// UnsubscribeDeployments removes a Subscription/channel from the subscribers list
 func (e *Events) UnsubscribeDeployments(s Subscription) {
 	e.deploymentLock.Lock()
 	defer e.deploymentLock.Unlock()
@@ -39,6 +40,7 @@ func (e *Events) UnsubscribeDeployments(s Subscription) {
 	delete(e.deploymentSubscribers, s.id)
 }
 
+// PublishDeployment fans out an updated Deployment to all active subscribers
 func (e *Events) PublishDeployment(d Deployment) {
 	e.deploymentLock.RLock()
 	defer e.deploymentLock.RUnlock()

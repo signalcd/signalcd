@@ -32,6 +32,7 @@ type SignalDB interface {
 	PipelineCreator
 }
 
+// Events to Deployments that should be sent via SSE (Server Sent Events)
 type Events interface {
 	SubscribeDeployments(channel chan signalcd.Deployment) signalcd.Subscription
 	UnsubscribeDeployments(s signalcd.Subscription)
