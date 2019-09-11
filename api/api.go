@@ -1,11 +1,15 @@
 package api
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/go-openapi/loads"
 	restmiddleware "github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
@@ -28,8 +32,14 @@ type SignalDB interface {
 	PipelineCreator
 }
 
+// Events to Deployments that should be sent via SSE (Server Sent Events)
+type Events interface {
+	SubscribeDeployments(channel chan signalcd.Deployment) signalcd.Subscription
+	UnsubscribeDeployments(s signalcd.Subscription)
+}
+
 // NewV1 creates a new v1 API
-func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
+func NewV1(logger log.Logger, db SignalDB, events Events) (*chi.Mux, error) {
 	router := chi.NewRouter()
 
 	// load embedded swagger file
@@ -56,7 +66,58 @@ func NewV1(db SignalDB, logger log.Logger) (*chi.Mux, error) {
 
 	router.Mount("/", api.Serve(nil))
 
+	router.Get("/api/v1/deployments/events", deploymentEventsHandler(logger, events))
+
 	return router, nil
+}
+
+func deploymentEventsHandler(logger log.Logger, events Events) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported!", http.StatusMethodNotAllowed)
+			return
+		}
+
+		ctx, cancel := context.WithCancel(r.Context())
+		defer cancel()
+
+		level.Debug(logger).Log("msg", "streaming deployment http connection just opened")
+
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		deploymentEvents := make(chan signalcd.Deployment, 8)
+		subscription := events.SubscribeDeployments(deploymentEvents)
+
+		defer func() {
+			events.UnsubscribeDeployments(subscription)
+			level.Debug(logger).Log("msg", "streaming deployment http connection just closed")
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				close(deploymentEvents)
+				return
+			case deployment := <-deploymentEvents:
+				model := getModelsDeployment(deployment)
+				j, err := json.Marshal(model)
+				if err != nil {
+					return // TODO
+				}
+
+				_, err = fmt.Fprintf(w, "data: %s\n\n", j)
+				if err != nil {
+					return // TODO
+				}
+
+				flusher.Flush()
+			}
+		}
+	}
 }
 
 func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {

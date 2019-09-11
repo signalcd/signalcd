@@ -14,6 +14,7 @@ import (
 	"github.com/oklog/run"
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
+	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
@@ -42,17 +43,24 @@ func main() {
 
 func apiAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
-		var db api.SignalDB
+		events := signalcd.NewEvents()
 
-		db, dbClose, err := boltdb.New(c.String("bolt.path"))
-		if err != nil {
-			return xerrors.Errorf("failed to create bolt db: %w", err)
+		var db api.SignalDB
+		{
+			bolt, dbClose, err := boltdb.New(c.String("bolt.path"))
+			if err != nil {
+				return xerrors.Errorf("failed to create bolt db: %w", err)
+			}
+			defer dbClose()
+
+			boltEvents := boltdb.NewEvents(bolt, events)
+
+			db = boltEvents
 		}
-		defer dbClose()
 
 		var gr run.Group
 		{
-			apiV1, err := api.NewV1(db, log.WithPrefix(logger, "component", "api"))
+			apiV1, err := api.NewV1(log.WithPrefix(logger, "component", "api"), db, events)
 			if err != nil {
 				return xerrors.Errorf("failed to initialize api: %w", err)
 			}

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:html';
 
 import 'package:angular/angular.dart';
 import 'package:ui/deployments_service.dart';
@@ -26,14 +28,16 @@ class DeploymentsComponent implements OnInit, OnDestroy {
   DeploymentsComponent(this._deploymentsService);
 
   Timer timer;
+  EventSource events = EventSource("/api/v1/deployments/events");
   List<Deployment> deployments = [];
 
   @override
   void ngOnInit() {
+    onDeploymentEvent(events.onMessage);
     getDeployments();
 
     timer = Timer.periodic(
-      Duration(seconds: 1),
+      Duration(seconds: 30),
       (Timer timer) => getDeployments(),
     );
   }
@@ -41,6 +45,7 @@ class DeploymentsComponent implements OnInit, OnDestroy {
   @override
   void ngOnDestroy() {
     timer.cancel();
+    events.close();
   }
 
   void getDeployments() {
@@ -48,6 +53,28 @@ class DeploymentsComponent implements OnInit, OnDestroy {
       // Only update if number of deployments changed
       if (this.deployments.length != deployments.length) {
         this.deployments = deployments;
+      }
+    });
+  }
+
+  void onDeploymentEvent(Stream<MessageEvent> events) {
+    events.forEach((MessageEvent message) {
+      Deployment deployment = Deployment.fromJson(json.decode(message.data));
+
+      int index = -1;
+
+      int i = 0;
+      deployments.forEach((Deployment d) {
+        if (deployment.number == d.number) {
+          index = i;
+        }
+        i++;
+      });
+
+      if (index == -1) {
+        deployments.insert(0, deployment);
+      } else {
+        deployments.replaceRange(index, index+1, [deployment]);
       }
     });
   }
