@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -26,7 +27,6 @@ import (
 )
 
 const apiURL = "localhost:6661"
-const namespace = "default"
 const serviceAccountName = "signalcd"
 
 func main() {
@@ -49,6 +49,10 @@ func main() {
 			Name:  "api.url",
 			Usage: "Full URL to API, like http://localhost:6661",
 		},
+		cli.StringFlag{
+			Name:  "namespace",
+			Usage: "The namespace to deploy to",
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -59,6 +63,11 @@ func main() {
 
 func agentAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
+		namespace := c.String("namespace")
+		if namespace == "" {
+			return errors.New("no namespace given, use --namespace flag")
+		}
+
 		conn, err := grpc.Dial(c.String("api.url"), grpc.WithInsecure())
 		if err != nil {
 			level.Error(logger).Log(
@@ -94,10 +103,12 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 		var gr run.Group
 		{
 			u := &updater{
-				client:    client,
-				klient:    klient,
-				logger:    logger,
+				client: client,
+				klient: klient,
+				logger: logger,
+
 				agentName: c.String("name"),
+				namespace: namespace,
 			}
 
 			gr.Add(func() error {
@@ -149,10 +160,12 @@ func (cd *currentDeployment) set(d signalcd.Deployment) {
 }
 
 type updater struct {
-	client    signalcdproto.AgentServiceClient
-	klient    *kubernetes.Clientset
-	logger    log.Logger
+	client signalcdproto.AgentServiceClient
+	klient *kubernetes.Clientset
+	logger log.Logger
+
 	agentName string
+	namespace string
 
 	currentDeployment currentDeployment
 }
@@ -393,7 +406,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: namespace,
+			Namespace: u.namespace,
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: serviceAccountName,
@@ -408,21 +421,21 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 		},
 	}
 
-	podLogger := log.With(u.logger, "namespace", namespace, "pod", p.Name)
+	podLogger := log.With(u.logger, "namespace", u.namespace, "pod", p.Name)
 
-	_, err := u.klient.CoreV1().Pods(namespace).Create(&p)
+	_, err := u.klient.CoreV1().Pods(u.namespace).Create(&p)
 	if err != nil {
 		return err
 	}
 	defer func(p *corev1.Pod) {
-		_ = u.klient.CoreV1().Pods(namespace).Delete(p.Name, nil)
+		_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
 		level.Debug(podLogger).Log("msg", "deleted pod")
 	}(&p)
 
 	level.Debug(podLogger).Log("msg", "created pod")
 
 	timeout := int64(time.Minute.Seconds())
-	watch, err := u.klient.CoreV1().Pods(namespace).Watch(metav1.ListOptions{
+	watch, err := u.klient.CoreV1().Pods(u.namespace).Watch(metav1.ListOptions{
 		LabelSelector:  labelsSelector(p.GetLabels()),
 		Watch:          true,
 		TimeoutSeconds: &timeout,
@@ -446,7 +459,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 }
 
 func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
-	err := u.klient.CoreV1().Pods(namespace).DeleteCollection(nil, metav1.ListOptions{
+	err := u.klient.CoreV1().Pods(u.namespace).DeleteCollection(nil, metav1.ListOptions{
 		LabelSelector: labelsSelector(checkLabels),
 	})
 	if err != nil {
@@ -482,7 +495,7 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(pipeline.Name + "-" + check.Name),
-			Namespace: namespace,
+			Namespace: u.namespace,
 			Labels:    checkLabels,
 		},
 		Spec: corev1.PodSpec{
@@ -497,7 +510,7 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 		},
 	}
 
-	_, err := u.klient.CoreV1().Pods(namespace).Create(&p)
+	_, err := u.klient.CoreV1().Pods(u.namespace).Create(&p)
 	if err != nil {
 		return xerrors.Errorf("failed to create check pod: %w", err)
 	}
@@ -517,7 +530,7 @@ const configMapName = "signalcd"
 const configMapFilename = "deployment.json"
 
 func (u *updater) loadDeployment() (signalcd.Deployment, error) {
-	cm, err := u.klient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+	cm, err := u.klient.CoreV1().ConfigMaps(u.namespace).Get(configMapName, metav1.GetOptions{})
 	if err != nil {
 		return signalcd.Deployment{}, err
 	}
@@ -541,16 +554,16 @@ func (u *updater) saveDeployment(d signalcd.Deployment) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: namespace,
+			Namespace: u.namespace,
 		},
 		Data: map[string]string{
 			configMapFilename: string(b),
 		},
 	}
 
-	_, err = u.klient.CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+	_, err = u.klient.CoreV1().ConfigMaps(u.namespace).Get(configMapName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		_, err = u.klient.CoreV1().ConfigMaps(namespace).Create(cm)
+		_, err = u.klient.CoreV1().ConfigMaps(u.namespace).Create(cm)
 		if err != nil {
 			return xerrors.Errorf("failed to create ConfigMap: %v", err)
 		}
@@ -560,7 +573,7 @@ func (u *updater) saveDeployment(d signalcd.Deployment) error {
 		return xerrors.Errorf("failed to get ConfigMap: %v", err)
 	}
 
-	_, err = u.klient.CoreV1().ConfigMaps(namespace).Update(cm)
+	_, err = u.klient.CoreV1().ConfigMaps(u.namespace).Update(cm)
 	if err != nil {
 		return xerrors.Errorf("failed to update ConfigMap: %v", err)
 	}
