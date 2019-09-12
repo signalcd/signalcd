@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: signalcd-agent
-  namespace: myapplication
+  namespace: signalcd-app
   labels:
     app: signalcd-agent
 spec:
@@ -14,9 +14,68 @@ spec:
       labels:
         app: signalcd-agent
     spec:
+      serviceAccountName: signalcd-agent
       containers:
         - name: api
           image: quay.io/signalcd/agent:latest
           imagePullPolicy: Always
           args:
-            - -name=myapplication
+            - --api.url=signalcd-api.signalcd.svc.cluster.local:6661
+            - --name=signalcd-app
+---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: signalcd-agent
+  namespace: signalcd-app
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: signalcd-agent
+  namespace: signalcd-app
+rules:
+  - apiGroups:
+      - ''
+    resources:
+      - services
+      - configmaps
+    verbs:
+      - create
+      - get
+      - list
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - create
+      - get
+      - list
+      - delete
+  - apiGroups:
+      - apps
+    resources:
+      - deployments
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
+      - patch
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: signalcd-agent
+  namespace: signalcd-app
+roleRef:
+  apiGroup: ''
+  kind: Role
+  name: signalcd-agent
+subjects:
+  - kind: ServiceAccount
+    name: signalcd-agent
+    namespace: signalcd-app
