@@ -27,7 +27,6 @@ import (
 )
 
 const apiURL = "localhost:6661"
-const serviceAccountName = "signalcd"
 
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
@@ -52,6 +51,11 @@ func main() {
 		cli.StringFlag{
 			Name:  "namespace",
 			Usage: "The namespace to deploy to",
+		},
+		cli.StringFlag{
+			Name:  "serviceaccount",
+			Usage: "The name of the ServiceAccount to use",
+			Value: "signalcd",
 		},
 	}
 
@@ -107,8 +111,9 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 				klient: klient,
 				logger: logger,
 
-				agentName: c.String("name"),
-				namespace: namespace,
+				agentName:      c.String("name"),
+				namespace:      namespace,
+				serviceAccount: c.String("serviceaccount"),
 			}
 
 			gr.Add(func() error {
@@ -164,8 +169,9 @@ type updater struct {
 	klient *kubernetes.Clientset
 	logger log.Logger
 
-	agentName string
-	namespace string
+	agentName      string
+	namespace      string
+	serviceAccount string
 
 	currentDeployment currentDeployment
 }
@@ -409,7 +415,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 			Namespace: u.namespace,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: serviceAccountName,
+			ServiceAccountName: u.serviceAccount,
 			Containers: []corev1.Container{{
 				Name:            step.Name,
 				Image:           step.Image,
@@ -499,7 +505,7 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 			Labels:    checkLabels,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: serviceAccountName,
+			ServiceAccountName: u.serviceAccount,
 			Containers: []corev1.Container{{
 				Name:            strings.ToLower(check.Name),
 				Image:           check.Image,
