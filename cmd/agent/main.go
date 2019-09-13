@@ -413,6 +413,11 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
 			Namespace: u.namespace,
+			Labels: map[string]string{
+				"signalcd": "step",
+				"pipeline": pipeline.Name,
+				"step":     step.Name,
+			},
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: u.serviceAccount,
