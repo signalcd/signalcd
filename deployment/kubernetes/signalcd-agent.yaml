@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: signalcd-agent
-  namespace: signalcd-app
+  namespace: signalcd-demo
   labels:
     app: signalcd-agent
 spec:
@@ -21,61 +21,83 @@ spec:
           imagePullPolicy: Always
           args:
             - --api.url=signalcd-api.signalcd.svc.cluster.local:6661
-            - --name=signalcd-app
+            - --name=signalcd-demo
+            - --namespace=signalcd-demo
+            - --serviceaccount=signalcd-agent
 ---
 kind: ServiceAccount
 apiVersion: v1
 metadata:
   name: signalcd-agent
-  namespace: signalcd-app
+  namespace: signalcd-demo
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: signalcd-agent
-  namespace: signalcd-app
+  namespace: signalcd-demo
 rules:
   - apiGroups:
-      - ''
+      - ""
     resources:
-      - services
+      - pods
       - configmaps
     verbs:
       - create
       - get
       - list
-  - apiGroups:
-      - ''
-    resources:
-      - pods
-    verbs:
-      - create
-      - get
-      - list
       - delete
-  - apiGroups:
-      - apps
-    resources:
-      - deployments
-    verbs:
-      - create
-      - delete
-      - get
-      - list
-      - update
-      - watch
-      - patch
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: signalcd-agent
-  namespace: signalcd-app
+  namespace: signalcd-demo
 roleRef:
-  apiGroup: ''
+  apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: signalcd-agent
 subjects:
   - kind: ServiceAccount
     name: signalcd-agent
-    namespace: signalcd-app
+    namespace: signalcd-demo
+
+---
+
+# Rules for Demo deployment itself
+
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: signalcd-demo
+  namespace: signalcd-demo
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - create
+      - get
+  - apiGroups:
+      - "apps"
+    resources:
+      - deployments
+    verbs:
+      - create
+      - get
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: signalcd-demo
+  namespace: signalcd-demo
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: signalcd-demo
+subjects:
+  - kind: ServiceAccount
+    name: signalcd-agent
+    namespace: signalcd-demo
+
