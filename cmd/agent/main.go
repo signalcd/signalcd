@@ -367,17 +367,17 @@ func (u *updater) sendStatus(ctx context.Context, number int64, err error) error
 func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
 	level.Info(u.logger).Log("msg", "running steps")
 	if err := u.runSteps(ctx, p); err != nil {
-		return err
+		return fmt.Errorf("failed to run steps: %w", err)
 	}
 
 	level.Info(u.logger).Log("msg", "cleaning checks")
 	if err := u.cleanChecks(p); err != nil {
-		return xerrors.Errorf("failed to clean old checks: %w", err)
+		return fmt.Errorf("failed to clean old checks: %w", err)
 	}
 
 	level.Info(u.logger).Log("msg", "running checks")
 	if err := u.runChecks(p); err != nil {
-		return err
+		return fmt.Errorf("failed to run checks: %w", err)
 	}
 
 	return nil
@@ -391,7 +391,7 @@ func (u *updater) runSteps(ctx context.Context, p signalcd.Pipeline) error {
 			"step", s.Name,
 		)
 		if err := u.runStep(ctx, p, s); err != nil {
-			return err
+			return fmt.Errorf("failed to run pipeline %s step %s: %w", p.Name, s.Name, err)
 		}
 	}
 
@@ -431,7 +431,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 
 	_, err := u.klient.CoreV1().Pods(u.namespace).Create(&p)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create pod: %w", err)
 	}
 	defer func(p *corev1.Pod) {
 		_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
@@ -447,7 +447,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 		TimeoutSeconds: &timeout,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to watch pods %s: %w", labelsSelector(p.GetLabels()), err)
 	}
 
 	for event := range watch.ResultChan() {
@@ -478,7 +478,7 @@ func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
 func (u *updater) runChecks(p signalcd.Pipeline) error {
 	for _, c := range p.Checks {
 		if err := u.runCheck(p, c); err != nil {
-			return err
+			return fmt.Errorf("failed to run pipeline %s check %s: %w", p.Name, c.Name, err)
 		}
 	}
 
@@ -554,7 +554,7 @@ func (u *updater) loadDeployment() (signalcd.Deployment, error) {
 func (u *updater) saveDeployment(d signalcd.Deployment) error {
 	b, err := json.Marshal(&d)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal deployment configmap: %w", err)
 	}
 
 	cm := &corev1.ConfigMap{
