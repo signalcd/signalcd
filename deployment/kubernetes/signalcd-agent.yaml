@@ -41,12 +41,28 @@ rules:
       - ""
     resources:
       - pods
-      - configmaps
     verbs:
       - create
       - get
       - list
       - delete
+      - deletecollection
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - pods/log
+    verbs:
+      - get
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - create
+      - get
+      - update
+
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -80,12 +96,13 @@ rules:
       - create
       - get
   - apiGroups:
-      - "apps"
+      - apps
     resources:
       - deployments
     verbs:
       - create
       - get
+      - patch
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
