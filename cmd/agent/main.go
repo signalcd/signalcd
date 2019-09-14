@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
@@ -474,12 +475,32 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 		pod := event.Object.(*corev1.Pod)
 
 		if pod.Status.Phase == corev1.PodSucceeded {
-			return nil
+			return u.podLogs(p.Name)
 		}
 		if pod.Status.Phase == corev1.PodFailed {
+			if err := u.podLogs(p.Name); err != nil {
+				return fmt.Errorf("step failed: %w", err)
+			}
 			return fmt.Errorf("step failed")
 		}
 	}
+
+	return nil
+}
+
+func (u *updater) podLogs(name string) error {
+	limit := int64(1048576)
+	r, err := u.klient.CoreV1().Pods(u.namespace).GetLogs(name, &corev1.PodLogOptions{LimitBytes: &limit}).Stream()
+	if err != nil {
+		return err
+	}
+
+	logs, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s - $%s: %s\n", u.namespace, name, string(logs))
 
 	return nil
 }
