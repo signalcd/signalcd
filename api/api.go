@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
 	"github.com/go-openapi/loads"
 	restmiddleware "github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
@@ -18,6 +17,7 @@ import (
 	"github.com/signalcd/signalcd/api/v1/restapi/operations"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
+	"github.com/signalcd/signalcd/signal"
 	"github.com/signalcd/signalcd/signalcd"
 	"golang.org/x/xerrors"
 )
@@ -39,7 +39,8 @@ type Events interface {
 }
 
 // NewV1 creates a new v1 API
-func NewV1(logger log.Logger, db SignalDB, events Events) (*chi.Mux, error) {
+func NewV1(signals *signal.Signal, db SignalDB, events Events) (*chi.Mux, error) {
+	logger := log.NewNopLogger()
 	router := chi.NewRouter()
 
 	// load embedded swagger file
@@ -66,13 +67,18 @@ func NewV1(logger log.Logger, db SignalDB, events Events) (*chi.Mux, error) {
 
 	router.Mount("/", api.Serve(nil))
 
-	router.Get("/api/v1/deployments/events", deploymentEventsHandler(logger, events))
+	router.Get("/api/v1/deployments/events", deploymentEventsHandler(signals, events))
 
 	return router, nil
 }
 
-func deploymentEventsHandler(logger log.Logger, events Events) func(w http.ResponseWriter, r *http.Request) {
+func deploymentEventsHandler(signals *signal.Signal, events Events) func(w http.ResponseWriter, r *http.Request) {
+	//prometheus.new
+	//signals.RegisterMetric()
+
 	return func(w http.ResponseWriter, r *http.Request) {
+		signals = signals.WithContext(r.Context())
+
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, "Streaming unsupported!", http.StatusMethodNotAllowed)
@@ -82,7 +88,7 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 		ctx, cancel := context.WithCancel(r.Context())
 		defer cancel()
 
-		level.Debug(logger).Log("msg", "streaming deployment http connection just opened")
+		signals.Log(signal.Labels{"msg": "streaming deployment http connection just opened"})
 
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
@@ -94,7 +100,7 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 
 		defer func() {
 			events.UnsubscribeDeployments(subscription)
-			level.Debug(logger).Log("msg", "streaming deployment http connection just closed")
+			signals.Log(signal.Labels{"msg": "streaming deployment http connection just closed"})
 		}()
 
 		for {

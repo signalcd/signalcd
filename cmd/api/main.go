@@ -14,6 +14,7 @@ import (
 	"github.com/oklog/run"
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
+	"github.com/signalcd/signalcd/signal"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
@@ -22,12 +23,10 @@ import (
 )
 
 func main() {
-	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
-	logger = log.WithPrefix(logger, "ts", log.DefaultTimestampUTC)
-	logger = log.WithPrefix(logger, "caller", log.DefaultCaller)
+	signals := signal.New()
 
 	app := cli.NewApp()
-	app.Action = apiAction(logger)
+	app.Action = apiAction(signals)
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "bolt.path",
@@ -36,12 +35,14 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		logger.Log("msg", "failed running api", "err", err)
+		signals.Log(signal.Labels{"msg": "failed running api", "err": err.Error()})
 		os.Exit(1)
 	}
 }
 
-func apiAction(logger log.Logger) cli.ActionFunc {
+func apiAction(signals *signal.Signal) cli.ActionFunc {
+	logger := log.NewNopLogger()
+
 	return func(c *cli.Context) error {
 		events := signalcd.NewEvents()
 
@@ -60,7 +61,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var gr run.Group
 		{
-			apiV1, err := api.NewV1(log.WithPrefix(logger, "component", "api"), db, events)
+			apiV1, err := api.NewV1(signals, db, events)
 			if err != nil {
 				return xerrors.Errorf("failed to initialize api: %w", err)
 			}
@@ -75,10 +76,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			}
 
 			gr.Add(func() error {
-				level.Info(logger).Log(
-					"msg", "running HTTP API",
-					"addr", s.Addr,
-				)
+				signals.Log(signal.Labels{"msg": "running HTTP API", "addr": s.Addr})
 				return s.ListenAndServe()
 			}, func(err error) {
 				_ = s.Shutdown(context.TODO())
@@ -98,10 +96,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			)
 
 			gr.Add(func() error {
-				level.Info(logger).Log(
-					"msg", "running gRPC API",
-					"addr", l.Addr().String(),
-				)
+				signals.Log(signal.Labels{"msg": "running gRPC API", "addr": l.Addr().String()})
 				if err := s.Serve(l); err != nil {
 					return xerrors.Errorf("failed to serve: %w", err)
 				}
