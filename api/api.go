@@ -12,6 +12,7 @@ import (
 	"github.com/go-openapi/loads"
 	restmiddleware "github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/api/v1/restapi"
 	"github.com/signalcd/signalcd/api/v1/restapi/operations"
@@ -73,8 +74,11 @@ func NewV1(signals *signal.Signal, db SignalDB, events Events) (*chi.Mux, error)
 }
 
 func deploymentEventsHandler(signals *signal.Signal, events Events) func(w http.ResponseWriter, r *http.Request) {
-	//prometheus.new
-	//signals.RegisterMetric()
+	connections := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "signalcd_event_connections",
+		Help: "Number of open connection subscribed for events",
+	})
+	signals.MetricsRegister(connections)
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		signals = signals.WithContext(r.Context())
@@ -89,6 +93,7 @@ func deploymentEventsHandler(signals *signal.Signal, events Events) func(w http.
 		defer cancel()
 
 		signals.Log(signal.Labels{"msg": "streaming deployment http connection just opened"})
+		connections.Inc()
 
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
@@ -101,6 +106,7 @@ func deploymentEventsHandler(signals *signal.Signal, events Events) func(w http.
 		defer func() {
 			events.UnsubscribeDeployments(subscription)
 			signals.Log(signal.Labels{"msg": "streaming deployment http connection just closed"})
+			connections.Dec()
 		}()
 
 		for {

@@ -105,6 +105,12 @@ func apiAction(signals *signal.Signal) cli.ActionFunc {
 				_ = l.Close()
 			})
 		}
+		{
+			gr.Add(func() error {
+				return signals.Serve(":6662")
+			}, func(err error) {
+			})
+		}
 
 		if err := gr.Run(); err != nil {
 			return xerrors.Errorf("error running: %w", err)
