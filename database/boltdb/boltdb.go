@@ -37,15 +37,6 @@ func New(path string) (*BoltDB, func() error, error) {
 			return err
 		}
 
-		//for _, d := range fakeDeployments {
-		//	key := strconv.Itoa(int(d.Number))
-		//	value, _ := json.Marshal(d)
-		//
-		//	if err := bucket.Put([]byte(key), value); err != nil {
-		//		return err
-		//	}
-		//}
-
 		bucket, err = tx.CreateBucketIfNotExists([]byte(bucketPipelines))
 		if err != nil {
 			return err

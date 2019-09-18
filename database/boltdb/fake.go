@@ -6,41 +6,6 @@ import (
 	"github.com/signalcd/signalcd/signalcd"
 )
 
-var fakeDeployments = []signalcd.Deployment{
-	{
-		Number:  4,
-		Created: time.Now().Add(-30 * time.Second),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Success,
-		},
-		Pipeline: fakePipelines[2],
-	},
-	{
-		Number:  3,
-		Created: time.Now().Add(-3 * time.Minute),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Success,
-		},
-		Pipeline: fakePipelines[0],
-	},
-	{
-		Number:  2,
-		Created: time.Now().Add(-8 * time.Minute),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Failure,
-		},
-		Pipeline: fakePipelines[1],
-	},
-	{
-		Number:  1,
-		Created: time.Now().Add(-10 * time.Minute),
-		Status: signalcd.DeploymentStatus{
-			Phase: signalcd.Success,
-		},
-		Pipeline: fakePipelines[0],
-	},
-}
-
 var fakePipelines = []signalcd.Pipeline{
 	{
 		ID:   "eee4047d-3826-4bf0-a7f1-b0b339521a52",
