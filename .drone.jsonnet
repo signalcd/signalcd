@@ -155,6 +155,14 @@ local swagger = {
           'make cmd/plugins/drone/drone',
         ],
       },
+      docker {
+        name: 'docker-drone',
+        settings+: {
+          repo: 'quay.io/signalcd/drone',
+          dockerfile: 'cmd/plugins/drone/Dockerfile',
+          context: 'cmd/plugins/drone',
+        },
+      },
     ],
   },
 

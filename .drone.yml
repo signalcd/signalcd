@@ -178,6 +178,23 @@ steps:
     GO111MODULE: on
     GOPROXY: https://proxy.golang.org
 
+- name: docker-drone
+  image: plugins/docker
+  settings:
+    context: cmd/plugins/drone
+    dockerfile: cmd/plugins/drone/Dockerfile
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/drone
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+    event:
+    - push
+
 ---
 kind: pipeline
 name: examples
