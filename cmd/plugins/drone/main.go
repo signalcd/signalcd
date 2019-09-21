@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	stdlog "log"
 	"net/url"
 	"os"
@@ -53,12 +54,12 @@ func action(c *cli.Context) error {
 	path := c.String("signalcd.file")
 	file, err := os.Open(path)
 	if err != nil {
-		return xerrors.Errorf("failed to read SignalCD file from: %s", path)
+		return fmt.Errorf("failed to read SignalCD file from: %s", path)
 	}
 
 	config, err := signalcd.ParseConfig(file)
 	if err != nil {
-		return xerrors.Errorf("failed to parse SignalCD config: %w", err)
+		return fmt.Errorf("failed to parse SignalCD config: %w", err)
 	}
 
 	apiURLFlag := c.String("api.url")
@@ -68,7 +69,7 @@ func action(c *cli.Context) error {
 
 	apiURL, err := url.Parse(apiURLFlag)
 	if err != nil {
-		return xerrors.Errorf("failed to parse API URL: %w", err)
+		return fmt.Errorf("failed to parse API URL: %w", err)
 	}
 
 	client := client.NewHTTPClientWithConfig(
@@ -91,7 +92,7 @@ func action(c *cli.Context) error {
 	pipelineParams = pipelineParams.WithTimeout(15 * time.Second)
 	pipeline, err := client.Pipeline.Create(pipelineParams, auth)
 	if err != nil {
-		return xerrors.Errorf("failed to create pipeline: %w", err)
+		return fmt.Errorf("failed to create pipeline: %w", err)
 	}
 
 	deploymentParams := &deployments.SetCurrentDeploymentParams{
@@ -100,7 +101,7 @@ func action(c *cli.Context) error {
 	deploymentParams.WithTimeout(15 * time.Second)
 	_, err = client.Deployments.SetCurrentDeployment(deploymentParams, auth)
 	if err != nil {
-		return xerrors.Errorf("failed to set current deployment: %w", err)
+		return fmt.Errorf("failed to set current deployment: %w", err)
 	}
 
 	return nil
