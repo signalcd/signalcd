@@ -28,7 +28,7 @@ func main() {
 			EnvVar: "PLUGIN_API_URL",
 		},
 		cli.StringFlag{
-			Name:   "signalcd.file",
+			Name:   "signalcd.file,f",
 			Usage:  "The path to the SignalCD file to use",
 			EnvVar: "PLUGIN_SIGNALCD_FILE",
 			Value:  ".signalcd.yaml",
