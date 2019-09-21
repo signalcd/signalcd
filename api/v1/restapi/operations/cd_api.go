@@ -40,22 +40,22 @@ func NewCdAPI(spec *loads.Document) *CdAPI {
 		BearerAuthenticator: security.BearerAuth,
 		JSONConsumer:        runtime.JSONConsumer(),
 		JSONProducer:        runtime.JSONProducer(),
-		PipelineCreateHandler: pipeline.CreateHandlerFunc(func(params pipeline.CreateParams) middleware.Responder {
+		PipelineCreateHandler: pipeline.CreateHandlerFunc(func(params pipeline.CreateParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation PipelineCreate has not yet been implemented")
 		}),
-		DeploymentsCurrentDeploymentHandler: deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams) middleware.Responder {
+		DeploymentsCurrentDeploymentHandler: deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation DeploymentsCurrentDeployment has not yet been implemented")
 		}),
-		DeploymentsDeploymentsHandler: deployments.DeploymentsHandlerFunc(func(params deployments.DeploymentsParams) middleware.Responder {
+		DeploymentsDeploymentsHandler: deployments.DeploymentsHandlerFunc(func(params deployments.DeploymentsParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation DeploymentsDeployments has not yet been implemented")
 		}),
-		PipelinePipelineHandler: pipeline.PipelineHandlerFunc(func(params pipeline.PipelineParams) middleware.Responder {
+		PipelinePipelineHandler: pipeline.PipelineHandlerFunc(func(params pipeline.PipelineParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation PipelinePipeline has not yet been implemented")
 		}),
-		PipelinePipelinesHandler: pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams) middleware.Responder {
+		PipelinePipelinesHandler: pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation PipelinePipelines has not yet been implemented")
 		}),
-		DeploymentsSetCurrentDeploymentHandler: deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams) middleware.Responder {
+		DeploymentsSetCurrentDeploymentHandler: deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation DeploymentsSetCurrentDeployment has not yet been implemented")
 		}),
 	}

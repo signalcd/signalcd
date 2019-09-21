@@ -27,7 +27,7 @@ type Client struct {
 /*
 CurrentDeployment returns the currently active deployment
 */
-func (a *Client) CurrentDeployment(params *CurrentDeploymentParams) (*CurrentDeploymentOK, error) {
+func (a *Client) CurrentDeployment(params *CurrentDeploymentParams, authInfo runtime.ClientAuthInfoWriter) (*CurrentDeploymentOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewCurrentDeploymentParams()
@@ -42,6 +42,7 @@ func (a *Client) CurrentDeployment(params *CurrentDeploymentParams) (*CurrentDep
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &CurrentDeploymentReader{formats: a.formats},
+		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
@@ -55,7 +56,7 @@ func (a *Client) CurrentDeployment(params *CurrentDeploymentParams) (*CurrentDep
 /*
 Deployments returns the history of deployments
 */
-func (a *Client) Deployments(params *DeploymentsParams) (*DeploymentsOK, error) {
+func (a *Client) Deployments(params *DeploymentsParams, authInfo runtime.ClientAuthInfoWriter) (*DeploymentsOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewDeploymentsParams()
@@ -70,6 +71,7 @@ func (a *Client) Deployments(params *DeploymentsParams) (*DeploymentsOK, error) 
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &DeploymentsReader{formats: a.formats},
+		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
@@ -83,7 +85,7 @@ func (a *Client) Deployments(params *DeploymentsParams) (*DeploymentsOK, error) 
 /*
 SetCurrentDeployment schedules a new deployment
 */
-func (a *Client) SetCurrentDeployment(params *SetCurrentDeploymentParams) (*SetCurrentDeploymentOK, error) {
+func (a *Client) SetCurrentDeployment(params *SetCurrentDeploymentParams, authInfo runtime.ClientAuthInfoWriter) (*SetCurrentDeploymentOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewSetCurrentDeploymentParams()
@@ -98,6 +100,7 @@ func (a *Client) SetCurrentDeployment(params *SetCurrentDeploymentParams) (*SetC
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &SetCurrentDeploymentReader{formats: a.formats},
+		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})

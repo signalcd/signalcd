@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/signalcd/signalcd/api/v1/client"
 	"github.com/signalcd/signalcd/api/v1/client/deployments"
 	"github.com/signalcd/signalcd/api/v1/client/pipeline"
@@ -30,6 +31,16 @@ func main() {
 			Usage:  "The path to the SignalCD file to use",
 			EnvVar: "PLUGIN_SIGNALCD_FILE",
 			Value:  ".signalcd.yaml",
+		},
+		cli.StringFlag{
+			Name:   "basicauth.username",
+			Usage:  "The username to authenticate with",
+			EnvVar: "PLUGIN_BASICAUTH_USERNAME",
+		},
+		cli.StringFlag{
+			Name:   "basicauth.password",
+			Usage:  "The user's password to authenticate with",
+			EnvVar: "PLUGIN_BASICAUTH_PASSWORD",
 		},
 	}
 
@@ -68,9 +79,17 @@ func action(c *cli.Context) error {
 			WithBasePath(apiURL.Path),
 	)
 
+	auth := httptransport.PassThroughAuth
+
+	username := c.String("basicauth.username")
+	password := c.String("basicauth.password")
+	if username != "" && password != "" {
+		auth = httptransport.BasicAuth(username, password)
+	}
+
 	pipelineParams := &pipeline.CreateParams{Pipeline: configToPipeline(config)}
 	pipelineParams = pipelineParams.WithTimeout(15 * time.Second)
-	pipeline, err := client.Pipeline.Create(pipelineParams)
+	pipeline, err := client.Pipeline.Create(pipelineParams, auth)
 	if err != nil {
 		return xerrors.Errorf("failed to create pipeline: %w", err)
 	}
@@ -79,7 +98,7 @@ func action(c *cli.Context) error {
 		Pipeline: pipeline.Payload.ID.String(),
 	}
 	deploymentParams.WithTimeout(15 * time.Second)
-	_, err = client.Deployments.SetCurrentDeployment(deploymentParams)
+	_, err = client.Deployments.SetCurrentDeployment(deploymentParams, auth)
 	if err != nil {
 		return xerrors.Errorf("failed to set current deployment: %w", err)
 	}

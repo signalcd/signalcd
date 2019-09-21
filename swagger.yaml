@@ -16,6 +16,10 @@ consumes:
   - application/json
 produces:
   - application/json
+
+security:
+  - basicAuth: []
+
 paths:
   /deployments:
     get:
