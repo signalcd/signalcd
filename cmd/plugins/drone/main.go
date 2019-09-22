@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	stdlog "log"
 	"net/url"
 	"os"
@@ -52,12 +53,12 @@ func main() {
 
 func action(c *cli.Context) error {
 	path := c.String("signalcd.file")
-	file, err := os.Open(path)
+	fileContent, err := ioutil.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read SignalCD file from: %s", path)
 	}
 
-	config, err := signalcd.ParseConfig(file)
+	config, err := signalcd.ParseConfig(string(fileContent))
 	if err != nil {
 		return fmt.Errorf("failed to parse SignalCD config: %w", err)
 	}
