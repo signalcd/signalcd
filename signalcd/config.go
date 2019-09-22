@@ -1,9 +1,12 @@
 package signalcd
 
 import (
+	"fmt"
 	"io"
+	"os"
 	"time"
 
+	"github.com/drone/envsubst"
 	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v2"
 )
@@ -31,10 +34,23 @@ type ConfigCheck struct {
 }
 
 // ParseConfig decodes a io.Reader into a SignalCD Config
-func ParseConfig(r io.Reader) (Config, error) {
+func ParseConfig(s string) (Config, error) {
+	return parseConfigEnv(s, os.Getenv)
+}
+
+func parseConfigEnv(s string, env func(string) string) (Config, error) {
 	var c Config
 
-	err := yaml.NewDecoder(r).Decode(&c)
+	if s == "" {
+		return c, io.EOF
+	}
+
+	s, err := envsubst.Eval(s, env)
+	if err != nil {
+		return c, fmt.Errorf("failed to substitute environment variable: %w", err)
+	}
+
+	err = yaml.Unmarshal([]byte(s), &c)
 	if err != nil {
 		return c, xerrors.Errorf("failed to unmarshal config: %w", err)
 	}
