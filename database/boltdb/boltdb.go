@@ -32,32 +32,20 @@ func New(path string) (*BoltDB, func() error, error) {
 	}
 
 	err = db.Batch(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte(bucketDeployments))
+		_, err := tx.CreateBucketIfNotExists([]byte(bucketDeployments))
 		if err != nil {
 			return err
 		}
 
-		bucket, err = tx.CreateBucketIfNotExists([]byte(bucketPipelines))
+		_, err = tx.CreateBucketIfNotExists([]byte(bucketPipelines))
 		if err != nil {
 			return err
-		}
-
-		for _, p := range fakePipelines {
-			key := []byte(p.ID)
-			value, _ := json.Marshal(p)
-
-			if err := bucket.Put(key, value); err != nil {
-				return err
-			}
 		}
 
 		return nil
 	})
-	if err != nil {
-		return nil, nil, err
-	}
 
-	return &BoltDB{db: db}, db.Close, nil
+	return &BoltDB{db: db}, db.Close, err
 }
 
 // ListDeployments lists all Deployments
