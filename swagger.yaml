@@ -173,6 +173,10 @@ definitions:
         type: string
       image:
         type: string
+      imagePullSecrets:
+        type: array
+        items:
+          type: string
       commands:
         type: array
         items:
@@ -186,6 +190,10 @@ definitions:
         type: string
       image:
         type: string
+      imagePullSecrets:
+        type: array
+        items:
+          type: string
       duration:
         type: number
       environment:

@@ -14,9 +14,10 @@ type Pipeline struct {
 // Step is a synchronous execution step in a Pipeline
 // TODO: This is probably mostly what Drone uses. Maybe we should copy that struct :)
 type Step struct {
-	Name     string   `json:"name"`
-	Image    string   `json:"image"`
-	Commands []string `json:"commands"`
+	Name             string   `json:"name"`
+	Image            string   `json:"image"`
+	ImagePullSecrets []string `json:"imagePullSecrets"`
+	Commands         []string `json:"commands"`
 
 	Status *StepStatus `json:"status,omitempty"`
 }
@@ -30,8 +31,9 @@ type StepStatus struct {
 
 // Check is an asynchronous long running Check after the Pipeline was successfully executed
 type Check struct {
-	Name        string            `json:"name"`
-	Image       string            `json:"image"`
-	Duration    time.Duration     `json:"duration"`
-	Environment map[string]string `json:"environment"`
+	Name             string            `json:"name"`
+	Image            string            `json:"image"`
+	ImagePullSecrets []string          `json:"imagePullSecrets"`
+	Duration         time.Duration     `json:"duration"`
+	Environment      map[string]string `json:"environment"`
 }

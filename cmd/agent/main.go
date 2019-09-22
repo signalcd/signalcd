@@ -409,6 +409,11 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 
 	podName := strings.ToLower(pipeline.Name + "-" + step.Name)
 
+	var imagePullSecrets []corev1.LocalObjectReference
+	for _, secret := range step.ImagePullSecrets {
+		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: secret})
+	}
+
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -428,7 +433,8 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 				Command:         []string{"sh"},
 				Args:            args,
 			}},
-			RestartPolicy: corev1.RestartPolicyNever,
+			ImagePullSecrets: imagePullSecrets,
+			RestartPolicy:    corev1.RestartPolicyNever,
 		},
 	}
 
@@ -503,6 +509,11 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 		env = append(env, corev1.EnvVar{Name: name, Value: value})
 	}
 
+	var imagePullSecrets []corev1.LocalObjectReference
+	for _, secret := range check.ImagePullSecrets {
+		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: secret})
+	}
+
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(pipeline.Name + "-" + check.Name),
@@ -517,7 +528,8 @@ func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) err
 				ImagePullPolicy: corev1.PullAlways,
 				Env:             env,
 			}},
-			RestartPolicy: corev1.RestartPolicyNever,
+			ImagePullSecrets: imagePullSecrets,
+			RestartPolicy:    corev1.RestartPolicyNever,
 		},
 	}
 

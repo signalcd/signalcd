@@ -21,16 +21,18 @@ type Config struct {
 
 // ConfigStep for a SignalCD Pipeline Step
 type ConfigStep struct {
-	Name     string   `json:"name"`
-	Image    string   `json:"image"`
-	Commands []string `json:"commands"`
+	Name             string   `json:"name"`
+	Image            string   `json:"image"`
+	ImagePullSecrets []string `json:"imagePullSecrets"`
+	Commands         []string `json:"commands"`
 }
 
 // ConfigCheck for a SignalCD Pipeline Check
 type ConfigCheck struct {
-	Name     string        `json:"name"`
-	Image    string        `json:"image"`
-	Duration time.Duration `json:"duration"`
+	Name             string        `json:"name"`
+	Image            string        `json:"image"`
+	ImagePullSecrets []string      `json:"imagePullSecrets"`
+	Duration         time.Duration `json:"duration"`
 }
 
 // ParseConfig decodes a io.Reader into a SignalCD Config
