@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/drone/envsubst"
+	"github.com/ghodss/yaml"
 	"golang.org/x/xerrors"
-	"gopkg.in/yaml.v2"
 )
 
 // Config for a SignalCD Pipeline

@@ -10,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ghodss/yaml"
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/signalcd/signalcd/api/v1/client"
@@ -22,20 +23,22 @@ import (
 )
 
 func main() {
+	fileFlag := cli.StringFlag{
+		Name:   "signalcd.file,f",
+		Usage:  "The path to the SignalCD file to use",
+		EnvVar: "PLUGIN_SIGNALCD_FILE",
+		Value:  ".signalcd.yaml",
+	}
+
 	app := cli.NewApp()
 	app.Name = "SignalCD Drone plugin"
 	app.Action = action
 	app.Flags = []cli.Flag{
+		fileFlag,
 		cli.StringFlag{
 			Name:   "api.url",
 			Usage:  "The URL to talk to the SignalCD API at",
 			EnvVar: "PLUGIN_API_URL",
-		},
-		cli.StringFlag{
-			Name:   "signalcd.file,f",
-			Usage:  "The path to the SignalCD file to use",
-			EnvVar: "PLUGIN_SIGNALCD_FILE",
-			Value:  ".signalcd.yaml",
 		},
 		cli.StringFlag{
 			Name:   "basicauth.username",
@@ -46,6 +49,17 @@ func main() {
 			Name:   "basicauth.password",
 			Usage:  "The user's password to authenticate with",
 			EnvVar: "PLUGIN_BASICAUTH_PASSWORD",
+		},
+	}
+
+	app.Commands = []cli.Command{
+		{
+			Name:  "eval",
+			Usage: "Evaluate the given signalcd configuration file",
+			Flags: []cli.Flag{
+				fileFlag,
+			},
+			Action: evalAction,
 		},
 	}
 
@@ -81,7 +95,6 @@ func action(c *cli.Context) error {
 	username := c.String("basicauth.username")
 	password := c.String("basicauth.password")
 	if username != "" && password != "" {
-		//auth = httptransport.BasicAuth(username, password)
 		httpClient.Transport = basicAuthTransport{Username: username, Password: password}
 	}
 
@@ -110,6 +123,11 @@ func action(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to set current deployment: %w", err)
 	}
+
+	// Ignoring error, as this YAML is only for debug printing
+	configYAML, _ := yaml.Marshal(config)
+
+	fmt.Printf("Crated and applied pipeline at %s:\n%s\n", apiURL.String(), string(configYAML))
 
 	return nil
 }
@@ -149,4 +167,24 @@ func configToPipeline(config signalcd.Config) *models.Pipeline {
 	}
 
 	return &p
+}
+
+func evalAction(c *cli.Context) error {
+	path := c.String("signalcd.file")
+	fileContent, err := ioutil.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read SignalCD file from: %s", path)
+	}
+
+	config, err := signalcd.ParseConfig(string(fileContent))
+	if err != nil {
+		return fmt.Errorf("failed to parse SignalCD config: %w", err)
+	}
+
+	// Ignoring error, as this YAML is only for debug printing
+	configYAML, _ := yaml.Marshal(config)
+
+	fmt.Println(string(configYAML))
+
+	return nil
 }
