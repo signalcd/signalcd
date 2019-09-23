@@ -128,9 +128,10 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 
 	for _, s := range p.Steps {
 		mp.Steps = append(mp.Steps, &models.Step{
-			Name:     &s.Name,
-			Image:    &s.Image,
-			Commands: s.Commands,
+			Name:             &s.Name,
+			Image:            &s.Image,
+			ImagePullSecrets: s.ImagePullSecrets,
+			Commands:         s.Commands,
 		})
 	}
 
@@ -144,10 +145,11 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 		}
 
 		mp.Checks = append(mp.Checks, &models.Check{
-			Name:        &c.Name,
-			Image:       &c.Image,
-			Duration:    c.Duration.Seconds(),
-			Environment: env,
+			Name:             &c.Name,
+			Image:            &c.Image,
+			ImagePullSecrets: c.ImagePullSecrets,
+			Duration:         c.Duration.Seconds(),
+			Environment:      env,
 		})
 	}
 

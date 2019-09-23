@@ -235,9 +235,10 @@ func pipelineFromRPC(pipeline *signalcdproto.Pipeline) signalcd.Pipeline {
 
 	for _, step := range pipeline.GetSteps() {
 		p.Steps = append(p.Steps, signalcd.Step{
-			Name:     step.GetName(),
-			Image:    step.GetImage(),
-			Commands: step.GetCommands(),
+			Name:             step.GetName(),
+			Image:            step.GetImage(),
+			ImagePullSecrets: step.GetImagePullSecrets(),
+			Commands:         step.GetCommands(),
 		})
 	}
 
@@ -248,10 +249,11 @@ func pipelineFromRPC(pipeline *signalcdproto.Pipeline) signalcd.Pipeline {
 		//}
 
 		p.Checks = append(p.Checks, signalcd.Check{
-			Name:        check.GetName(),
-			Image:       check.GetImage(),
-			Duration:    time.Duration(check.Duration) * time.Second,
-			Environment: map[string]string{},
+			Name:             check.GetName(),
+			Image:            check.GetImage(),
+			ImagePullSecrets: check.GetImagePullSecrets(),
+			Duration:         time.Duration(check.Duration) * time.Second,
+			Environment:      map[string]string{},
 		})
 	}
 
