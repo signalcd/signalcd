@@ -8,6 +8,9 @@ class Check {
   String image = null;
   
 
+  List<String> imagePullSecrets = [];
+  
+
   num duration = null;
   
 
@@ -17,7 +20,7 @@ class Check {
 
   @override
   String toString() {
-    return 'Check[name=$name, image=$image, duration=$duration, environment=$environment, ]';
+    return 'Check[name=$name, image=$image, imagePullSecrets=$imagePullSecrets, duration=$duration, environment=$environment, ]';
   }
 
   Check.fromJson(Map<String, dynamic> json) {
@@ -27,6 +30,9 @@ class Check {
     ;
     image =
         json['image']
+    ;
+    imagePullSecrets =
+        (json['imagePullSecrets'] as List).map((item) => item as String).toList()
     ;
     duration =
         json['duration']
@@ -40,6 +46,7 @@ class Check {
     return {
       'name': name,
       'image': image,
+      'imagePullSecrets': imagePullSecrets,
       'duration': duration,
       'environment': environment
      };

@@ -24,6 +24,9 @@ type Step struct {
 	// Required: true
 	Image *string `json:"image"`
 
+	// image pull secrets
+	ImagePullSecrets []string `json:"imagePullSecrets"`
+
 	// name
 	// Required: true
 	Name *string `json:"name"`

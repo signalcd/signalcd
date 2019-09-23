@@ -33,9 +33,10 @@ func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentD
 		var steps2 []*signalcdproto.Step
 		for _, s := range steps1 {
 			steps2 = append(steps2, &signalcdproto.Step{
-				Name:     s.Name,
-				Image:    s.Image,
-				Commands: s.Commands,
+				Name:             s.Name,
+				Image:            s.Image,
+				ImagePullSecrets: s.ImagePullSecrets,
+				Commands:         s.Commands,
 			})
 		}
 		return steps2
@@ -45,9 +46,10 @@ func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentD
 		var checks2 []*signalcdproto.Check
 		for _, c := range checks1 {
 			checks2 = append(checks2, &signalcdproto.Check{
-				Name:     c.Name,
-				Image:    c.Image,
-				Duration: int64(c.Duration.Seconds()),
+				Name:             c.Name,
+				Image:            c.Image,
+				ImagePullSecrets: c.ImagePullSecrets,
+				Duration:         int64(c.Duration.Seconds()),
 			})
 		}
 		return checks2

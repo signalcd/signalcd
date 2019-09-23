@@ -303,9 +303,10 @@ func fromModelPipeline(m *models.Pipeline) signalcd.Pipeline {
 
 	for _, c := range m.Checks {
 		check := signalcd.Check{
-			Name:     *c.Name,
-			Image:    *c.Image,
-			Duration: time.Duration(c.Duration) * time.Second,
+			Name:             *c.Name,
+			Image:            *c.Image,
+			ImagePullSecrets: c.ImagePullSecrets,
+			Duration:         time.Duration(c.Duration) * time.Second,
 		}
 
 		for _, env := range c.Environment {
@@ -317,9 +318,10 @@ func fromModelPipeline(m *models.Pipeline) signalcd.Pipeline {
 
 	for _, s := range m.Steps {
 		step := signalcd.Step{
-			Name:     *s.Name,
-			Image:    *s.Image,
-			Commands: s.Commands,
+			Name:             *s.Name,
+			Image:            *s.Image,
+			ImagePullSecrets: s.ImagePullSecrets,
+			Commands:         s.Commands,
 		}
 
 		p.Steps = append(p.Steps, step)

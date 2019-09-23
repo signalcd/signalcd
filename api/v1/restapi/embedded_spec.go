@@ -217,6 +217,12 @@ func init() {
         "image": {
           "type": "string"
         },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "name": {
           "type": "string"
         }
@@ -301,6 +307,12 @@ func init() {
         },
         "image": {
           "type": "string"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "name": {
           "type": "string"
@@ -515,6 +527,12 @@ func init() {
         "image": {
           "type": "string"
         },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "name": {
           "type": "string"
         }
@@ -599,6 +617,12 @@ func init() {
         },
         "image": {
           "type": "string"
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "name": {
           "type": "string"

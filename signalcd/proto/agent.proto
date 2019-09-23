@@ -67,11 +67,13 @@ message Pipeline {
 message Step {
     string name = 1;
     string image = 2;
-    repeated string commands = 3;
+    repeated string ImagePullSecrets = 3;
+    repeated string commands = 4;
 }
 
 message Check {
     string name = 1;
     string image = 2;
-    int64 duration = 3;
+    repeated string ImagePullSecrets = 3;
+    int64 duration = 4;
 }

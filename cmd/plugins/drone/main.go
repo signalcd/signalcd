@@ -132,17 +132,19 @@ func configToPipeline(config signalcd.Config) *models.Pipeline {
 
 	for _, s := range config.Steps {
 		p.Steps = append(p.Steps, &models.Step{
-			Name:     &s.Name,
-			Image:    &s.Image,
-			Commands: s.Commands,
+			Name:             &s.Name,
+			Image:            &s.Image,
+			ImagePullSecrets: s.ImagePullSecrets,
+			Commands:         s.Commands,
 		})
 	}
 	for _, c := range config.Checks {
 		p.Checks = append(p.Checks, &models.Check{
-			Name:        &c.Name,
-			Image:       &c.Image,
-			Duration:    c.Duration.Seconds(),
-			Environment: nil,
+			Name:             &c.Name,
+			Image:            &c.Image,
+			ImagePullSecrets: c.ImagePullSecrets,
+			Duration:         c.Duration.Seconds(),
+			Environment:      nil,
 		})
 	}
 
