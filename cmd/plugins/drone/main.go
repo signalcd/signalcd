@@ -1,14 +1,17 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/go-openapi/strfmt"
 	"github.com/signalcd/signalcd/api/v1/client"
 	"github.com/signalcd/signalcd/api/v1/client/deployments"
 	"github.com/signalcd/signalcd/api/v1/client/pipeline"
@@ -73,25 +76,28 @@ func action(c *cli.Context) error {
 		return fmt.Errorf("failed to parse API URL: %w", err)
 	}
 
-	client := client.NewHTTPClientWithConfig(
-		nil,
-		client.DefaultTransportConfig().
-			WithSchemes([]string{apiURL.Scheme}).
-			WithHost(apiURL.Host).
-			WithBasePath(apiURL.Path),
-	)
-
-	auth := httptransport.PassThroughAuth
+	httpClient := &http.Client{}
 
 	username := c.String("basicauth.username")
 	password := c.String("basicauth.password")
 	if username != "" && password != "" {
-		auth = httptransport.BasicAuth(username, password)
+		//auth = httptransport.BasicAuth(username, password)
+		httpClient.Transport = basicAuthTransport{Username: username, Password: password}
 	}
+
+	client := client.New(
+		httptransport.NewWithClient(
+			apiURL.Host,
+			apiURL.Path,
+			[]string{apiURL.Scheme},
+			httpClient,
+		),
+		strfmt.Default,
+	)
 
 	pipelineParams := &pipeline.CreateParams{Pipeline: configToPipeline(config)}
 	pipelineParams = pipelineParams.WithTimeout(15 * time.Second)
-	pipeline, err := client.Pipeline.Create(pipelineParams, auth)
+	pipeline, err := client.Pipeline.Create(pipelineParams)
 	if err != nil {
 		return fmt.Errorf("failed to create pipeline: %w", err)
 	}
@@ -100,12 +106,25 @@ func action(c *cli.Context) error {
 		Pipeline: pipeline.Payload.ID.String(),
 	}
 	deploymentParams.WithTimeout(15 * time.Second)
-	_, err = client.Deployments.SetCurrentDeployment(deploymentParams, auth)
+	_, err = client.Deployments.SetCurrentDeployment(deploymentParams)
 	if err != nil {
 		return fmt.Errorf("failed to set current deployment: %w", err)
 	}
 
 	return nil
+}
+
+type basicAuthTransport struct {
+	Username, Password string
+}
+
+func (b basicAuthTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	token := base64.StdEncoding.EncodeToString([]byte(
+		fmt.Sprintf("%s:%s", b.Username, b.Password)),
+	)
+	r.Header.Set("Authorization", fmt.Sprintf("Basic %s", token))
+
+	return http.DefaultTransport.RoundTrip(r)
 }
 
 func configToPipeline(config signalcd.Config) *models.Pipeline {
