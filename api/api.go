@@ -160,7 +160,7 @@ type PipelinesLister interface {
 }
 
 func getPipelinesHandler(lister PipelinesLister) pipeline.PipelinesHandlerFunc {
-	return func(params pipeline.PipelinesParams, i interface{}) restmiddleware.Responder {
+	return func(params pipeline.PipelinesParams) restmiddleware.Responder {
 		var payload []*models.Pipeline
 
 		pipelines, err := lister.ListPipelines()
@@ -195,7 +195,7 @@ type DeploymentLister interface {
 }
 
 func getDeploymentsHandler(lister DeploymentLister) deployments.DeploymentsHandlerFunc {
-	return func(params deployments.DeploymentsParams, i interface{}) restmiddleware.Responder {
+	return func(params deployments.DeploymentsParams) restmiddleware.Responder {
 		var payload []*models.Deployment
 
 		list, err := lister.ListDeployments()
@@ -230,7 +230,7 @@ type CurrentDeploymentGetter interface {
 }
 
 func getCurrentDeploymentHandler(getter CurrentDeploymentGetter) deployments.CurrentDeploymentHandlerFunc {
-	return func(params deployments.CurrentDeploymentParams, i interface{}) restmiddleware.Responder {
+	return func(params deployments.CurrentDeploymentParams) restmiddleware.Responder {
 		d, err := getter.GetCurrentDeployment()
 		if err != nil {
 			return deployments.NewSetCurrentDeploymentInternalServerError()
@@ -247,7 +247,7 @@ type CurrentDeploymentSetter interface {
 }
 
 func setCurrentDeploymentHandler(creator CurrentDeploymentSetter, logger log.Logger) deployments.SetCurrentDeploymentHandlerFunc {
-	return func(params deployments.SetCurrentDeploymentParams, i interface{}) restmiddleware.Responder {
+	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
 		p, err := creator.GetPipeline(params.Pipeline)
 		if err != nil {
 			logger.Log("msg", "failed to get pipeline", "id", params.Pipeline, "err", err)
@@ -270,7 +270,7 @@ type PipelineGetter interface {
 }
 
 func getPipelineHandler(getter PipelineGetter) pipeline.PipelineHandlerFunc {
-	return func(params pipeline.PipelineParams, i interface{}) restmiddleware.Responder {
+	return func(params pipeline.PipelineParams) restmiddleware.Responder {
 		p, err := getter.GetPipeline(params.ID)
 		if err != nil {
 			return pipeline.NewPipelineInternalServerError()
@@ -285,7 +285,7 @@ type PipelineCreator interface {
 }
 
 func createPipelineHandler(creator PipelineCreator) pipeline.CreateHandlerFunc {
-	return func(params pipeline.CreateParams, i interface{}) restmiddleware.Responder {
+	return func(params pipeline.CreateParams) restmiddleware.Responder {
 		p, err := creator.CreatePipeline(fromModelPipeline(params.Pipeline))
 		if err != nil {
 			return pipeline.NewCreateInternalServerError()

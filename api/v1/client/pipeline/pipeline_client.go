@@ -27,7 +27,7 @@ type Client struct {
 /*
 Create creates a new pipeline
 */
-func (a *Client) Create(params *CreateParams, authInfo runtime.ClientAuthInfoWriter) (*CreateOK, error) {
+func (a *Client) Create(params *CreateParams) (*CreateOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewCreateParams()
@@ -42,7 +42,6 @@ func (a *Client) Create(params *CreateParams, authInfo runtime.ClientAuthInfoWri
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &CreateReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
@@ -56,7 +55,7 @@ func (a *Client) Create(params *CreateParams, authInfo runtime.ClientAuthInfoWri
 /*
 Pipeline returns a pipeline by id
 */
-func (a *Client) Pipeline(params *PipelineParams, authInfo runtime.ClientAuthInfoWriter) (*PipelineOK, error) {
+func (a *Client) Pipeline(params *PipelineParams) (*PipelineOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPipelineParams()
@@ -71,7 +70,6 @@ func (a *Client) Pipeline(params *PipelineParams, authInfo runtime.ClientAuthInf
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &PipelineReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})
@@ -85,7 +83,7 @@ func (a *Client) Pipeline(params *PipelineParams, authInfo runtime.ClientAuthInf
 /*
 Pipelines returns a list of all pipelines
 */
-func (a *Client) Pipelines(params *PipelinesParams, authInfo runtime.ClientAuthInfoWriter) (*PipelinesOK, error) {
+func (a *Client) Pipelines(params *PipelinesParams) (*PipelinesOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
 		params = NewPipelinesParams()
@@ -100,7 +98,6 @@ func (a *Client) Pipelines(params *PipelinesParams, authInfo runtime.ClientAuthI
 		Schemes:            []string{"http", "https"},
 		Params:             params,
 		Reader:             &PipelinesReader{formats: a.formats},
-		AuthInfo:           authInfo,
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	})

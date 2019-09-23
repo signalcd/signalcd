@@ -36,32 +36,32 @@ func configureAPI(api *operations.CdAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	if api.PipelineCreateHandler == nil {
-		api.PipelineCreateHandler = pipeline.CreateHandlerFunc(func(params pipeline.CreateParams, principal interface{}) middleware.Responder {
+		api.PipelineCreateHandler = pipeline.CreateHandlerFunc(func(params pipeline.CreateParams) middleware.Responder {
 			return middleware.NotImplemented("operation pipeline.Create has not yet been implemented")
 		})
 	}
 	if api.DeploymentsCurrentDeploymentHandler == nil {
-		api.DeploymentsCurrentDeploymentHandler = deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams, principal interface{}) middleware.Responder {
+		api.DeploymentsCurrentDeploymentHandler = deployments.CurrentDeploymentHandlerFunc(func(params deployments.CurrentDeploymentParams) middleware.Responder {
 			return middleware.NotImplemented("operation deployments.CurrentDeployment has not yet been implemented")
 		})
 	}
 	if api.DeploymentsDeploymentsHandler == nil {
-		api.DeploymentsDeploymentsHandler = deployments.DeploymentsHandlerFunc(func(params deployments.DeploymentsParams, principal interface{}) middleware.Responder {
+		api.DeploymentsDeploymentsHandler = deployments.DeploymentsHandlerFunc(func(params deployments.DeploymentsParams) middleware.Responder {
 			return middleware.NotImplemented("operation deployments.Deployments has not yet been implemented")
 		})
 	}
 	if api.PipelinePipelineHandler == nil {
-		api.PipelinePipelineHandler = pipeline.PipelineHandlerFunc(func(params pipeline.PipelineParams, principal interface{}) middleware.Responder {
+		api.PipelinePipelineHandler = pipeline.PipelineHandlerFunc(func(params pipeline.PipelineParams) middleware.Responder {
 			return middleware.NotImplemented("operation pipeline.Pipeline has not yet been implemented")
 		})
 	}
 	if api.PipelinePipelinesHandler == nil {
-		api.PipelinePipelinesHandler = pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams, principal interface{}) middleware.Responder {
+		api.PipelinePipelinesHandler = pipeline.PipelinesHandlerFunc(func(params pipeline.PipelinesParams) middleware.Responder {
 			return middleware.NotImplemented("operation pipeline.Pipelines has not yet been implemented")
 		})
 	}
 	if api.DeploymentsSetCurrentDeploymentHandler == nil {
-		api.DeploymentsSetCurrentDeploymentHandler = deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams, principal interface{}) middleware.Responder {
+		api.DeploymentsSetCurrentDeploymentHandler = deployments.SetCurrentDeploymentHandlerFunc(func(params deployments.SetCurrentDeploymentParams) middleware.Responder {
 			return middleware.NotImplemented("operation deployments.SetCurrentDeployment has not yet been implemented")
 		})
 	}

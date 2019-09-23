@@ -308,11 +308,6 @@ func init() {
       }
     }
   },
-  "security": [
-    {
-      "basicAuth": null
-    }
-  ],
   "tags": [
     {
       "description": "manage pipelines",
@@ -611,11 +606,6 @@ func init() {
       }
     }
   },
-  "security": [
-    {
-      "basicAuth": []
-    }
-  ],
   "tags": [
     {
       "description": "manage pipelines",
