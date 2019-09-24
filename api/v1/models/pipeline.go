@@ -22,6 +22,10 @@ type Pipeline struct {
 	// checks
 	Checks []*Check `json:"checks"`
 
+	// created
+	// Format: date-time
+	Created strfmt.DateTime `json:"created,omitempty"`
+
 	// id
 	// Format: uuid
 	ID strfmt.UUID `json:"id,omitempty"`
@@ -38,6 +42,10 @@ func (m *Pipeline) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateChecks(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCreated(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -75,6 +83,19 @@ func (m *Pipeline) validateChecks(formats strfmt.Registry) error {
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Pipeline) validateCreated(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Created) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("created", "body", "date-time", m.Created.String(), formats); err != nil {
+		return err
 	}
 
 	return nil

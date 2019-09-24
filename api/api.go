@@ -122,8 +122,9 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 
 func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 	mp := &models.Pipeline{
-		ID:   strfmt.UUID(p.ID),
-		Name: p.Name,
+		ID:      strfmt.UUID(p.ID),
+		Name:    p.Name,
+		Created: strfmt.DateTime(p.Created),
 	}
 
 	for _, s := range p.Steps {
@@ -299,8 +300,9 @@ func createPipelineHandler(creator PipelineCreator) pipeline.CreateHandlerFunc {
 
 func fromModelPipeline(m *models.Pipeline) signalcd.Pipeline {
 	p := signalcd.Pipeline{
-		ID:   m.ID.String(),
-		Name: m.Name,
+		ID:      m.ID.String(),
+		Name:    m.Name,
+		Created: time.Time(m.Created),
 	}
 
 	for _, c := range m.Checks {

@@ -13,11 +13,14 @@ class Pipeline {
 
   List<Check> checks = [];
   
+
+  DateTime created = null;
+  
   Pipeline();
 
   @override
   String toString() {
-    return 'Pipeline[id=$id, name=$name, steps=$steps, checks=$checks, ]';
+    return 'Pipeline[id=$id, name=$name, steps=$steps, checks=$checks, created=$created, ]';
   }
 
   Pipeline.fromJson(Map<String, dynamic> json) {
@@ -34,6 +37,7 @@ class Pipeline {
     checks =
       Check.listFromJson(json['checks'])
 ;
+    created = json['created'] == null ? null : DateTime.parse(json['created']);
   }
 
   Map<String, dynamic> toJson() {
@@ -41,7 +45,8 @@ class Pipeline {
       'id': id,
       'name': name,
       'steps': steps,
-      'checks': checks
+      'checks': checks,
+      'created': created == null ? '' : created.toUtc().toIso8601String()
      };
   }
 

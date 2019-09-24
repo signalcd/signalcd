@@ -278,6 +278,10 @@ func init() {
             "$ref": "#/definitions/check"
           }
         },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
         "id": {
           "type": "string",
           "format": "uuid"
@@ -587,6 +591,10 @@ func init() {
           "items": {
             "$ref": "#/definitions/check"
           }
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
         },
         "id": {
           "type": "string",

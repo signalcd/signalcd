@@ -160,6 +160,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/check'
+      created:
+        type: string
+        format: 'date-time'
   step:
     required:
       - name
