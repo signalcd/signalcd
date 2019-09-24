@@ -221,6 +221,7 @@ func (bdb *BoltDB) ListPipelines() ([]signalcd.Pipeline, error) {
 // CreatePipeline saves a Pipeline and returns the saved Pipeline
 func (bdb *BoltDB) CreatePipeline(p signalcd.Pipeline) (signalcd.Pipeline, error) {
 	p.ID = uuid.New().String()
+	p.Created = time.Now()
 
 	err := bdb.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketPipelines))
