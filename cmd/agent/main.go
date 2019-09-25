@@ -297,7 +297,7 @@ func (u *updater) poll(ctx context.Context) error {
 			return xerrors.Errorf("failed to update deployment status: %w", err)
 		}
 
-		if err := u.runPipeline(ctx, deployment.Pipeline); err != nil {
+		if err := u.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
 			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to run pipeline: %w", err))
 		}
 
@@ -325,7 +325,7 @@ func (u *updater) poll(ctx context.Context) error {
 			return xerrors.Errorf("failed to update deployment status: %w", err)
 		}
 
-		if err := u.runPipeline(ctx, deployment.Pipeline); err != nil {
+		if err := u.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
 			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to run deployment: %w", err))
 		}
 
@@ -367,9 +367,9 @@ func (u *updater) sendStatus(ctx context.Context, number int64, err error) error
 	return err
 }
 
-func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
+func (u *updater) runPipeline(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
 	level.Info(u.logger).Log("msg", "running steps")
-	if err := u.runSteps(ctx, p); err != nil {
+	if err := u.runSteps(ctx, deploymentNumber, p); err != nil {
 		return fmt.Errorf("failed to run steps: %w", err)
 	}
 
@@ -379,21 +379,22 @@ func (u *updater) runPipeline(ctx context.Context, p signalcd.Pipeline) error {
 	}
 
 	level.Info(u.logger).Log("msg", "running checks")
-	if err := u.runChecks(p); err != nil {
+	if err := u.runChecks(ctx, deploymentNumber, p); err != nil {
 		return fmt.Errorf("failed to run checks: %w", err)
 	}
 
 	return nil
 }
 
-func (u *updater) runSteps(ctx context.Context, p signalcd.Pipeline) error {
-	for _, s := range p.Steps {
+func (u *updater) runSteps(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
+	for i, s := range p.Steps {
 		level.Debug(u.logger).Log(
 			"msg", "running step",
 			"pipeline", p.Name,
 			"step", s.Name,
 		)
-		if err := u.runStep(ctx, p, s); err != nil {
+
+		if err := u.runStep(ctx, deploymentNumber, int64(i), p, s); err != nil {
 			return fmt.Errorf("failed to run pipeline %s step %s: %w", p.Name, s.Name, err)
 		}
 	}
@@ -401,7 +402,7 @@ func (u *updater) runSteps(ctx context.Context, p signalcd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step signalcd.Step) error {
+func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumber int64, pipeline signalcd.Pipeline, step signalcd.Step) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
@@ -453,11 +454,26 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 	if err != nil {
 		return fmt.Errorf("failed to create pod: %w", err)
 	}
-	// TODO: Add field in Step to enable cleaning up when successful
-	//defer func(p *corev1.Pod) {
-	//	_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
-	//	level.Debug(podLogger).Log("msg", "deleted pod")
-	//}(&p)
+
+	defer func(p *corev1.Pod) {
+		logs, err := u.podLogs(p.Name)
+		if err != nil {
+			level.Warn(podLogger).Log("msg", "failed to get pod logs", "err", err)
+		}
+
+		_, err = u.client.ShipDeploymentLogs(ctx, &signalcdproto.ShipDeploymentLogsRequest{
+			Number: deploymentNumber,
+			Step:   stepNumber,
+			Check:  0,
+			Logs:   logs,
+		})
+		if err != nil {
+			level.Warn(podLogger).Log("msg", "failed to ship logs", "err", err)
+		}
+
+		_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+		level.Debug(podLogger).Log("msg", "deleted pod")
+	}(&p)
 
 	level.Debug(podLogger).Log("msg", "created pod")
 
@@ -475,12 +491,9 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 		pod := event.Object.(*corev1.Pod)
 
 		if pod.Status.Phase == corev1.PodSucceeded {
-			return u.podLogs(p.Name)
+			return nil
 		}
 		if pod.Status.Phase == corev1.PodFailed {
-			if err := u.podLogs(p.Name); err != nil {
-				return fmt.Errorf("step failed: %w", err)
-			}
 			return fmt.Errorf("step failed")
 		}
 	}
@@ -488,21 +501,14 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 	return nil
 }
 
-func (u *updater) podLogs(name string) error {
+func (u *updater) podLogs(name string) ([]byte, error) {
 	limit := int64(1048576)
 	r, err := u.klient.CoreV1().Pods(u.namespace).GetLogs(name, &corev1.PodLogOptions{LimitBytes: &limit}).Stream()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	logs, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("%s - $%s: %s\n", u.namespace, name, string(logs))
-
-	return nil
+	return ioutil.ReadAll(r)
 }
 
 func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
@@ -516,9 +522,9 @@ func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
 	return nil
 }
 
-func (u *updater) runChecks(p signalcd.Pipeline) error {
-	for _, c := range p.Checks {
-		if err := u.runCheck(p, c); err != nil {
+func (u *updater) runChecks(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
+	for i, c := range p.Checks {
+		if err := u.runCheck(ctx, deploymentNumber, int64(i), p, c); err != nil {
 			return fmt.Errorf("failed to run pipeline %s check %s: %w", p.Name, c.Name, err)
 		}
 	}
@@ -530,7 +536,7 @@ var checkLabels = map[string]string{
 	"cd": "check",
 }
 
-func (u *updater) runCheck(pipeline signalcd.Pipeline, check signalcd.Check) error {
+func (u *updater) runCheck(ctx context.Context, deploymentNumber int64, checkNumber int64, pipeline signalcd.Pipeline, check signalcd.Check) error {
 	// Add PLUGIN_API for checks to find the API
 	check.Environment["PLUGIN_API"] = apiURL
 

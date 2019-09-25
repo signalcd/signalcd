@@ -19,6 +19,7 @@ option go_package = "signalcdproto";
 service AgentService {
     rpc CurrentDeployment (CurrentDeploymentRequest) returns (CurrentDeploymentResponse);
     rpc SetDeploymentStatus (SetDeploymentStatusRequest) returns (SetDeploymentStatusResponse);
+    rpc ShipDeploymentLogs (ShipDeploymentLogsRequest) returns (ShipDeploymentLogsResponse);
 }
 
 message Deployment {
@@ -76,4 +77,14 @@ message Check {
     string image = 2;
     repeated string ImagePullSecrets = 3;
     int64 duration = 4;
+}
+
+message ShipDeploymentLogsRequest {
+    int64 number = 1;
+    int64 step = 2;
+    int64 check = 3;
+    bytes logs = 4;
+}
+
+message ShipDeploymentLogsResponse {
 }

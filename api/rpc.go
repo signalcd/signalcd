@@ -102,3 +102,7 @@ func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDep
 
 	return &signalcdproto.SetDeploymentStatusResponse{}, nil
 }
+
+func (r *RPC) ShipDeploymentLogs(context.Context, *signalcdproto.ShipDeploymentLogsRequest) (*signalcdproto.ShipDeploymentLogsResponse, error) {
+	panic("implement me")
+}
