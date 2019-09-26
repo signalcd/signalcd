@@ -3,8 +3,14 @@
         <div class="card-content">
             <div class="media">
                 <div class="media-content">
-                    <p class="title is-4">{{ pipeline.name }}</p>
-                    <!--<p class="subtitle is-6">{{ pipeline.id }}</p>-->
+                    <div class="columns">
+                        <div class="column">
+                            <p class="title is-4">{{ pipeline.name }}</p>
+                        </div>
+                        <div class="column is-narrow">
+                            <signalcd-timeago [date]="pipeline.created"></signalcd-timeago>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="content columns">

@@ -16,7 +16,11 @@
                     </div>
                 </div>
                 <div class="column is-narrow">
-                    <p>{{ deployment.created | timeago }}</p>
+                    <p>
+                        <signalcd-duration [start]="deployment.started" [end]="deployment.finished"></signalcd-duration>
+                        &nbsp;&bull;&nbsp;
+                        <signalcd-timeago [date]="deployment.created"></signalcd-timeago>
+                    </p>
                 </div>
             </div>
         </div>

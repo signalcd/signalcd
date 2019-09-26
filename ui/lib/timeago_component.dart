@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:angular/angular.dart';
 
 @Component(
-  selector: 'timeago',
+  selector: 'signalcd-timeago',
   template: '<span>{{ ago }}</span>',
 )
-class Timeago implements OnInit, OnDestroy {
+class TimeagoComponent implements OnInit, OnDestroy {
   Timer timer;
   String ago = '';
 

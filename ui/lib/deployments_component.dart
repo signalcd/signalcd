@@ -4,9 +4,10 @@ import 'dart:html';
 
 import 'package:angular/angular.dart';
 import 'package:ui/deployments_service.dart';
+import 'package:ui/duration_component.dart';
 import 'package:ui/src/api/api.dart';
 import 'package:ui/status_component.dart';
-import 'package:ui/timeago_pipe.dart';
+import 'package:ui/timeago_component.dart';
 
 @Component(
   selector: 'deployments-list',
@@ -14,12 +15,11 @@ import 'package:ui/timeago_pipe.dart';
   directives: [
     coreDirectives,
     StatusComponent,
+    TimeagoComponent,
+    DurationComponent,
   ],
   providers: [
     DeploymentsService,
-  ],
-  pipes: [
-    TimeagoPipe,
   ],
 )
 class DeploymentsComponent implements OnInit, OnDestroy {

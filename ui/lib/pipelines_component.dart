@@ -2,12 +2,14 @@ import 'package:angular/angular.dart';
 import 'package:ui/deployments_service.dart';
 import 'package:ui/pipelines_service.dart';
 import 'package:ui/src/api/api.dart';
+import 'package:ui/timeago_component.dart';
 
 @Component(
   selector: 'pipelines-list',
   templateUrl: 'pipelines_component.html',
   directives: [
     coreDirectives,
+    TimeagoComponent,
   ],
   providers: [
     DeploymentsService,
