@@ -7,11 +7,14 @@ import (
 	"os"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
 	"github.com/signalcd/signalcd/signalcd"
@@ -45,6 +48,11 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
 		events := signalcd.NewEvents()
 
+		registry := prometheus.NewRegistry()
+		registry.MustRegister(
+		//prometheus.NewGoCollector(),
+		)
+
 		var db api.SignalDB
 		{
 			bolt, dbClose, err := boltdb.New(c.String("bolt.path"))
@@ -67,6 +75,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 			r := chi.NewRouter()
 			r.Use(Logger(logger))
+			r.Use(HTTPMetrics(registry))
 			r.Mount("/", apiV1)
 
 			s := http.Server{
@@ -110,6 +119,26 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 				_ = l.Close()
 			})
 		}
+		{
+			r := chi.NewRouter()
+			r.Mount("/metrics", promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+			r.Mount("/debug", middleware.Profiler())
+
+			s := http.Server{
+				Addr:    ":6662",
+				Handler: r,
+			}
+			gr.Add(func() error {
+				level.Info(logger).Log(
+					"msg", "running internal HTTP API",
+					"addr", s.Addr,
+				)
+
+				return s.ListenAndServe()
+			}, func(err error) {
+				_ = s.Shutdown(context.TODO())
+			})
+		}
 
 		if err := gr.Run(); err != nil {
 			return xerrors.Errorf("error running: %w", err)
@@ -136,5 +165,25 @@ func Logger(logger log.Logger) func(next http.Handler) http.Handler {
 				"bytes", ww.BytesWritten(),
 			)
 		})
+	}
+}
+
+func HTTPMetrics(registry *prometheus.Registry) func(next http.Handler) http.Handler {
+	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_request_duration_seconds",
+		Help: "Tracks the latencies for HTTP requests.",
+	}, nil)
+
+	counter := prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Tracks the number of HTTP requests.",
+	}, []string{"code", "method"})
+
+	registry.MustRegister(duration, counter)
+
+	return func(next http.Handler) http.Handler {
+		return promhttp.InstrumentHandlerDuration(duration,
+			promhttp.InstrumentHandlerCounter(counter, next),
+		)
 	}
 }
