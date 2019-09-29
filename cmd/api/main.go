@@ -50,7 +50,8 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		registry := prometheus.NewRegistry()
 		registry.MustRegister(
-		//prometheus.NewGoCollector(),
+			prometheus.NewGoCollector(),
+			prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
 		)
 
 		var db api.SignalDB
@@ -148,6 +149,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 	}
 }
 
+// Logger returns a middleware to log HTTP requests
 func Logger(logger log.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -168,6 +170,7 @@ func Logger(logger log.Logger) func(next http.Handler) http.Handler {
 	}
 }
 
+// HTTPMetrics returns a middleware to track HTTP requests with Prometheus metrics
 func HTTPMetrics(registry *prometheus.Registry) func(next http.Handler) http.Handler {
 	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "http_request_duration_seconds",
