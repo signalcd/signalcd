@@ -49,6 +49,10 @@ cmd/api/api:
 cmd/ui/ui:
 	$(GO) build -v -o ./cmd/ui/ui ./cmd/ui
 
+.PHONY: cmd/checks/http/http
+cmd/checks/http/http:
+	$(GO) build -v -o ./cmd/checks/http/http ./cmd/checks/http
+
 .PHONY: cmd/checks/kubernetes-status/kubernetes-status
 cmd/checks/kubernetes-status/kubernetes-status:
 	$(GO) build -v -o ./cmd/checks/kubernetes-status/kubernetes-status ./cmd/checks/kubernetes-status
