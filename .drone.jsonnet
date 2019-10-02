@@ -142,6 +142,20 @@ local swagger = {
           context: 'cmd/checks/kubernetes-status',
         },
       },
+      golang {
+        name: 'build-http',
+        commands: [
+          'make cmd/checks/http/http',
+        ],
+      },
+      docker {
+        name: 'docker-http',
+        settings+: {
+          repo: 'quay.io/signalcd/http',
+          dockerfile: 'cmd/checks/http/Dockerfile',
+          context: 'cmd/checks/http',
+        },
+      },
     ],
   },
 

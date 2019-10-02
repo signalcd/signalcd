@@ -159,6 +159,33 @@ steps:
     event:
     - push
 
+- name: build-http
+  pull: always
+  image: golang:1.13
+  commands:
+  - make cmd/checks/http/http
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
+- name: docker-http
+  image: plugins/docker
+  settings:
+    context: cmd/checks/http
+    dockerfile: cmd/checks/http/Dockerfile
+    password:
+      from_secret: quay_password
+    registry: quay.io
+    repo: quay.io/signalcd/http
+    username:
+      from_secret: quay_username
+  when:
+    branch:
+    - master
+    event:
+    - push
+
 ---
 kind: pipeline
 name: plugins
