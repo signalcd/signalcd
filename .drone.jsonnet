@@ -137,7 +137,7 @@ local swagger = {
       docker {
         name: 'docker-kubernetes-status',
         settings+: {
-          repo: 'quay.io/signalcd/kubernetes-status',
+          repo: 'quay.io/signalcd/check-kubernetes-status',
           dockerfile: 'cmd/checks/kubernetes-status/Dockerfile',
           context: 'cmd/checks/kubernetes-status',
         },
@@ -151,7 +151,7 @@ local swagger = {
       docker {
         name: 'docker-http',
         settings+: {
-          repo: 'quay.io/signalcd/http',
+          repo: 'quay.io/signalcd/check-http',
           dockerfile: 'cmd/checks/http/Dockerfile',
           context: 'cmd/checks/http',
         },

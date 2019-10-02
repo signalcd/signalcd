@@ -150,7 +150,7 @@ steps:
     password:
       from_secret: quay_password
     registry: quay.io
-    repo: quay.io/signalcd/kubernetes-status
+    repo: quay.io/signalcd/check-kubernetes-status
     username:
       from_secret: quay_username
   when:
@@ -177,7 +177,7 @@ steps:
     password:
       from_secret: quay_password
     registry: quay.io
-    repo: quay.io/signalcd/http
+    repo: quay.io/signalcd/check-http
     username:
       from_secret: quay_username
   when:
