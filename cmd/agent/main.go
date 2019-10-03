@@ -123,6 +123,9 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			})
 		}
 		{
+			// Start gRPC Server here
+		}
+		{
 			sig := make(chan os.Signal)
 
 			gr.Add(func() error {

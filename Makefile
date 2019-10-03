@@ -29,6 +29,9 @@ ui/lib/src/api: swagger.yaml
 signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
 	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:.
 
+signalcd/proto/check.pb.go: signalcd/proto/check.proto
+	protoc signalcd/proto/check.proto --go_out=plugins=grpc:.
+
 .PHONY: build
 build: \
 	cmd/agent/agent \

@@ -1,0 +1,30 @@
+syntax = "proto3";
+package signalcd;
+
+option go_package = "signalcdproto";
+
+service CheckService {
+    rpc SetCheckStatus(SetCheckStatusRequest) returns (SetCheckStatusResponse);
+    //    rpc CurrentDeployment (CurrentDeploymentRequest) returns (CurrentDeploymentResponse);
+    //    rpc SetDeploymentStatus (SetDeploymentStatusRequest) returns (SetDeploymentStatusResponse);
+}
+
+message CheckStatus {
+    enum Phase {
+        UNKNOWN = 0;
+        SUCCESS = 1;
+        FAILURE = 2;
+        CHECKING = 3;
+        KILLED = 5;
+    }
+    Phase phase = 1;
+}
+
+message SetCheckStatusRequest {
+    int64 deploymentNumber = 1;
+    int64 number = 2;
+    CheckStatus status = 3;
+}
+
+message SetCheckStatusResponse {
+}
