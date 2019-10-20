@@ -444,7 +444,7 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 
 	// Clean up previous runs if the pods still exists
 	err := u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
-	if err != nil {
+	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete previous pod: %w", err)
 	}
 
