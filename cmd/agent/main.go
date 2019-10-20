@@ -442,14 +442,21 @@ func (u *updater) runStep(ctx context.Context, pipeline signalcd.Pipeline, step 
 
 	podLogger := log.With(u.logger, "namespace", u.namespace, "pod", p.Name)
 
-	_, err := u.klient.CoreV1().Pods(u.namespace).Create(&p)
+	// Clean up previous runs if the pods still exists
+	err := u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+	if err != nil {
+		return fmt.Errorf("failed to delete previous pod: %w", err)
+	}
+
+	_, err = u.klient.CoreV1().Pods(u.namespace).Create(&p)
 	if err != nil {
 		return fmt.Errorf("failed to create pod: %w", err)
 	}
-	defer func(p *corev1.Pod) {
-		_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
-		level.Debug(podLogger).Log("msg", "deleted pod")
-	}(&p)
+	// TODO: Add field in Step to enable cleaning up when successful
+	//defer func(p *corev1.Pod) {
+	//	_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+	//	level.Debug(podLogger).Log("msg", "deleted pod")
+	//}(&p)
 
 	level.Debug(podLogger).Log("msg", "created pod")
 
