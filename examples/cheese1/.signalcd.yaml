@@ -1,0 +1,6 @@
+name: cheese1
+steps:
+  - name: manifests
+    image: quay.io/signalcd/examples:cheese1
+    commands:
+      - kubectl apply -f /data/
