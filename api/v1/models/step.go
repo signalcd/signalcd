@@ -30,6 +30,9 @@ type Step struct {
 	// name
 	// Required: true
 	Name *string `json:"name"`
+
+	// status
+	Status *StepStatus `json:"status,omitempty"`
 }
 
 // Validate validates this step
@@ -41,6 +44,10 @@ func (m *Step) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStatus(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -68,6 +75,24 @@ func (m *Step) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Step) validateStatus(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Status) { // not required
+		return nil
+	}
+
+	if m.Status != nil {
+		if err := m.Status.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("status")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // MarshalBinary interface implementation
 func (m *Step) MarshalBinary() ([]byte, error) {
 	if m == nil {
@@ -79,6 +104,37 @@ func (m *Step) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *Step) UnmarshalBinary(b []byte) error {
 	var res Step
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*m = res
+	return nil
+}
+
+// StepStatus step status
+// swagger:model StepStatus
+type StepStatus struct {
+
+	// logs
+	Logs string `json:"logs,omitempty"`
+}
+
+// Validate validates this step status
+func (m *StepStatus) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (m *StepStatus) MarshalBinary() ([]byte, error) {
+	if m == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(m)
+}
+
+// UnmarshalBinary interface implementation
+func (m *StepStatus) UnmarshalBinary(b []byte) error {
+	var res StepStatus
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

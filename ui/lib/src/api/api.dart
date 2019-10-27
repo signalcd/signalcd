@@ -22,6 +22,7 @@ part 'model/deployment.dart';
 part 'model/deploymentstatus.dart';
 part 'model/pipeline.dart';
 part 'model/step.dart';
+part 'model/step_status.dart';
 
 
 ApiClient defaultApiClient = new ApiClient();

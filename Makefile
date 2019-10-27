@@ -2,6 +2,8 @@ GO := CGO_ENABLED=0 GO111MODULE=on go
 
 all: build
 
+generate: apiv1 signalcd/proto/agent.pb.go
+
 .PHONY: apiv1
 apiv1: api/v1/client api/v1/models api/v1/restapi ui/lib/src/api
 
@@ -18,7 +20,7 @@ api/v1/client api/v1/models api/v1/restapi: swagger.yaml
 SWAGGER ?= docker run --rm \
 		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
 		-v $(shell pwd):/local \
-		swaggerapi/swagger-codegen-cli:2.4.0
+		swaggerapi/swagger-codegen-cli:2.4.9
 
 ui/lib/src/api: swagger.yaml
 	-rm -rf ui/lib/src/api

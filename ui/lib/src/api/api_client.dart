@@ -49,6 +49,8 @@ class ApiClient {
           return new Pipeline.fromJson(value);
         case 'Step':
           return new Step.fromJson(value);
+        case 'StepStatus':
+          return new StepStatus.fromJson(value);
         default:
           {
             Match match;
