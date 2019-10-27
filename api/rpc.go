@@ -110,6 +110,7 @@ type StepLogsSaver interface {
 	SaveStepLogs(ctx context.Context, deployment int64, step int64, logs []byte) error
 }
 
+//StepLogs saves the logs for a specific deployment and step coming from an agent
 func (r *RPC) StepLogs(ctx context.Context, req *signalcdproto.StepLogsRequest) (*signalcdproto.StepLogsResponse, error) {
 	err := r.DB.SaveStepLogs(ctx, req.GetNumber(), req.GetStep(), req.GetLogs())
 	if err != nil {

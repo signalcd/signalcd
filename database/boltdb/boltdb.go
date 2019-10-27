@@ -176,7 +176,8 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	return d, err
 }
 
-func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment int64, step int64, logs []byte) error {
+// SaveStepLogs saves the logs for a Deployment step by its number
+func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment, step int64, logs []byte) error {
 	var d signalcd.Deployment
 
 	return bdb.db.Update(func(tx *bolt.Tx) error {

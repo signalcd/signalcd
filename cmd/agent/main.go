@@ -539,7 +539,7 @@ var checkLabels = map[string]string{
 	"cd": "check",
 }
 
-func (u *updater) runCheck(ctx context.Context, deploymentNumber int64, checkNumber int64, pipeline signalcd.Pipeline, check signalcd.Check) error {
+func (u *updater) runCheck(ctx context.Context, deploymentNumber, checkNumber int64, pipeline signalcd.Pipeline, check signalcd.Check) error {
 	// Add PLUGIN_API for checks to find the API
 	check.Environment["PLUGIN_API"] = apiURL
 
