@@ -73,6 +73,10 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			return errors.New("no namespace given, use --namespace flag")
 		}
 
+		if c.String("api.url") == "" {
+			return errors.New("no api.url to API gRPC endpoint given, use --api.url flag")
+		}
+
 		conn, err := grpc.Dial(c.String("api.url"), grpc.WithInsecure())
 		if err != nil {
 			level.Error(logger).Log(
@@ -461,10 +465,9 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 			level.Warn(podLogger).Log("msg", "failed to get pod logs", "err", err)
 		}
 
-		_, err = u.client.ShipDeploymentLogs(ctx, &signalcdproto.ShipDeploymentLogsRequest{
+		_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
 			Number: deploymentNumber,
 			Step:   stepNumber,
-			Check:  0,
 			Logs:   logs,
 		})
 		if err != nil {

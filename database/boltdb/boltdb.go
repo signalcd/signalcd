@@ -3,6 +3,7 @@ package boltdb
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"time"
@@ -173,6 +174,39 @@ func (bdb *BoltDB) GetCurrentDeployment() (signalcd.Deployment, error) {
 	var d signalcd.Deployment
 	err = json.Unmarshal(value, &d)
 	return d, err
+}
+
+func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment int64, step int64, logs []byte) error {
+	var d signalcd.Deployment
+
+	return bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketDeployments))
+		key := []byte(strconv.Itoa(int(deployment)))
+		value := b.Get(key)
+
+		if err := json.Unmarshal(value, &d); err != nil {
+			return err
+		}
+
+		if int64(len(d.Pipeline.Steps)) < step {
+			return fmt.Errorf("step %d does not exist", step)
+		}
+
+		if d.Pipeline.Steps[step].Status == nil {
+			d.Pipeline.Steps[step].Status = &signalcd.Status{}
+		}
+
+		d.Pipeline.Steps[step].Status.Logs = logs
+
+		value, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("saving logs", string(value))
+
+		return b.Put(key, value)
+	})
 }
 
 // GetPipeline gets a Pipeline by its ID

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/go-kit/kit/log"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
@@ -103,6 +105,16 @@ func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDep
 	return &signalcdproto.SetDeploymentStatusResponse{}, nil
 }
 
-func (r *RPC) ShipDeploymentLogs(context.Context, *signalcdproto.ShipDeploymentLogsRequest) (*signalcdproto.ShipDeploymentLogsResponse, error) {
-	panic("implement me")
+// StepLogsSaver saves the logs for a Deployment step by its number
+type StepLogsSaver interface {
+	SaveStepLogs(ctx context.Context, deployment int64, step int64, logs []byte) error
+}
+
+func (r *RPC) StepLogs(ctx context.Context, req *signalcdproto.StepLogsRequest) (*signalcdproto.StepLogsResponse, error) {
+	err := r.DB.SaveStepLogs(ctx, req.GetNumber(), req.GetStep(), req.GetLogs())
+	if err != nil {
+		return nil, fmt.Errorf("failed to save logs: %w", err)
+	}
+
+	return &signalcdproto.StepLogsResponse{}, nil
 }

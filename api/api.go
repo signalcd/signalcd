@@ -30,6 +30,7 @@ type SignalDB interface {
 	CurrentDeploymentSetter
 	PipelinesLister
 	PipelineCreator
+	StepLogsSaver
 }
 
 // Events to Deployments that should be sent via SSE (Server Sent Events)
@@ -125,15 +126,30 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 		ID:      strfmt.UUID(p.ID),
 		Name:    p.Name,
 		Created: strfmt.DateTime(p.Created),
+		Steps:   []*models.Step{},
+		Checks:  []*models.Check{},
 	}
 
 	for _, s := range p.Steps {
-		mp.Steps = append(mp.Steps, &models.Step{
+		imagePullSecrets := []string{}
+		if len(s.ImagePullSecrets) > 0 {
+			imagePullSecrets = s.ImagePullSecrets
+		}
+
+		ms := &models.Step{
 			Name:             &s.Name,
 			Image:            &s.Image,
-			ImagePullSecrets: s.ImagePullSecrets,
+			ImagePullSecrets: imagePullSecrets,
 			Commands:         s.Commands,
-		})
+		}
+
+		if s.Status != nil {
+			ms.Status = &models.StepStatus{
+				Logs: string(s.Status.Logs),
+			}
+		}
+
+		mp.Steps = append(mp.Steps, ms)
 	}
 
 	for _, c := range p.Checks {
@@ -145,10 +161,15 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 			})
 		}
 
+		imagePullSecrets := []string{}
+		if len(c.ImagePullSecrets) > 0 {
+			imagePullSecrets = c.ImagePullSecrets
+		}
+
 		mp.Checks = append(mp.Checks, &models.Check{
 			Name:             &c.Name,
 			Image:            &c.Image,
-			ImagePullSecrets: c.ImagePullSecrets,
+			ImagePullSecrets: imagePullSecrets,
 			Duration:         c.Duration.Seconds(),
 			Environment:      env,
 		})
