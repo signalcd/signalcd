@@ -19,14 +19,16 @@ type Step struct {
 	ImagePullSecrets []string `json:"imagePullSecrets"`
 	Commands         []string `json:"commands"`
 
-	Status *StepStatus `json:"status,omitempty"`
+	Status *Status `json:"status,omitempty"`
 }
 
-// StepStatus is the state of a Step in a Pipeline
-type StepStatus struct {
+// Status is the state of a Step in a Pipeline
+type Status struct {
 	ExitCode int   `json:"exit_code"`
 	Started  int64 `json:"started,omitempty"`
 	Stopped  int64 `json:"stopped,omitempty"`
+
+	Logs []byte `json:"logs"`
 }
 
 // Check is an asynchronous long running Check after the Pipeline was successfully executed
@@ -36,4 +38,6 @@ type Check struct {
 	ImagePullSecrets []string          `json:"imagePullSecrets"`
 	Duration         time.Duration     `json:"duration"`
 	Environment      map[string]string `json:"environment"`
+
+	Status *Status `json:"status,omitempty"`
 }

@@ -320,6 +320,14 @@ func init() {
         },
         "name": {
           "type": "string"
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "logs": {
+              "type": "string"
+            }
+          }
         }
       }
     }
@@ -634,6 +642,14 @@ func init() {
         },
         "name": {
           "type": "string"
+        },
+        "status": {
+          "type": "object",
+          "properties": {
+            "logs": {
+              "type": "string"
+            }
+          }
         }
       }
     }

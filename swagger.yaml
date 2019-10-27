@@ -180,6 +180,11 @@ definitions:
         type: array
         items:
           type: string
+      status:
+        type: object
+        properties:
+          logs:
+            type: string
   check:
     required:
       - name

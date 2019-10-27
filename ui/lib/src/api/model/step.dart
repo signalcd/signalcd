@@ -13,11 +13,14 @@ class Step {
 
   List<String> commands = [];
   
+
+  StepStatus status = null;
+  
   Step();
 
   @override
   String toString() {
-    return 'Step[name=$name, image=$image, imagePullSecrets=$imagePullSecrets, commands=$commands, ]';
+    return 'Step[name=$name, image=$image, imagePullSecrets=$imagePullSecrets, commands=$commands, status=$status, ]';
   }
 
   Step.fromJson(Map<String, dynamic> json) {
@@ -34,6 +37,11 @@ class Step {
     commands =
         (json['commands'] as List).map((item) => item as String).toList()
     ;
+    status =
+      
+      
+      new StepStatus.fromJson(json['status'])
+;
   }
 
   Map<String, dynamic> toJson() {
@@ -41,7 +49,8 @@ class Step {
       'name': name,
       'image': image,
       'imagePullSecrets': imagePullSecrets,
-      'commands': commands
+      'commands': commands,
+      'status': status
      };
   }
 
