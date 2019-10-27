@@ -203,8 +203,6 @@ func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment int64, step int6
 			return err
 		}
 
-		fmt.Println("saving logs", string(value))
-
 		return b.Put(key, value)
 	})
 }
