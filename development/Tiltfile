@@ -1,3 +1,6 @@
+k8s_yaml('envoy.yaml')
+k8s_resource('envoy', port_forwards=10000)
+
 docker_build('quay.io/signalcd/api', '../cmd/api')
 k8s_yaml('../deployment/kubernetes/signalcd-api.yaml')
 k8s_resource('signalcd-api', port_forwards=6060)
