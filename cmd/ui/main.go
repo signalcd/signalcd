@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"io/ioutil"
+	stdlog "log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
@@ -21,6 +23,13 @@ func main() {
 
 	app := cli.NewApp()
 	app.Action = uiAction(logger)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "assets.path",
+			Usage: "Path on the filesystem to the folder containing the assets",
+			Value: "/assets",
+		},
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		logger.Log("msg", "failed running ui", "err", err)
@@ -34,9 +43,10 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 		{
 			router := chi.NewRouter()
 
-			router.Get("/", file("index.html", "text/html"))
-			router.Get("/bulma.min.css", file("bulma.min.css", "text/css"))
-			router.Get("/main.dart.js", file("main.dart.js", "application/javascript"))
+			folder := c.String("assets.path")
+			router.Get("/", file(folder, "index.html", "text/html"))
+			router.Get("/bulma.min.css", file(folder, "bulma.min.css", "text/css"))
+			router.Get("/main.dart.js", file(folder, "main.dart.js", "application/javascript"))
 
 			s := http.Server{
 				Addr:    ":6662",
@@ -62,8 +72,13 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 	}
 }
 
-func file(name, mime string) http.HandlerFunc {
-	file, _ := ioutil.ReadFile("/assets/" + name)
+func file(folder, name, mime string) http.HandlerFunc {
+	fp := filepath.Join(folder, name)
+	file, err := ioutil.ReadFile(fp)
+	if err != nil {
+		stdlog.Fatalf("failed to read assets: %s", fp)
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mime)
 		_, _ = w.Write(file)
