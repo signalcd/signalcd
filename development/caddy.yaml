@@ -25,7 +25,7 @@ spec:
         app: caddy
     spec:
       containers:
-      - name: caddy1
+      - name: caddy
         image: abiosoft/caddy
         command:
           - caddy

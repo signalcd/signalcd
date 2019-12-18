@@ -3,7 +3,7 @@ k8s_resource('caddy', port_forwards=6060)
 
 docker_build('quay.io/signalcd/api', '../cmd/api')
 k8s_yaml('../deployment/kubernetes/signalcd-api.yaml')
-k8s_resource('signalcd-api', port_forwards=6060)
+k8s_resource('signalcd-api', port_forwards=6660)
 
 docker_build('quay.io/signalcd/ui', '../cmd/ui')
 k8s_yaml('../deployment/kubernetes/signalcd-ui.yaml')
