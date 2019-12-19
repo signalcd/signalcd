@@ -1,0 +1,10 @@
+FROM google/dart:2.3
+
+WORKDIR /app
+
+ADD ui/ /app
+RUN pub get
+RUN pub global activate webdev
+
+CMD []
+ENTRYPOINT ["/root/.pub-cache/bin/webdev", "serve", "web:6662", "--hostname=0.0.0.0", "--auto=restart"]

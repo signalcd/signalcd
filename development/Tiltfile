@@ -5,6 +5,8 @@ docker_build('quay.io/signalcd/api', '../cmd/api')
 k8s_yaml('../deployment/kubernetes/signalcd-api.yaml')
 k8s_resource('signalcd-api', port_forwards=6660)
 
-docker_build('quay.io/signalcd/ui', '../cmd/ui')
 k8s_yaml('../deployment/kubernetes/signalcd-ui.yaml')
 k8s_resource('signalcd-ui', port_forwards=6662)
+docker_build('quay.io/signalcd/ui', '..', dockerfile='../cmd/ui/Dockerfile.dev',
+  live_update=[sync('../ui/', '/app')]
+)
