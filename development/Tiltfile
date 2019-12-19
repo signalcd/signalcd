@@ -8,5 +8,8 @@ k8s_resource('signalcd-api', port_forwards=6660)
 k8s_yaml('../deployment/kubernetes/signalcd-ui.yaml')
 k8s_resource('signalcd-ui', port_forwards=6662)
 docker_build('quay.io/signalcd/ui', '..', dockerfile='../cmd/ui/Dockerfile.dev',
-  live_update=[sync('../ui/', '/app')]
+  live_update=[
+    fall_back_on(['../ui/pubspec.lock', '../ui/pubspec.yaml']),
+    sync('../ui/', '/app'),
+  ]
 )
