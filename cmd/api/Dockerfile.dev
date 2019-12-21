@@ -1,0 +1,10 @@
+FROM golang:1.13-alpine
+
+WORKDIR /go/src/github.com/signalcd/signalcd
+COPY . /go/src/github.com/signalcd/signalcd
+
+ENV GOPROXY=https://proxy.golang.org
+
+RUN go install -v /go/src/github.com/signalcd/signalcd/cmd/api
+
+ENTRYPOINT ["/go/bin/api"]

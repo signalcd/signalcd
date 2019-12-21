@@ -7,21 +7,21 @@ import (
 	"os"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/urfave/cli"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
-	"github.com/urfave/cli"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
 )
 
 func main() {
