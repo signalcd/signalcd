@@ -28,12 +28,21 @@ ui/lib/src/api: swagger.yaml
 	mv tmp/dart/lib ui/lib/src/api
 	-rm -rf tmp/
 
+signalcd/proto: signalcd/proto/agent.pb.go signalcd/proto/types.pb.go signalcd/proto/ui.pb.go
+
 signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
 	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:.
 
 signalcd/proto/types.pb.go: signalcd/proto/types.proto
 	protoc signalcd/proto/types.proto --go_out=plugins=grpc:.
 
+
+signalcd/proto/ui.pb.go: signalcd/proto/ui.proto
+	protoc signalcd/proto/ui.proto \
+		--go_out=plugins=grpc:. \
+		--swagger_out=logtostderr=true:. \
+		--grpc-gateway_out=logtostderr=true:. \
+		-I=. -I=/usr/include -I=$(GOPATH)/src -I=$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis
 
 .PHONY: build
 build: \

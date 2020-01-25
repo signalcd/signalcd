@@ -1,0 +1,53 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "signalcd/proto/ui.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/deployments": {
+      "post": {
+        "operationId": "ListDeployment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdListDeploymentResponse"
+            }
+          }
+        },
+        "tags": [
+          "UIService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "signalcdDeployment": {
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "signalcdListDeploymentResponse": {
+      "type": "object",
+      "properties": {
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdDeployment"
+          }
+        }
+      }
+    }
+  }
+}
