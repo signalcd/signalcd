@@ -1,0 +1,46 @@
+syntax = "proto3";
+package signalcd;
+
+option go_package = "signalcdproto";
+
+message Deployment {
+    int64 number = 1;
+    int64 created = 2;
+    int64 started = 3;
+    int64 finished = 4;
+    DeploymentStatus status = 5;
+    Pipeline pipeline = 6;
+}
+
+message DeploymentStatus {
+    enum Phase {
+        UNKNOWN = 0;
+        SUCCESS = 1;
+        FAILURE = 2;
+        PROGRESS = 3;
+        PENDING = 4;
+        KILLED = 5;
+    }
+    Phase phase = 1;
+}
+
+message Pipeline {
+    string id = 1;
+    string name = 2;
+    repeated Step steps = 3;
+    repeated Check checks = 4;
+}
+
+message Step {
+    string name = 1;
+    string image = 2;
+    repeated string ImagePullSecrets = 3;
+    repeated string commands = 4;
+}
+
+message Check {
+    string name = 1;
+    string image = 2;
+    repeated string ImagePullSecrets = 3;
+    int64 duration = 4;
+}

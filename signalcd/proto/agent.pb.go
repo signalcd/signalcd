@@ -3,13 +3,14 @@
 
 package signalcdproto
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-
 import (
-	context "golang.org/x/net/context"
+	context "context"
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,158 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
-
-type DeploymentStatus_Phase int32
-
-const (
-	DeploymentStatus_UNKNOWN  DeploymentStatus_Phase = 0
-	DeploymentStatus_SUCCESS  DeploymentStatus_Phase = 1
-	DeploymentStatus_FAILURE  DeploymentStatus_Phase = 2
-	DeploymentStatus_PROGRESS DeploymentStatus_Phase = 3
-	DeploymentStatus_PENDING  DeploymentStatus_Phase = 4
-	DeploymentStatus_KILLED   DeploymentStatus_Phase = 5
-)
-
-var DeploymentStatus_Phase_name = map[int32]string{
-	0: "UNKNOWN",
-	1: "SUCCESS",
-	2: "FAILURE",
-	3: "PROGRESS",
-	4: "PENDING",
-	5: "KILLED",
-}
-var DeploymentStatus_Phase_value = map[string]int32{
-	"UNKNOWN":  0,
-	"SUCCESS":  1,
-	"FAILURE":  2,
-	"PROGRESS": 3,
-	"PENDING":  4,
-	"KILLED":   5,
-}
-
-func (x DeploymentStatus_Phase) String() string {
-	return proto.EnumName(DeploymentStatus_Phase_name, int32(x))
-}
-func (DeploymentStatus_Phase) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{1, 0}
-}
-
-type Deployment struct {
-	Number               int64             `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
-	Created              int64             `protobuf:"varint,2,opt,name=created,proto3" json:"created,omitempty"`
-	Started              int64             `protobuf:"varint,3,opt,name=started,proto3" json:"started,omitempty"`
-	Finished             int64             `protobuf:"varint,4,opt,name=finished,proto3" json:"finished,omitempty"`
-	Status               *DeploymentStatus `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
-	Pipeline             *Pipeline         `protobuf:"bytes,6,opt,name=pipeline,proto3" json:"pipeline,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
-}
-
-func (m *Deployment) Reset()         { *m = Deployment{} }
-func (m *Deployment) String() string { return proto.CompactTextString(m) }
-func (*Deployment) ProtoMessage()    {}
-func (*Deployment) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{0}
-}
-func (m *Deployment) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Deployment.Unmarshal(m, b)
-}
-func (m *Deployment) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Deployment.Marshal(b, m, deterministic)
-}
-func (dst *Deployment) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Deployment.Merge(dst, src)
-}
-func (m *Deployment) XXX_Size() int {
-	return xxx_messageInfo_Deployment.Size(m)
-}
-func (m *Deployment) XXX_DiscardUnknown() {
-	xxx_messageInfo_Deployment.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Deployment proto.InternalMessageInfo
-
-func (m *Deployment) GetNumber() int64 {
-	if m != nil {
-		return m.Number
-	}
-	return 0
-}
-
-func (m *Deployment) GetCreated() int64 {
-	if m != nil {
-		return m.Created
-	}
-	return 0
-}
-
-func (m *Deployment) GetStarted() int64 {
-	if m != nil {
-		return m.Started
-	}
-	return 0
-}
-
-func (m *Deployment) GetFinished() int64 {
-	if m != nil {
-		return m.Finished
-	}
-	return 0
-}
-
-func (m *Deployment) GetStatus() *DeploymentStatus {
-	if m != nil {
-		return m.Status
-	}
-	return nil
-}
-
-func (m *Deployment) GetPipeline() *Pipeline {
-	if m != nil {
-		return m.Pipeline
-	}
-	return nil
-}
-
-type DeploymentStatus struct {
-	Phase                DeploymentStatus_Phase `protobuf:"varint,1,opt,name=phase,proto3,enum=signalcd.DeploymentStatus_Phase" json:"phase,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
-}
-
-func (m *DeploymentStatus) Reset()         { *m = DeploymentStatus{} }
-func (m *DeploymentStatus) String() string { return proto.CompactTextString(m) }
-func (*DeploymentStatus) ProtoMessage()    {}
-func (*DeploymentStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{1}
-}
-func (m *DeploymentStatus) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_DeploymentStatus.Unmarshal(m, b)
-}
-func (m *DeploymentStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_DeploymentStatus.Marshal(b, m, deterministic)
-}
-func (dst *DeploymentStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DeploymentStatus.Merge(dst, src)
-}
-func (m *DeploymentStatus) XXX_Size() int {
-	return xxx_messageInfo_DeploymentStatus.Size(m)
-}
-func (m *DeploymentStatus) XXX_DiscardUnknown() {
-	xxx_messageInfo_DeploymentStatus.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_DeploymentStatus proto.InternalMessageInfo
-
-func (m *DeploymentStatus) GetPhase() DeploymentStatus_Phase {
-	if m != nil {
-		return m.Phase
-	}
-	return DeploymentStatus_UNKNOWN
-}
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type CurrentDeploymentRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -184,16 +34,17 @@ func (m *CurrentDeploymentRequest) Reset()         { *m = CurrentDeploymentReque
 func (m *CurrentDeploymentRequest) String() string { return proto.CompactTextString(m) }
 func (*CurrentDeploymentRequest) ProtoMessage()    {}
 func (*CurrentDeploymentRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{2}
+	return fileDescriptor_e7aa30ce6e358323, []int{0}
 }
+
 func (m *CurrentDeploymentRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CurrentDeploymentRequest.Unmarshal(m, b)
 }
 func (m *CurrentDeploymentRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CurrentDeploymentRequest.Marshal(b, m, deterministic)
 }
-func (dst *CurrentDeploymentRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CurrentDeploymentRequest.Merge(dst, src)
+func (m *CurrentDeploymentRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CurrentDeploymentRequest.Merge(m, src)
 }
 func (m *CurrentDeploymentRequest) XXX_Size() int {
 	return xxx_messageInfo_CurrentDeploymentRequest.Size(m)
@@ -215,16 +66,17 @@ func (m *CurrentDeploymentResponse) Reset()         { *m = CurrentDeploymentResp
 func (m *CurrentDeploymentResponse) String() string { return proto.CompactTextString(m) }
 func (*CurrentDeploymentResponse) ProtoMessage()    {}
 func (*CurrentDeploymentResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{3}
+	return fileDescriptor_e7aa30ce6e358323, []int{1}
 }
+
 func (m *CurrentDeploymentResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_CurrentDeploymentResponse.Unmarshal(m, b)
 }
 func (m *CurrentDeploymentResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_CurrentDeploymentResponse.Marshal(b, m, deterministic)
 }
-func (dst *CurrentDeploymentResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CurrentDeploymentResponse.Merge(dst, src)
+func (m *CurrentDeploymentResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CurrentDeploymentResponse.Merge(m, src)
 }
 func (m *CurrentDeploymentResponse) XXX_Size() int {
 	return xxx_messageInfo_CurrentDeploymentResponse.Size(m)
@@ -254,16 +106,17 @@ func (m *SetDeploymentStatusRequest) Reset()         { *m = SetDeploymentStatusR
 func (m *SetDeploymentStatusRequest) String() string { return proto.CompactTextString(m) }
 func (*SetDeploymentStatusRequest) ProtoMessage()    {}
 func (*SetDeploymentStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{4}
+	return fileDescriptor_e7aa30ce6e358323, []int{2}
 }
+
 func (m *SetDeploymentStatusRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SetDeploymentStatusRequest.Unmarshal(m, b)
 }
 func (m *SetDeploymentStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SetDeploymentStatusRequest.Marshal(b, m, deterministic)
 }
-func (dst *SetDeploymentStatusRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SetDeploymentStatusRequest.Merge(dst, src)
+func (m *SetDeploymentStatusRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetDeploymentStatusRequest.Merge(m, src)
 }
 func (m *SetDeploymentStatusRequest) XXX_Size() int {
 	return xxx_messageInfo_SetDeploymentStatusRequest.Size(m)
@@ -298,16 +151,17 @@ func (m *SetDeploymentStatusResponse) Reset()         { *m = SetDeploymentStatus
 func (m *SetDeploymentStatusResponse) String() string { return proto.CompactTextString(m) }
 func (*SetDeploymentStatusResponse) ProtoMessage()    {}
 func (*SetDeploymentStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{5}
+	return fileDescriptor_e7aa30ce6e358323, []int{3}
 }
+
 func (m *SetDeploymentStatusResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SetDeploymentStatusResponse.Unmarshal(m, b)
 }
 func (m *SetDeploymentStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SetDeploymentStatusResponse.Marshal(b, m, deterministic)
 }
-func (dst *SetDeploymentStatusResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SetDeploymentStatusResponse.Merge(dst, src)
+func (m *SetDeploymentStatusResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetDeploymentStatusResponse.Merge(m, src)
 }
 func (m *SetDeploymentStatusResponse) XXX_Size() int {
 	return xxx_messageInfo_SetDeploymentStatusResponse.Size(m)
@@ -317,192 +171,6 @@ func (m *SetDeploymentStatusResponse) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_SetDeploymentStatusResponse proto.InternalMessageInfo
-
-type Pipeline struct {
-	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Steps                []*Step  `protobuf:"bytes,3,rep,name=steps,proto3" json:"steps,omitempty"`
-	Checks               []*Check `protobuf:"bytes,4,rep,name=checks,proto3" json:"checks,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Pipeline) Reset()         { *m = Pipeline{} }
-func (m *Pipeline) String() string { return proto.CompactTextString(m) }
-func (*Pipeline) ProtoMessage()    {}
-func (*Pipeline) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{6}
-}
-func (m *Pipeline) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Pipeline.Unmarshal(m, b)
-}
-func (m *Pipeline) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Pipeline.Marshal(b, m, deterministic)
-}
-func (dst *Pipeline) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Pipeline.Merge(dst, src)
-}
-func (m *Pipeline) XXX_Size() int {
-	return xxx_messageInfo_Pipeline.Size(m)
-}
-func (m *Pipeline) XXX_DiscardUnknown() {
-	xxx_messageInfo_Pipeline.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Pipeline proto.InternalMessageInfo
-
-func (m *Pipeline) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-func (m *Pipeline) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Pipeline) GetSteps() []*Step {
-	if m != nil {
-		return m.Steps
-	}
-	return nil
-}
-
-func (m *Pipeline) GetChecks() []*Check {
-	if m != nil {
-		return m.Checks
-	}
-	return nil
-}
-
-type Step struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Image                string   `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
-	ImagePullSecrets     []string `protobuf:"bytes,3,rep,name=ImagePullSecrets,proto3" json:"ImagePullSecrets,omitempty"`
-	Commands             []string `protobuf:"bytes,4,rep,name=commands,proto3" json:"commands,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Step) Reset()         { *m = Step{} }
-func (m *Step) String() string { return proto.CompactTextString(m) }
-func (*Step) ProtoMessage()    {}
-func (*Step) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{7}
-}
-func (m *Step) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Step.Unmarshal(m, b)
-}
-func (m *Step) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Step.Marshal(b, m, deterministic)
-}
-func (dst *Step) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Step.Merge(dst, src)
-}
-func (m *Step) XXX_Size() int {
-	return xxx_messageInfo_Step.Size(m)
-}
-func (m *Step) XXX_DiscardUnknown() {
-	xxx_messageInfo_Step.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Step proto.InternalMessageInfo
-
-func (m *Step) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Step) GetImage() string {
-	if m != nil {
-		return m.Image
-	}
-	return ""
-}
-
-func (m *Step) GetImagePullSecrets() []string {
-	if m != nil {
-		return m.ImagePullSecrets
-	}
-	return nil
-}
-
-func (m *Step) GetCommands() []string {
-	if m != nil {
-		return m.Commands
-	}
-	return nil
-}
-
-type Check struct {
-	Name                 string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Image                string   `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
-	ImagePullSecrets     []string `protobuf:"bytes,3,rep,name=ImagePullSecrets,proto3" json:"ImagePullSecrets,omitempty"`
-	Duration             int64    `protobuf:"varint,4,opt,name=duration,proto3" json:"duration,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Check) Reset()         { *m = Check{} }
-func (m *Check) String() string { return proto.CompactTextString(m) }
-func (*Check) ProtoMessage()    {}
-func (*Check) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{8}
-}
-func (m *Check) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Check.Unmarshal(m, b)
-}
-func (m *Check) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Check.Marshal(b, m, deterministic)
-}
-func (dst *Check) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Check.Merge(dst, src)
-}
-func (m *Check) XXX_Size() int {
-	return xxx_messageInfo_Check.Size(m)
-}
-func (m *Check) XXX_DiscardUnknown() {
-	xxx_messageInfo_Check.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Check proto.InternalMessageInfo
-
-func (m *Check) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-func (m *Check) GetImage() string {
-	if m != nil {
-		return m.Image
-	}
-	return ""
-}
-
-func (m *Check) GetImagePullSecrets() []string {
-	if m != nil {
-		return m.ImagePullSecrets
-	}
-	return nil
-}
-
-func (m *Check) GetDuration() int64 {
-	if m != nil {
-		return m.Duration
-	}
-	return 0
-}
 
 type StepLogsRequest struct {
 	Number               int64    `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
@@ -517,16 +185,17 @@ func (m *StepLogsRequest) Reset()         { *m = StepLogsRequest{} }
 func (m *StepLogsRequest) String() string { return proto.CompactTextString(m) }
 func (*StepLogsRequest) ProtoMessage()    {}
 func (*StepLogsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{9}
+	return fileDescriptor_e7aa30ce6e358323, []int{4}
 }
+
 func (m *StepLogsRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StepLogsRequest.Unmarshal(m, b)
 }
 func (m *StepLogsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_StepLogsRequest.Marshal(b, m, deterministic)
 }
-func (dst *StepLogsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StepLogsRequest.Merge(dst, src)
+func (m *StepLogsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StepLogsRequest.Merge(m, src)
 }
 func (m *StepLogsRequest) XXX_Size() int {
 	return xxx_messageInfo_StepLogsRequest.Size(m)
@@ -568,16 +237,17 @@ func (m *StepLogsResponse) Reset()         { *m = StepLogsResponse{} }
 func (m *StepLogsResponse) String() string { return proto.CompactTextString(m) }
 func (*StepLogsResponse) ProtoMessage()    {}
 func (*StepLogsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_agent_e9326c7a3354513a, []int{10}
+	return fileDescriptor_e7aa30ce6e358323, []int{5}
 }
+
 func (m *StepLogsResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_StepLogsResponse.Unmarshal(m, b)
 }
 func (m *StepLogsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_StepLogsResponse.Marshal(b, m, deterministic)
 }
-func (dst *StepLogsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StepLogsResponse.Merge(dst, src)
+func (m *StepLogsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StepLogsResponse.Merge(m, src)
 }
 func (m *StepLogsResponse) XXX_Size() int {
 	return xxx_messageInfo_StepLogsResponse.Size(m)
@@ -589,18 +259,38 @@ func (m *StepLogsResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_StepLogsResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*Deployment)(nil), "signalcd.Deployment")
-	proto.RegisterType((*DeploymentStatus)(nil), "signalcd.DeploymentStatus")
 	proto.RegisterType((*CurrentDeploymentRequest)(nil), "signalcd.CurrentDeploymentRequest")
 	proto.RegisterType((*CurrentDeploymentResponse)(nil), "signalcd.CurrentDeploymentResponse")
 	proto.RegisterType((*SetDeploymentStatusRequest)(nil), "signalcd.SetDeploymentStatusRequest")
 	proto.RegisterType((*SetDeploymentStatusResponse)(nil), "signalcd.SetDeploymentStatusResponse")
-	proto.RegisterType((*Pipeline)(nil), "signalcd.Pipeline")
-	proto.RegisterType((*Step)(nil), "signalcd.Step")
-	proto.RegisterType((*Check)(nil), "signalcd.Check")
 	proto.RegisterType((*StepLogsRequest)(nil), "signalcd.StepLogsRequest")
 	proto.RegisterType((*StepLogsResponse)(nil), "signalcd.StepLogsResponse")
-	proto.RegisterEnum("signalcd.DeploymentStatus_Phase", DeploymentStatus_Phase_name, DeploymentStatus_Phase_value)
+}
+
+func init() { proto.RegisterFile("signalcd/proto/agent.proto", fileDescriptor_e7aa30ce6e358323) }
+
+var fileDescriptor_e7aa30ce6e358323 = []byte{
+	// 309 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0x51, 0x4b, 0xc3, 0x30,
+	0x10, 0xc7, 0xd9, 0x2a, 0x65, 0x9c, 0x93, 0xb9, 0x28, 0xd2, 0x45, 0x84, 0x11, 0x15, 0xf6, 0xd4,
+	0x41, 0xfd, 0x04, 0x9b, 0x3e, 0xfa, 0x62, 0xfb, 0x26, 0x82, 0xb4, 0xf5, 0xa8, 0x83, 0x2e, 0x89,
+	0x4d, 0x2a, 0xec, 0x73, 0xf8, 0x85, 0x65, 0x69, 0x4a, 0xeb, 0xd6, 0xb9, 0xa7, 0x5e, 0xef, 0xff,
+	0xbf, 0xfb, 0x71, 0x77, 0x01, 0xaa, 0x56, 0x19, 0x8f, 0xf3, 0xf4, 0x63, 0x2e, 0x0b, 0xa1, 0xc5,
+	0x3c, 0xce, 0x90, 0x6b, 0xdf, 0xc4, 0x64, 0x50, 0x6b, 0x74, 0xd7, 0xa5, 0x37, 0x12, 0x55, 0xe5,
+	0x62, 0x14, 0xbc, 0xc7, 0xb2, 0x28, 0x90, 0xeb, 0x27, 0x94, 0xb9, 0xd8, 0xac, 0x91, 0xeb, 0x10,
+	0xbf, 0x4a, 0x54, 0x9a, 0xbd, 0xc3, 0xa4, 0x43, 0x53, 0x52, 0x70, 0x85, 0x64, 0x09, 0xe3, 0x74,
+	0x57, 0xf4, 0x7a, 0xd3, 0xde, 0xec, 0x34, 0xb8, 0xf4, 0x6b, 0xa0, 0xdf, 0x2a, 0xdc, 0xb7, 0xb3,
+	0x4f, 0xa0, 0x11, 0xb6, 0x12, 0x91, 0x8e, 0x75, 0xa9, 0x2c, 0x9e, 0x5c, 0x81, 0xcb, 0xcb, 0x75,
+	0x82, 0x85, 0x69, 0xeb, 0x84, 0xf6, 0x8f, 0x04, 0xe0, 0x2a, 0x63, 0xf4, 0xfa, 0x06, 0x47, 0xbb,
+	0x70, 0xb6, 0x95, 0x75, 0xb2, 0x1b, 0xb8, 0xee, 0x24, 0x55, 0xc3, 0xb0, 0x17, 0x18, 0x45, 0x1a,
+	0xe5, 0xb3, 0xc8, 0x8e, 0xd2, 0x09, 0x9c, 0x28, 0x8d, 0xd2, 0xb0, 0x9d, 0xd0, 0xc4, 0xdb, 0x5c,
+	0x2e, 0x32, 0xe5, 0x39, 0xd3, 0xde, 0x6c, 0x18, 0x9a, 0x98, 0x11, 0x38, 0x6f, 0x5a, 0x56, 0x98,
+	0xe0, 0xa7, 0x0f, 0xc3, 0xc5, 0xf6, 0x44, 0x11, 0x16, 0xdf, 0xab, 0x14, 0xc9, 0x1b, 0x8c, 0xf7,
+	0x36, 0x4c, 0x58, 0x33, 0xcf, 0xa1, 0xd3, 0xd0, 0xdb, 0x7f, 0x3d, 0xf6, 0x44, 0x09, 0x5c, 0x74,
+	0x0c, 0x4d, 0xee, 0x9a, 0xda, 0xc3, 0xdb, 0xa7, 0xf7, 0x47, 0x5c, 0x96, 0xb1, 0x80, 0x41, 0x3d,
+	0x26, 0x99, 0xb4, 0x4a, 0xfe, 0x6e, 0x93, 0xd2, 0x2e, 0xa9, 0x6a, 0xb1, 0x1c, 0xbd, 0x9e, 0xd5,
+	0xa2, 0x79, 0x93, 0x89, 0x6b, 0x3e, 0x0f, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x61, 0xf9, 0x32,
+	0x40, 0xde, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -660,6 +350,20 @@ type AgentServiceServer interface {
 	CurrentDeployment(context.Context, *CurrentDeploymentRequest) (*CurrentDeploymentResponse, error)
 	SetDeploymentStatus(context.Context, *SetDeploymentStatusRequest) (*SetDeploymentStatusResponse, error)
 	StepLogs(context.Context, *StepLogsRequest) (*StepLogsResponse, error)
+}
+
+// UnimplementedAgentServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedAgentServiceServer struct {
+}
+
+func (*UnimplementedAgentServiceServer) CurrentDeployment(ctx context.Context, req *CurrentDeploymentRequest) (*CurrentDeploymentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CurrentDeployment not implemented")
+}
+func (*UnimplementedAgentServiceServer) SetDeploymentStatus(ctx context.Context, req *SetDeploymentStatusRequest) (*SetDeploymentStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetDeploymentStatus not implemented")
+}
+func (*UnimplementedAgentServiceServer) StepLogs(ctx context.Context, req *StepLogsRequest) (*StepLogsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StepLogs not implemented")
 }
 
 func RegisterAgentServiceServer(s *grpc.Server, srv AgentServiceServer) {
@@ -739,49 +443,4 @@ var _AgentService_serviceDesc = grpc.ServiceDesc{
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "signalcd/proto/agent.proto",
-}
-
-func init() { proto.RegisterFile("signalcd/proto/agent.proto", fileDescriptor_agent_e9326c7a3354513a) }
-
-var fileDescriptor_agent_e9326c7a3354513a = []byte{
-	// 612 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0xdd, 0x6e, 0xd3, 0x30,
-	0x14, 0x26, 0x6d, 0xd3, 0xb5, 0xa7, 0x63, 0xcb, 0x0e, 0x13, 0xca, 0x82, 0x90, 0x2a, 0x33, 0xc4,
-	0xc4, 0x45, 0x27, 0x15, 0x89, 0xfb, 0xad, 0x2b, 0x53, 0xb5, 0xaa, 0x2b, 0x8e, 0x2a, 0x24, 0x84,
-	0x84, 0xb2, 0xc4, 0xb4, 0x11, 0xf9, 0x23, 0x76, 0x10, 0xbb, 0xe0, 0x29, 0x78, 0x02, 0xde, 0x8a,
-	0xc7, 0x41, 0x76, 0x92, 0xa6, 0xac, 0x2d, 0xe3, 0x86, 0xab, 0xf8, 0xf3, 0xf7, 0xd9, 0xdf, 0x39,
-	0x3e, 0xe7, 0x04, 0x2c, 0xee, 0xcf, 0x23, 0x27, 0x70, 0xbd, 0xd3, 0x24, 0x8d, 0x45, 0x7c, 0xea,
-	0xcc, 0x59, 0x24, 0x7a, 0x6a, 0x8d, 0xad, 0x92, 0x23, 0xbf, 0x34, 0x80, 0x0b, 0x96, 0x04, 0xf1,
-	0x6d, 0xc8, 0x22, 0x81, 0x8f, 0xa1, 0x19, 0x65, 0xe1, 0x0d, 0x4b, 0x4d, 0xad, 0xab, 0x9d, 0xd4,
-	0x69, 0x81, 0xd0, 0x84, 0x1d, 0x37, 0x65, 0x8e, 0x60, 0x9e, 0x59, 0x53, 0x44, 0x09, 0x25, 0xc3,
-	0x85, 0x93, 0x4a, 0xa6, 0x9e, 0x33, 0x05, 0x44, 0x0b, 0x5a, 0x9f, 0xfc, 0xc8, 0xe7, 0x0b, 0xe6,
-	0x99, 0x0d, 0x45, 0x2d, 0x31, 0xf6, 0xa1, 0xc9, 0x85, 0x23, 0x32, 0x6e, 0xea, 0x5d, 0xed, 0xa4,
-	0xd3, 0xb7, 0x7a, 0x65, 0x44, 0xbd, 0x2a, 0x1a, 0x5b, 0x29, 0x68, 0xa1, 0xc4, 0x1e, 0xb4, 0x12,
-	0x3f, 0x61, 0x81, 0x1f, 0x31, 0xb3, 0xa9, 0x4e, 0x61, 0x75, 0x6a, 0x5a, 0x30, 0x74, 0xa9, 0x21,
-	0x3f, 0x35, 0x30, 0xee, 0x5e, 0x86, 0xaf, 0x41, 0x4f, 0x16, 0x0e, 0x67, 0x2a, 0xbf, 0xbd, 0x7e,
-	0x77, 0xbb, 0x6f, 0x6f, 0x2a, 0x75, 0x34, 0x97, 0x93, 0x19, 0xe8, 0x0a, 0x63, 0x07, 0x76, 0x66,
-	0x93, 0xab, 0xc9, 0xf5, 0xbb, 0x89, 0xf1, 0x40, 0x02, 0x7b, 0x36, 0x18, 0x0c, 0x6d, 0xdb, 0xd0,
-	0x24, 0x78, 0x73, 0x36, 0x1a, 0xcf, 0xe8, 0xd0, 0xa8, 0xe1, 0x2e, 0xb4, 0xa6, 0xf4, 0xfa, 0x92,
-	0x4a, 0xaa, 0x2e, 0xa9, 0xe9, 0x70, 0x72, 0x31, 0x9a, 0x5c, 0x1a, 0x0d, 0x04, 0x68, 0x5e, 0x8d,
-	0xc6, 0xe3, 0xe1, 0x85, 0xa1, 0x13, 0x0b, 0xcc, 0x41, 0x96, 0xa6, 0x2c, 0x12, 0x95, 0x3d, 0x65,
-	0x5f, 0x32, 0xc6, 0x05, 0xf9, 0x08, 0x47, 0x1b, 0x38, 0x9e, 0xc4, 0x11, 0x67, 0x78, 0x0e, 0x07,
-	0xee, 0x5d, 0x52, 0xe5, 0xd4, 0xe9, 0x1f, 0x6e, 0xca, 0x89, 0xae, 0xcb, 0xc9, 0x02, 0x2c, 0x9b,
-	0x89, 0xb5, 0xf7, 0xce, 0xed, 0xb7, 0xb6, 0x42, 0x55, 0xba, 0xda, 0xbf, 0x96, 0x8e, 0x3c, 0x85,
-	0x27, 0x1b, 0x9d, 0xf2, 0x64, 0xc8, 0x77, 0x68, 0x95, 0xf5, 0xc3, 0x3d, 0xa8, 0xf9, 0x9e, 0xb2,
-	0x6c, 0xd3, 0x9a, 0xef, 0x21, 0x42, 0x23, 0x72, 0x42, 0xa6, 0xcc, 0xda, 0x54, 0xad, 0xf1, 0x18,
-	0x74, 0x2e, 0x58, 0xc2, 0xcd, 0x7a, 0xb7, 0x7e, 0xd2, 0xe9, 0xef, 0x55, 0x11, 0xd8, 0x82, 0x25,
-	0x34, 0x27, 0xf1, 0x05, 0x34, 0xdd, 0x05, 0x73, 0x3f, 0x73, 0xb3, 0xa1, 0x64, 0xfb, 0x95, 0x6c,
-	0x20, 0xf7, 0x69, 0x41, 0x93, 0x6f, 0xd0, 0x90, 0xe7, 0x96, 0x56, 0xda, 0x8a, 0xd5, 0x21, 0xe8,
-	0x7e, 0xe8, 0xcc, 0x4b, 0xff, 0x1c, 0xe0, 0x4b, 0x30, 0x46, 0x72, 0x31, 0xcd, 0x82, 0xc0, 0x66,
-	0x6e, 0xca, 0x44, 0x1e, 0x4b, 0x9b, 0xae, 0xed, 0xcb, 0x31, 0x70, 0xe3, 0x30, 0x74, 0x22, 0x2f,
-	0x0f, 0xa4, 0x4d, 0x97, 0x98, 0xdc, 0x82, 0xae, 0x42, 0xf9, 0x7f, 0xd6, 0x5e, 0x96, 0x3a, 0xc2,
-	0x8f, 0xa3, 0x72, 0x02, 0x4b, 0x4c, 0xde, 0xc2, 0xbe, 0x4c, 0x7a, 0x1c, 0xcf, 0xef, 0xad, 0x38,
-	0x42, 0x43, 0xbe, 0x68, 0x31, 0xf9, 0x6a, 0x2d, 0xf7, 0x82, 0x78, 0xce, 0xd5, 0xcc, 0xef, 0x52,
-	0xb5, 0x26, 0x08, 0x46, 0x75, 0x65, 0x5e, 0xda, 0xfe, 0x8f, 0x1a, 0xec, 0x9e, 0xc9, 0x3f, 0x8f,
-	0xcd, 0xd2, 0xaf, 0xbe, 0xcb, 0xf0, 0x03, 0x1c, 0xac, 0x75, 0x35, 0x92, 0x95, 0xd2, 0x6c, 0x19,
-	0x07, 0xeb, 0xd9, 0x5f, 0x35, 0xc5, 0x58, 0xdc, 0xc0, 0xa3, 0x0d, 0x8d, 0x86, 0xc7, 0x2b, 0x1d,
-	0xb2, 0xb5, 0xe3, 0xad, 0xe7, 0xf7, 0xa8, 0x0a, 0x8f, 0x33, 0x68, 0x95, 0x69, 0xe2, 0xd1, 0x9f,
-	0xad, 0xb7, 0xf2, 0x9a, 0x96, 0xb5, 0x89, 0xca, 0xaf, 0x38, 0xdf, 0x7f, 0xff, 0xb0, 0x24, 0xd5,
-	0x0f, 0xf9, 0xa6, 0xa9, 0x3e, 0xaf, 0x7e, 0x07, 0x00, 0x00, 0xff, 0xff, 0x95, 0x60, 0xee, 0x00,
-	0xb5, 0x05, 0x00, 0x00,
 }

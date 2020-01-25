@@ -16,32 +16,14 @@ package signalcd;
 
 option go_package = "signalcdproto";
 
+import "signalcd/proto/types.proto";
+
 service AgentService {
     rpc CurrentDeployment (CurrentDeploymentRequest) returns (CurrentDeploymentResponse);
     rpc SetDeploymentStatus (SetDeploymentStatusRequest) returns (SetDeploymentStatusResponse);
     rpc StepLogs (StepLogsRequest) returns (StepLogsResponse);
 }
 
-message Deployment {
-    int64 number = 1;
-    int64 created = 2;
-    int64 started = 3;
-    int64 finished = 4;
-    DeploymentStatus status = 5;
-    Pipeline pipeline = 6;
-}
-
-message DeploymentStatus {
-    enum Phase {
-        UNKNOWN = 0;
-        SUCCESS = 1;
-        FAILURE = 2;
-        PROGRESS = 3;
-        PENDING = 4;
-        KILLED = 5;
-    }
-    Phase phase = 1;
-}
 
 message CurrentDeploymentRequest {
 }
@@ -56,27 +38,6 @@ message SetDeploymentStatusRequest {
 }
 
 message SetDeploymentStatusResponse {
-}
-
-message Pipeline {
-    string id = 1;
-    string name = 2;
-    repeated Step steps = 3;
-    repeated Check checks = 4;
-}
-
-message Step {
-    string name = 1;
-    string image = 2;
-    repeated string ImagePullSecrets = 3;
-    repeated string commands = 4;
-}
-
-message Check {
-    string name = 1;
-    string image = 2;
-    repeated string ImagePullSecrets = 3;
-    int64 duration = 4;
 }
 
 message StepLogsRequest {
