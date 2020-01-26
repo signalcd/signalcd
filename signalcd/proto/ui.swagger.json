@@ -11,8 +11,8 @@
     "application/json"
   ],
   "paths": {
-    "/v1/deployments": {
-      "post": {
+    "/deployments": {
+      "get": {
         "operationId": "ListDeployment",
         "responses": {
           "200": {
@@ -26,15 +26,202 @@
           "UIService"
         ]
       }
+    },
+    "/deployments/current": {
+      "get": {
+        "operationId": "GetCurrentDeployment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdGetCurrentDeploymentResponse"
+            }
+          }
+        },
+        "tags": [
+          "UIService"
+        ]
+      },
+      "post": {
+        "operationId": "SetCurrentDeployment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdSetCurrentDeploymentResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "UIService"
+        ]
+      }
+    },
+    "/pipelines": {
+      "get": {
+        "operationId": "ListPipelines",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdListPipelinesResponse"
+            }
+          }
+        },
+        "tags": [
+          "UIService"
+        ]
+      },
+      "post": {
+        "operationId": "CreatePipeline",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdCreatePipelineResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/signalcdPipeline"
+            }
+          }
+        ],
+        "tags": [
+          "UIService"
+        ]
+      }
+    },
+    "/pipelines/{id}": {
+      "get": {
+        "operationId": "GetPipeline",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdGetPipelineResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UIService"
+        ]
+      }
     }
   },
   "definitions": {
+    "DeploymentStatusPhase": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "SUCCESS",
+        "FAILURE",
+        "PROGRESS",
+        "PENDING",
+        "KILLED"
+      ],
+      "default": "UNKNOWN"
+    },
+    "signalcdCheck": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "ImagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duration": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "signalcdCreatePipelineResponse": {
+      "type": "object",
+      "properties": {
+        "pipeline": {
+          "$ref": "#/definitions/signalcdPipeline"
+        }
+      }
+    },
     "signalcdDeployment": {
       "type": "object",
       "properties": {
         "number": {
           "type": "string",
           "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "int64"
+        },
+        "started": {
+          "type": "string",
+          "format": "int64"
+        },
+        "finished": {
+          "type": "string",
+          "format": "int64"
+        },
+        "status": {
+          "$ref": "#/definitions/signalcdDeploymentStatus"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/signalcdPipeline"
+        }
+      }
+    },
+    "signalcdDeploymentStatus": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "$ref": "#/definitions/DeploymentStatusPhase"
+        }
+      }
+    },
+    "signalcdGetCurrentDeploymentResponse": {
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "$ref": "#/definitions/signalcdDeployment"
+        }
+      }
+    },
+    "signalcdGetPipelineResponse": {
+      "type": "object",
+      "properties": {
+        "pipeline": {
+          "$ref": "#/definitions/signalcdPipeline"
         }
       }
     },
@@ -45,6 +232,71 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/signalcdDeployment"
+          }
+        }
+      }
+    },
+    "signalcdListPipelinesResponse": {
+      "type": "object",
+      "properties": {
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdPipeline"
+          }
+        }
+      }
+    },
+    "signalcdPipeline": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdStep"
+          }
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdCheck"
+          }
+        }
+      }
+    },
+    "signalcdSetCurrentDeploymentResponse": {
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "$ref": "#/definitions/signalcdDeployment"
+        }
+      }
+    },
+    "signalcdStep": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "ImagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }

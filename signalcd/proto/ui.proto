@@ -16,11 +16,44 @@ package signalcd;
 option go_package = "signalcdproto";
 
 import "google/api/annotations.proto";
+import "signalcd/proto/types.proto";
 
 service UIService {
     rpc ListDeployment (ListDeploymentRequest) returns (ListDeploymentResponse) {
         option (google.api.http) = {
-          post: "/v1/deployments"
+          get: "/deployments"
+        };
+    }
+
+    rpc GetCurrentDeployment (GetCurrentDeploymentRequest) returns (GetCurrentDeploymentResponse) {
+        option (google.api.http) = {
+          get: "/deployments/current"
+        };
+    }
+
+    rpc SetCurrentDeployment (SetCurrentDeploymentRequest) returns (SetCurrentDeploymentResponse) {
+        option (google.api.http) = {
+          post: "/deployments/current"
+          body: "id"
+        };
+    }
+
+    rpc ListPipelines (ListPipelinesRequest) returns (ListPipelinesResponse) {
+        option (google.api.http) = {
+            get: "/pipelines"
+        };
+    }
+
+    rpc CreatePipeline (CreatePipelineRequest) returns (CreatePipelineResponse) {
+        option (google.api.http) = {
+            post: "/pipelines"
+            body: "pipeline"
+        };
+    }
+
+    rpc GetPipeline (GetPipelineRequest) returns (GetPipelineResponse) {
+        option (google.api.http) = {
+            get: "/pipelines/{id}"
         };
     }
 }
@@ -32,6 +65,40 @@ message ListDeploymentResponse {
     repeated Deployment deployments = 1;
 }
 
-message Deployment {
-    int64 number = 1;
+message GetCurrentDeploymentRequest {
+}
+
+message GetCurrentDeploymentResponse {
+    Deployment deployment = 1;
+}
+
+message SetCurrentDeploymentRequest {
+    string id = 1;
+}
+
+message SetCurrentDeploymentResponse {
+    Deployment deployment = 1;
+}
+
+message ListPipelinesRequest {
+}
+
+message ListPipelinesResponse {
+    repeated Pipeline pipelines = 1;
+}
+
+message CreatePipelineRequest {
+    Pipeline pipeline = 1;
+}
+
+message CreatePipelineResponse {
+    Pipeline pipeline = 1;
+}
+
+message GetPipelineRequest {
+    string id = 1;
+}
+
+message GetPipelineResponse {
+    Pipeline pipeline = 1;
 }
