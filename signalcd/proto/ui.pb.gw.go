@@ -497,17 +497,17 @@ func RegisterUIServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, 
 }
 
 var (
-	pattern_UIService_ListDeployment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"deployments"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_UIService_ListDeployment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "deployments"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_UIService_GetCurrentDeployment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"deployments", "current"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_UIService_GetCurrentDeployment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "deployments", "current"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_UIService_SetCurrentDeployment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"deployments", "current"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_UIService_SetCurrentDeployment_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"api", "v1", "deployments", "current"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_UIService_ListPipelines_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"pipelines"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_UIService_ListPipelines_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "pipelines"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_UIService_CreatePipeline_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"pipelines"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_UIService_CreatePipeline_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "pipelines"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_UIService_GetPipeline_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"pipelines", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_UIService_GetPipeline_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "pipelines", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

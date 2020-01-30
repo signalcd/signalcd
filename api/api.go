@@ -2,25 +2,29 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"time"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/go-openapi/loads"
-	restmiddleware "github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"github.com/signalcd/signalcd/api/v1/models"
-	"github.com/signalcd/signalcd/api/v1/restapi"
-	"github.com/signalcd/signalcd/api/v1/restapi/operations"
-	"github.com/signalcd/signalcd/api/v1/restapi/operations/deployments"
-	"github.com/signalcd/signalcd/api/v1/restapi/operations/pipeline"
 	"github.com/signalcd/signalcd/signalcd"
-	"golang.org/x/xerrors"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
+
+const addr = "localhost:6660"
 
 // SignalDB is the union of all necessary interfaces for the API
 type SignalDB interface {
@@ -43,33 +47,258 @@ type Events interface {
 func NewV1(logger log.Logger, db SignalDB, events Events) (*chi.Mux, error) {
 	router := chi.NewRouter()
 
-	// load embedded swagger file
-	swaggerSpec, err := loads.Analyzed(restapi.SwaggerJSON, "")
+	pool, err := x509.SystemCertPool()
 	if err != nil {
-		return nil, xerrors.Errorf("failed to load embedded swagger file: %w", err.Error())
+		return nil, err
 	}
 
-	api := operations.NewCdAPI(swaggerSpec)
-
-	// Skip the  redoc middleware, only serving the OpenAPI specification and
-	// the API itself via RoutesHandler. See:
-	// https://github.com/go-swagger/go-swagger/issues/1779
-	api.Middleware = func(b restmiddleware.Builder) http.Handler {
-		return restmiddleware.Spec("", swaggerSpec.Raw(), api.Context().RoutesHandler(b))
+	cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
+	if err != nil {
+		return nil, err
 	}
 
-	api.DeploymentsDeploymentsHandler = getDeploymentsHandler(db)
-	api.DeploymentsCurrentDeploymentHandler = getCurrentDeploymentHandler(db)
-	api.DeploymentsSetCurrentDeploymentHandler = setCurrentDeploymentHandler(db, logger)
-	api.PipelinePipelineHandler = getPipelineHandler(db)
-	api.PipelinePipelinesHandler = getPipelinesHandler(db)
-	api.PipelineCreateHandler = createPipelineHandler(db)
+	ok := pool.AppendCertsFromPEM(cert)
+	if !ok {
+		return nil, fmt.Errorf("failed to appened certificate")
+	}
 
-	router.Mount("/", api.Serve(nil))
+	var server *grpc.Server
+	{
+		opts := []grpc.ServerOption{
+			grpc.Creds(credentials.NewClientTLSFromCert(pool, addr)),
+		}
+
+		server = grpc.NewServer(opts...)
+		signalcdproto.RegisterUIServiceServer(server, &UIServer{
+			db:     db,
+			logger: logger,
+		})
+	}
+
+	var mux *runtime.ServeMux
+	{
+		keyPair, err := tls.LoadX509KeyPair("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
+		if err != nil {
+			return nil, err
+		}
+
+		creds := credentials.NewTLS(&tls.Config{
+			RootCAs:      pool,
+			Certificates: []tls.Certificate{keyPair},
+		})
+		opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+
+		mux = runtime.NewServeMux()
+		err = signalcdproto.RegisterUIServiceHandlerFromEndpoint(context.Background(), mux, addr, opts)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	router.Mount("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+			server.ServeHTTP(w, r)
+		} else {
+			mux.ServeHTTP(w, r)
+		}
+	}))
 
 	router.Get("/api/v1/deployments/events", deploymentEventsHandler(logger, events))
 
 	return router, nil
+}
+
+type UIServer struct {
+	db     SignalDB
+	logger log.Logger
+}
+
+func (s *UIServer) ListDeployment(context.Context, *signalcdproto.ListDeploymentRequest) (*signalcdproto.ListDeploymentResponse, error) {
+	list, err := s.db.ListDeployments()
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &signalcdproto.ListDeploymentResponse{}
+
+	for _, d := range list {
+		dProto, err := deployment(d)
+		if err != nil {
+			return nil, err
+		}
+		resp.Deployments = append(resp.Deployments, dProto)
+	}
+
+	return resp, nil
+}
+
+func (s *UIServer) GetCurrentDeployment(context.Context, *signalcdproto.GetCurrentDeploymentRequest) (*signalcdproto.GetCurrentDeploymentResponse, error) {
+	panic("implement me")
+}
+
+func (s *UIServer) SetCurrentDeployment(ctx context.Context, req *signalcdproto.SetCurrentDeploymentRequest) (*signalcdproto.SetCurrentDeploymentResponse, error) {
+	p, err := s.db.GetPipeline(req.GetId())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pipeline: %w", err)
+	}
+
+	d, err := s.db.CreateDeployment(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create deployment: %w", err)
+	}
+
+	dProto, err := deployment(d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &signalcdproto.SetCurrentDeploymentResponse{Deployment: dProto}, nil
+}
+
+func (s *UIServer) ListPipelines(context.Context, *signalcdproto.ListPipelinesRequest) (*signalcdproto.ListPipelinesResponse, error) {
+	//pipelines, _ := s.db.ListPipelines()
+	return &signalcdproto.ListPipelinesResponse{}, nil
+}
+
+func (s *UIServer) CreatePipeline(ctx context.Context, req *signalcdproto.CreatePipelineRequest) (*signalcdproto.CreatePipelineResponse, error) {
+	p, err := pipeline(req.Pipeline)
+	if err != nil {
+		return nil, fmt.Errorf("failed converting to internal pipeline: %w", err)
+	}
+
+	p, err = s.db.CreatePipeline(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating the pipeline: %w", err)
+	}
+
+	protoPipeline, err := pipelineProto(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert to gRPC pipeline: %w", err)
+	}
+
+	return &signalcdproto.CreatePipelineResponse{Pipeline: protoPipeline}, nil
+
+}
+
+func deployment(d signalcd.Deployment) (*signalcdproto.Deployment, error) {
+	created, err := ptypes.TimestampProto(d.Created)
+	if err != nil {
+		return nil, err
+	}
+	started, err := ptypes.TimestampProto(d.Started)
+	if err != nil {
+		return nil, err
+	}
+	finished, err := ptypes.TimestampProto(d.Finished)
+	if err != nil {
+		return nil, err
+	}
+	p, err := pipelineProto(d.Pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	return &signalcdproto.Deployment{
+		Number:   d.Number,
+		Created:  created,
+		Started:  started,
+		Finished: finished,
+		Status: &signalcdproto.DeploymentStatus{
+			Phase: signalcdproto.DeploymentStatus_UNKNOWN,
+		},
+		Pipeline: p,
+	}, nil
+}
+
+func pipeline(p *signalcdproto.Pipeline) (signalcd.Pipeline, error) {
+	created, err := ptypes.Timestamp(p.GetCreated())
+	if err != nil {
+		return signalcd.Pipeline{}, err
+	}
+
+	steps := make([]signalcd.Step, len(p.GetSteps()))
+	for _, s := range p.GetSteps() {
+		steps = append(steps, signalcd.Step{
+			Name:             s.GetName(),
+			Image:            s.GetImage(),
+			ImagePullSecrets: s.GetImagePullSecrets(),
+			Commands:         s.GetCommands(),
+		})
+	}
+
+	checks := make([]signalcd.Check, len(p.GetChecks()))
+	for _, c := range p.GetChecks() {
+		duration, err := ptypes.Duration(c.GetDuration())
+		if err != nil {
+			return signalcd.Pipeline{}, err
+		}
+
+		check := signalcd.Check{
+			Name:             c.GetName(),
+			Image:            c.GetImage(),
+			ImagePullSecrets: c.GetImagePullSecrets(),
+			Duration:         duration,
+		}
+
+		checks = append(checks, check)
+	}
+
+	return signalcd.Pipeline{
+		ID:      p.GetId(),
+		Name:    p.GetName(),
+		Created: created,
+		Steps:   steps,
+		Checks:  checks,
+	}, nil
+}
+
+func pipelineProto(p signalcd.Pipeline) (*signalcdproto.Pipeline, error) {
+	created, err := ptypes.TimestampProto(p.Created)
+	if err != nil {
+		return nil, err
+	}
+
+	steps := make([]*signalcdproto.Step, len(p.Steps))
+	for _, s := range p.Steps {
+		steps = append(steps, &signalcdproto.Step{
+			Name:             s.Name,
+			Image:            s.Image,
+			ImagePullSecrets: s.ImagePullSecrets,
+			Commands:         s.Commands,
+		})
+	}
+
+	checks := make([]*signalcdproto.Check, len(p.Checks))
+	for _, c := range p.Checks {
+		checks = append(checks, &signalcdproto.Check{
+			Name:             c.Name,
+			Image:            c.Image,
+			ImagePullSecrets: c.ImagePullSecrets,
+			Duration:         ptypes.DurationProto(c.Duration),
+		})
+	}
+
+	return &signalcdproto.Pipeline{
+		Id:      p.ID,
+		Name:    p.Name,
+		Created: created,
+		Steps:   steps,
+		Checks:  checks,
+	}, nil
+}
+
+func (s *UIServer) GetPipeline(ctx context.Context, req *signalcdproto.GetPipelineRequest) (*signalcdproto.GetPipelineResponse, error) {
+	p, err := s.db.GetPipeline(req.GetId())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pipeline")
+	}
+
+	pProto, err := pipelineProto(p)
+	if err != nil {
+		return nil, err
+	}
+
+	return &signalcdproto.GetPipelineResponse{Pipeline: pProto}, nil
 }
 
 func deploymentEventsHandler(logger log.Logger, events Events) func(w http.ResponseWriter, r *http.Request) {
@@ -183,23 +412,6 @@ type PipelinesLister interface {
 	ListPipelines() ([]signalcd.Pipeline, error)
 }
 
-func getPipelinesHandler(lister PipelinesLister) pipeline.PipelinesHandlerFunc {
-	return func(params pipeline.PipelinesParams) restmiddleware.Responder {
-		var payload []*models.Pipeline
-
-		pipelines, err := lister.ListPipelines()
-		if err != nil {
-			return pipeline.NewPipelinesInternalServerError()
-		}
-
-		for _, p := range pipelines {
-			payload = append(payload, getModelsPipeline(p))
-		}
-
-		return pipeline.NewPipelinesOK().WithPayload(payload)
-	}
-}
-
 func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 	switch phase {
 	case signalcd.Success:
@@ -216,23 +428,6 @@ func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 // DeploymentLister lists all Deployments
 type DeploymentLister interface {
 	ListDeployments() ([]signalcd.Deployment, error)
-}
-
-func getDeploymentsHandler(lister DeploymentLister) deployments.DeploymentsHandlerFunc {
-	return func(params deployments.DeploymentsParams) restmiddleware.Responder {
-		var payload []*models.Deployment
-
-		list, err := lister.ListDeployments()
-		if err != nil {
-			return deployments.NewDeploymentsInternalServerError()
-		}
-
-		for _, d := range list {
-			payload = append(payload, getModelsDeployment(d))
-		}
-
-		return deployments.NewDeploymentsOK().WithPayload(payload)
-	}
 }
 
 func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
@@ -253,39 +448,10 @@ type CurrentDeploymentGetter interface {
 	GetCurrentDeployment() (signalcd.Deployment, error)
 }
 
-func getCurrentDeploymentHandler(getter CurrentDeploymentGetter) deployments.CurrentDeploymentHandlerFunc {
-	return func(params deployments.CurrentDeploymentParams) restmiddleware.Responder {
-		d, err := getter.GetCurrentDeployment()
-		if err != nil {
-			return deployments.NewSetCurrentDeploymentInternalServerError()
-		}
-
-		return deployments.NewCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
-	}
-}
-
 // CurrentDeploymentSetter gets a Pipeline and then creates a new Deployments
 type CurrentDeploymentSetter interface {
 	PipelineGetter
 	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
-}
-
-func setCurrentDeploymentHandler(creator CurrentDeploymentSetter, logger log.Logger) deployments.SetCurrentDeploymentHandlerFunc {
-	return func(params deployments.SetCurrentDeploymentParams) restmiddleware.Responder {
-		p, err := creator.GetPipeline(params.Pipeline)
-		if err != nil {
-			logger.Log("msg", "failed to get pipeline", "id", params.Pipeline, "err", err)
-			return deployments.NewSetCurrentDeploymentInternalServerError()
-		}
-
-		d, err := creator.CreateDeployment(p)
-		if err != nil {
-			logger.Log("msg", "failed to create deployment", "err", err)
-			return deployments.NewSetCurrentDeploymentInternalServerError()
-		}
-
-		return deployments.NewSetCurrentDeploymentOK().WithPayload(getModelsDeployment(d))
-	}
 }
 
 // PipelineGetter gets a new Pipeline
@@ -293,64 +459,7 @@ type PipelineGetter interface {
 	GetPipeline(id string) (signalcd.Pipeline, error)
 }
 
-func getPipelineHandler(getter PipelineGetter) pipeline.PipelineHandlerFunc {
-	return func(params pipeline.PipelineParams) restmiddleware.Responder {
-		p, err := getter.GetPipeline(params.ID)
-		if err != nil {
-			return pipeline.NewPipelineInternalServerError()
-		}
-		return pipeline.NewPipelineOK().WithPayload(getModelsPipeline(p))
-	}
-}
-
 // PipelineCreator creates a new Pipeline
 type PipelineCreator interface {
 	CreatePipeline(signalcd.Pipeline) (signalcd.Pipeline, error)
-}
-
-func createPipelineHandler(creator PipelineCreator) pipeline.CreateHandlerFunc {
-	return func(params pipeline.CreateParams) restmiddleware.Responder {
-		p, err := creator.CreatePipeline(fromModelPipeline(params.Pipeline))
-		if err != nil {
-			return pipeline.NewCreateInternalServerError()
-		}
-
-		return pipeline.NewCreateOK().WithPayload(getModelsPipeline(p))
-	}
-}
-
-func fromModelPipeline(m *models.Pipeline) signalcd.Pipeline {
-	p := signalcd.Pipeline{
-		ID:      m.ID.String(),
-		Name:    m.Name,
-		Created: time.Time(m.Created),
-	}
-
-	for _, c := range m.Checks {
-		check := signalcd.Check{
-			Name:             *c.Name,
-			Image:            *c.Image,
-			ImagePullSecrets: c.ImagePullSecrets,
-			Duration:         time.Duration(c.Duration) * time.Second,
-		}
-
-		for _, env := range c.Environment {
-			check.Environment[env.Key] = env.Value
-		}
-
-		p.Checks = append(p.Checks, check)
-	}
-
-	for _, s := range m.Steps {
-		step := signalcd.Step{
-			Name:             *s.Name,
-			Image:            *s.Image,
-			ImagePullSecrets: s.ImagePullSecrets,
-			Commands:         s.Commands,
-		}
-
-		p.Steps = append(p.Steps, step)
-	}
-
-	return p
 }

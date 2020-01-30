@@ -18,6 +18,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.2.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.12.2
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/oklog/run v1.0.0
@@ -27,11 +28,12 @@ require (
 	github.com/urfave/cli v1.20.0
 	go.etcd.io/bbolt v1.3.2
 	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect
-	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+	golang.org/x/net v0.0.0-20191002035440-2ec189313ef0
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
-	google.golang.org/grpc v1.22.0
+	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
+	google.golang.org/grpc v1.24.0
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.0.0-20190313235455-40a48860b5ab
 	k8s.io/apimachinery v0.0.0-20190313205120-d7deff9243b1

@@ -21,39 +21,39 @@ import "signalcd/proto/types.proto";
 service UIService {
     rpc ListDeployment (ListDeploymentRequest) returns (ListDeploymentResponse) {
         option (google.api.http) = {
-          get: "/deployments"
+          get: "/api/v1/deployments"
         };
     }
 
     rpc GetCurrentDeployment (GetCurrentDeploymentRequest) returns (GetCurrentDeploymentResponse) {
         option (google.api.http) = {
-          get: "/deployments/current"
+          get: "/api/v1/deployments/current"
         };
     }
 
     rpc SetCurrentDeployment (SetCurrentDeploymentRequest) returns (SetCurrentDeploymentResponse) {
         option (google.api.http) = {
-          post: "/deployments/current"
+          post: "/api/v1/deployments/current"
           body: "id"
         };
     }
 
     rpc ListPipelines (ListPipelinesRequest) returns (ListPipelinesResponse) {
         option (google.api.http) = {
-            get: "/pipelines"
+            get: "/api/v1/pipelines"
         };
     }
 
     rpc CreatePipeline (CreatePipelineRequest) returns (CreatePipelineResponse) {
         option (google.api.http) = {
-            post: "/pipelines"
+            post: "/api/v1/pipelines"
             body: "pipeline"
         };
     }
 
     rpc GetPipeline (GetPipelineRequest) returns (GetPipelineResponse) {
         option (google.api.http) = {
-            get: "/pipelines/{id}"
+            get: "/api/v1/pipelines/{id}"
         };
     }
 }

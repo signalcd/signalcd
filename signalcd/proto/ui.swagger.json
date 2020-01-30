@@ -11,7 +11,7 @@
     "application/json"
   ],
   "paths": {
-    "/deployments": {
+    "/api/v1/deployments": {
       "get": {
         "operationId": "ListDeployment",
         "responses": {
@@ -27,7 +27,7 @@
         ]
       }
     },
-    "/deployments/current": {
+    "/api/v1/deployments/current": {
       "get": {
         "operationId": "GetCurrentDeployment",
         "responses": {
@@ -67,7 +67,7 @@
         ]
       }
     },
-    "/pipelines": {
+    "/api/v1/pipelines": {
       "get": {
         "operationId": "ListPipelines",
         "responses": {
@@ -107,7 +107,7 @@
         ]
       }
     },
-    "/pipelines/{id}": {
+    "/api/v1/pipelines/{id}": {
       "get": {
         "operationId": "GetPipeline",
         "responses": {
@@ -136,6 +136,7 @@
     "DeploymentStatusPhase": {
       "type": "string",
       "enum": [
+        "DONTUSETHISVALUE",
         "UNKNOWN",
         "SUCCESS",
         "FAILURE",
@@ -143,7 +144,7 @@
         "PENDING",
         "KILLED"
       ],
-      "default": "UNKNOWN"
+      "default": "DONTUSETHISVALUE"
     },
     "signalcdCheck": {
       "type": "object",
@@ -161,8 +162,7 @@
           }
         },
         "duration": {
-          "type": "string",
-          "format": "int64"
+          "type": "string"
         }
       }
     },
@@ -183,15 +183,15 @@
         },
         "created": {
           "type": "string",
-          "format": "int64"
+          "format": "date-time"
         },
         "started": {
           "type": "string",
-          "format": "int64"
+          "format": "date-time"
         },
         "finished": {
           "type": "string",
-          "format": "int64"
+          "format": "date-time"
         },
         "status": {
           "$ref": "#/definitions/signalcdDeploymentStatus"
@@ -255,6 +255,10 @@
         },
         "name": {
           "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
         },
         "steps": {
           "type": "array",

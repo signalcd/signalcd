@@ -3,23 +3,27 @@ package signalcd;
 
 option go_package = "signalcdproto";
 
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
 message Deployment {
     int64 number = 1;
-    int64 created = 2;
-    int64 started = 3;
-    int64 finished = 4;
+    google.protobuf.Timestamp created = 2;
+    google.protobuf.Timestamp started = 3;
+    google.protobuf.Timestamp finished = 4;
     DeploymentStatus status = 5;
     Pipeline pipeline = 6;
 }
 
 message DeploymentStatus {
     enum Phase {
-        UNKNOWN = 0;
-        SUCCESS = 1;
-        FAILURE = 2;
-        PROGRESS = 3;
-        PENDING = 4;
-        KILLED = 5;
+        DONTUSETHISVALUE = 0; // It seems that grpc gateway defaults to 0 being null...
+        UNKNOWN = 1;
+        SUCCESS = 2;
+        FAILURE = 3;
+        PROGRESS = 4;
+        PENDING = 5;
+        KILLED = 6;
     }
     Phase phase = 1;
 }
@@ -27,8 +31,9 @@ message DeploymentStatus {
 message Pipeline {
     string id = 1;
     string name = 2;
-    repeated Step steps = 3;
-    repeated Check checks = 4;
+    google.protobuf.Timestamp created = 3;
+    repeated Step steps = 4;
+    repeated Check checks = 5;
 }
 
 message Step {
@@ -39,8 +44,9 @@ message Step {
 }
 
 message Check {
+
     string name = 1;
     string image = 2;
     repeated string ImagePullSecrets = 3;
-    int64 duration = 4;
+    google.protobuf.Duration duration = 4;
 }

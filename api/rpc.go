@@ -4,10 +4,12 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
-	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
+	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/net/context"
 	"golang.org/x/xerrors"
+
+	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
 // RPC implement the gRPC server connecting it to a SignalDB
@@ -51,16 +53,18 @@ func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentD
 				Name:             c.Name,
 				Image:            c.Image,
 				ImagePullSecrets: c.ImagePullSecrets,
-				Duration:         int64(c.Duration.Seconds()),
+				Duration:         ptypes.DurationProto(c.Duration),
 			})
 		}
 		return checks2
 	}
 
+	created, _ := ptypes.TimestampProto(deployment.Created)
+
 	return &signalcdproto.CurrentDeploymentResponse{
 		CurrentDeployment: &signalcdproto.Deployment{
 			Number:  deployment.Number,
-			Created: deployment.Created.Unix(),
+			Created: created,
 
 			Pipeline: &signalcdproto.Pipeline{
 				Id:     deployment.Pipeline.ID,
