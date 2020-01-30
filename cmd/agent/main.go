@@ -14,9 +14,8 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/oklog/run"
-	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -25,9 +24,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
-const apiURL = "localhost:6661"
+const apiURL = "localhost:6663"
 
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
@@ -222,9 +224,11 @@ func deploymentStatusPhase(phase signalcdproto.DeploymentStatus_Phase) signalcd.
 }
 
 func deploymentFromRPC(deployment *signalcdproto.Deployment) signalcd.Deployment {
+	created, _ := ptypes.Timestamp(deployment.GetCreated())
+
 	return signalcd.Deployment{
 		Number:   deployment.GetNumber(),
-		Created:  time.Unix(deployment.GetCreated(), 0),
+		Created:  created,
 		Pipeline: pipelineFromRPC(deployment.GetPipeline()),
 		Status: signalcd.DeploymentStatus{
 			Phase: deploymentStatusPhase(deployment.GetStatus().GetPhase()),
@@ -253,11 +257,13 @@ func pipelineFromRPC(pipeline *signalcdproto.Pipeline) signalcd.Pipeline {
 		//	env[item.Key] = item.Value
 		//}
 
+		duration, _ := ptypes.Duration(check.GetDuration())
+
 		p.Checks = append(p.Checks, signalcd.Check{
 			Name:             check.GetName(),
 			Image:            check.GetImage(),
 			ImagePullSecrets: check.GetImagePullSecrets(),
-			Duration:         time.Duration(check.Duration) * time.Second,
+			Duration:         duration,
 			Environment:      map[string]string{},
 		})
 	}

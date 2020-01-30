@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -15,13 +14,15 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/urfave/cli"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
-	"github.com/urfave/cli"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
 )
 
 func main() {
@@ -71,7 +72,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 		{
 			apiV1, err := api.NewV1(log.WithPrefix(logger, "component", "api"), db, events)
 			if err != nil {
-				return xerrors.Errorf("failed to initialize api: %w", err)
+				return fmt.Errorf("failed to initialize api: %w", err)
 			}
 
 			r := chi.NewRouter()
@@ -89,13 +90,13 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 					"msg", "running HTTP API",
 					"addr", s.Addr,
 				)
-				return s.ListenAndServe()
+				return s.ListenAndServeTLS("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
 			}, func(err error) {
 				_ = s.Shutdown(context.TODO())
 			})
 		}
 		{
-			const addr = ":6661"
+			const addr = ":6663"
 			l, err := net.Listen("tcp", addr)
 			if err != nil {
 				return xerrors.Errorf("failed to listen on %s: %w", addr, err)
@@ -126,7 +127,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			r.Mount("/debug", middleware.Profiler())
 
 			s := http.Server{
-				Addr:    ":6662",
+				Addr:    ":6661",
 				Handler: r,
 			}
 			gr.Add(func() error {
@@ -162,6 +163,7 @@ func Logger(logger log.Logger) func(next http.Handler) http.Handler {
 				"proto", r.Proto,
 				"method", r.Method,
 				"status", ww.Status(),
+				"content", r.Header.Get("Content-Type"),
 				"path", r.URL.Path,
 				"duration", time.Since(start),
 				"bytes", ww.BytesWritten(),
