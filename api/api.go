@@ -17,9 +17,10 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 
-	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
@@ -113,6 +114,11 @@ type UIServer struct {
 	logger log.Logger
 }
 
+// DeploymentLister lists all Deployments
+type DeploymentLister interface {
+	ListDeployments() ([]signalcd.Deployment, error)
+}
+
 func (s *UIServer) ListDeployment(context.Context, *signalcdproto.ListDeploymentRequest) (*signalcdproto.ListDeploymentResponse, error) {
 	list, err := s.db.ListDeployments()
 	if err != nil {
@@ -132,8 +138,19 @@ func (s *UIServer) ListDeployment(context.Context, *signalcdproto.ListDeployment
 	return resp, nil
 }
 
+// CurrentDeploymentGetter gets the current Deployment
+type CurrentDeploymentGetter interface {
+	GetCurrentDeployment() (signalcd.Deployment, error)
+}
+
 func (s *UIServer) GetCurrentDeployment(context.Context, *signalcdproto.GetCurrentDeploymentRequest) (*signalcdproto.GetCurrentDeploymentResponse, error) {
 	panic("implement me")
+}
+
+// CurrentDeploymentSetter gets a Pipeline and then creates a new Deployments
+type CurrentDeploymentSetter interface {
+	PipelineGetter
+	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
 }
 
 func (s *UIServer) SetCurrentDeployment(ctx context.Context, req *signalcdproto.SetCurrentDeploymentRequest) (*signalcdproto.SetCurrentDeploymentResponse, error) {
@@ -155,9 +172,32 @@ func (s *UIServer) SetCurrentDeployment(ctx context.Context, req *signalcdproto.
 	return &signalcdproto.SetCurrentDeploymentResponse{Deployment: dProto}, nil
 }
 
+// PipelinesLister returns a list of Pipelines
+type PipelinesLister interface {
+	ListPipelines() ([]signalcd.Pipeline, error)
+}
+
 func (s *UIServer) ListPipelines(context.Context, *signalcdproto.ListPipelinesRequest) (*signalcdproto.ListPipelinesResponse, error) {
-	//pipelines, _ := s.db.ListPipelines()
-	return &signalcdproto.ListPipelinesResponse{}, nil
+	pipelines, err := s.db.ListPipelines()
+	if err != nil {
+		return nil, fmt.Errorf("failed to list pipelines: %w", err)
+	}
+
+	psProto := make([]*signalcdproto.Pipeline, len(pipelines))
+	for i, p := range pipelines {
+		pProto, err := pipelineProto(p)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert pipeline to proto: %w", err)
+		}
+		psProto[i] = pProto
+	}
+
+	return &signalcdproto.ListPipelinesResponse{Pipelines: psProto}, nil
+}
+
+// PipelineCreator creates a new Pipeline
+type PipelineCreator interface {
+	CreatePipeline(signalcd.Pipeline) (signalcd.Pipeline, error)
 }
 
 func (s *UIServer) CreatePipeline(ctx context.Context, req *signalcdproto.CreatePipelineRequest) (*signalcdproto.CreatePipelineResponse, error) {
@@ -217,30 +257,28 @@ func pipeline(p *signalcdproto.Pipeline) (signalcd.Pipeline, error) {
 	}
 
 	steps := make([]signalcd.Step, len(p.GetSteps()))
-	for _, s := range p.GetSteps() {
-		steps = append(steps, signalcd.Step{
+	for i, s := range p.GetSteps() {
+		steps[i] = signalcd.Step{
 			Name:             s.GetName(),
 			Image:            s.GetImage(),
 			ImagePullSecrets: s.GetImagePullSecrets(),
 			Commands:         s.GetCommands(),
-		})
+		}
 	}
 
 	checks := make([]signalcd.Check, len(p.GetChecks()))
-	for _, c := range p.GetChecks() {
+	for i, c := range p.GetChecks() {
 		duration, err := ptypes.Duration(c.GetDuration())
 		if err != nil {
 			return signalcd.Pipeline{}, err
 		}
 
-		check := signalcd.Check{
+		checks[i] = signalcd.Check{
 			Name:             c.GetName(),
 			Image:            c.GetImage(),
 			ImagePullSecrets: c.GetImagePullSecrets(),
 			Duration:         duration,
 		}
-
-		checks = append(checks, check)
 	}
 
 	return signalcd.Pipeline{
@@ -259,23 +297,23 @@ func pipelineProto(p signalcd.Pipeline) (*signalcdproto.Pipeline, error) {
 	}
 
 	steps := make([]*signalcdproto.Step, len(p.Steps))
-	for _, s := range p.Steps {
-		steps = append(steps, &signalcdproto.Step{
+	for i, s := range p.Steps {
+		steps[i] = &signalcdproto.Step{
 			Name:             s.Name,
 			Image:            s.Image,
 			ImagePullSecrets: s.ImagePullSecrets,
 			Commands:         s.Commands,
-		})
+		}
 	}
 
 	checks := make([]*signalcdproto.Check, len(p.Checks))
-	for _, c := range p.Checks {
-		checks = append(checks, &signalcdproto.Check{
+	for i, c := range p.Checks {
+		checks[i] = &signalcdproto.Check{
 			Name:             c.Name,
 			Image:            c.Image,
 			ImagePullSecrets: c.ImagePullSecrets,
 			Duration:         ptypes.DurationProto(c.Duration),
-		})
+		}
 	}
 
 	return &signalcdproto.Pipeline{
@@ -287,10 +325,15 @@ func pipelineProto(p signalcd.Pipeline) (*signalcdproto.Pipeline, error) {
 	}, nil
 }
 
+// PipelineGetter gets a new Pipeline
+type PipelineGetter interface {
+	GetPipeline(id string) (signalcd.Pipeline, error)
+}
+
 func (s *UIServer) GetPipeline(ctx context.Context, req *signalcdproto.GetPipelineRequest) (*signalcdproto.GetPipelineResponse, error) {
 	p, err := s.db.GetPipeline(req.GetId())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get pipeline")
+		return nil, status.Errorf(codes.NotFound, "failed to get pipeline")
 	}
 
 	pProto, err := pipelineProto(p)
@@ -407,11 +450,6 @@ func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
 	return mp
 }
 
-// PipelinesLister returns a list of Pipelines
-type PipelinesLister interface {
-	ListPipelines() ([]signalcd.Pipeline, error)
-}
-
 func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 	switch phase {
 	case signalcd.Success:
@@ -425,11 +463,6 @@ func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
 	}
 }
 
-// DeploymentLister lists all Deployments
-type DeploymentLister interface {
-	ListDeployments() ([]signalcd.Deployment, error)
-}
-
 func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
 	return &models.Deployment{
 		Number:   &fd.Number,
@@ -441,25 +474,4 @@ func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
 			Phase: getDeploymentStatusPhase(fd.Status.Phase),
 		},
 	}
-}
-
-// CurrentDeploymentGetter gets the current Deployment
-type CurrentDeploymentGetter interface {
-	GetCurrentDeployment() (signalcd.Deployment, error)
-}
-
-// CurrentDeploymentSetter gets a Pipeline and then creates a new Deployments
-type CurrentDeploymentSetter interface {
-	PipelineGetter
-	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
-}
-
-// PipelineGetter gets a new Pipeline
-type PipelineGetter interface {
-	GetPipeline(id string) (signalcd.Pipeline, error)
-}
-
-// PipelineCreator creates a new Pipeline
-type PipelineCreator interface {
-	CreatePipeline(signalcd.Pipeline) (signalcd.Pipeline, error)
 }
