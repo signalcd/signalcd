@@ -8,11 +8,13 @@ class DeploymentsService {
 
   DeploymentsService(this._api);
 
-  Future<List<Deployment>> deployments() async {
-    return await _api.deployments.deployments();
+  Future<List<SignalcdDeployment>> deployments() async {
+    return await _api.ui.listDeployment().then((resp) => resp.deployments);
   }
 
-  Future<Deployment> deploy(String pipelineID) async {
-    return await _api.deployments.setCurrentDeployment(pipelineID);
+  Future<SignalcdDeployment> deploy(String pipelineID) async {
+    return await _api.ui
+        .setCurrentDeployment(pipelineID)
+        .then((resp) => resp.deployment);
   }
 }

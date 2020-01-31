@@ -29,7 +29,7 @@ class DeploymentsComponent implements OnInit, OnDestroy {
 
   Timer timer;
   EventSource events = EventSource("/api/v1/deployments/events");
-  List<Deployment> deployments = [];
+  List<SignalcdDeployment> deployments = [];
 
   @override
   void ngOnInit() {
@@ -49,7 +49,7 @@ class DeploymentsComponent implements OnInit, OnDestroy {
   }
 
   void getDeployments() {
-    _deploymentsService.deployments().then((List<Deployment> deployments) {
+    _deploymentsService.deployments().then((List<SignalcdDeployment> deployments) {
       // Only update if number of deployments changed
       if (this.deployments.length != deployments.length) {
         this.deployments = deployments;
@@ -59,12 +59,12 @@ class DeploymentsComponent implements OnInit, OnDestroy {
 
   void onDeploymentEvent(Stream<MessageEvent> events) {
     events.forEach((MessageEvent message) {
-      Deployment deployment = Deployment.fromJson(json.decode(message.data));
+      SignalcdDeployment deployment = SignalcdDeployment.fromJson(json.decode(message.data));
 
       int index = -1;
 
       int i = 0;
-      deployments.forEach((Deployment d) {
+      deployments.forEach((SignalcdDeployment d) {
         if (deployment.number == d.number) {
           index = i;
         }

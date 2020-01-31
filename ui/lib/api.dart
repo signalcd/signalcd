@@ -1,13 +1,10 @@
 import 'package:ui/src/api/api.dart';
 
 class API {
+  UIServiceApi ui;
+
   API() {
-    ApiClient client = ApiClient(basePath: "/api/v1");
-
-    this.deployments = DeploymentsApi(client);
-    this.pipelines = PipelineApi(client);
+    ApiClient client = ApiClient(basePath: "http://localhost:6060");
+    this.ui = UIServiceApi(client);
   }
-
-  DeploymentsApi deployments;
-  PipelineApi pipelines;
 }

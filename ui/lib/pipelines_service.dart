@@ -8,7 +8,7 @@ class PipelinesService {
 
   PipelinesService(this._api);
 
-  Future<List<Pipeline>> pipelines() async {
-    return await _api.pipelines.pipelines();
+  Future<List<SignalcdPipeline>> pipelines() async {
+    return await _api.ui.listPipelines().then((resp) => resp.pipelines);
   }
 }
