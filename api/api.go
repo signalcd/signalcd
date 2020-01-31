@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
@@ -122,7 +123,7 @@ type DeploymentLister interface {
 func (s *UIServer) ListDeployment(context.Context, *signalcdproto.ListDeploymentRequest) (*signalcdproto.ListDeploymentResponse, error) {
 	list, err := s.db.ListDeployments()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.NotFound, "failed to list deployments: %w", err)
 	}
 
 	resp := &signalcdproto.ListDeploymentResponse{}
@@ -130,7 +131,7 @@ func (s *UIServer) ListDeployment(context.Context, *signalcdproto.ListDeployment
 	for _, d := range list {
 		dProto, err := deployment(d)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to convert deployment to proto: %w", err)
 		}
 		resp.Deployments = append(resp.Deployments, dProto)
 	}
@@ -156,17 +157,18 @@ type CurrentDeploymentSetter interface {
 func (s *UIServer) SetCurrentDeployment(ctx context.Context, req *signalcdproto.SetCurrentDeploymentRequest) (*signalcdproto.SetCurrentDeploymentResponse, error) {
 	p, err := s.db.GetPipeline(req.GetId())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get pipeline: %w", err)
+
+		return nil, status.Errorf(codes.NotFound, "failed to get pipeline: %w", err)
 	}
 
 	d, err := s.db.CreateDeployment(p)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create deployment: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to create deployment: %w", err)
 	}
 
 	dProto, err := deployment(d)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to convert deployment to proto: %w", err)
 	}
 
 	return &signalcdproto.SetCurrentDeploymentResponse{Deployment: dProto}, nil
@@ -180,14 +182,14 @@ type PipelinesLister interface {
 func (s *UIServer) ListPipelines(context.Context, *signalcdproto.ListPipelinesRequest) (*signalcdproto.ListPipelinesResponse, error) {
 	pipelines, err := s.db.ListPipelines()
 	if err != nil {
-		return nil, fmt.Errorf("failed to list pipelines: %w", err)
+		return nil, status.Errorf(codes.NotFound, "failed to list pipelines: %w", err)
 	}
 
 	psProto := make([]*signalcdproto.Pipeline, len(pipelines))
 	for i, p := range pipelines {
 		pProto, err := pipelineProto(p)
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert pipeline to proto: %w", err)
+			return nil, status.Errorf(codes.Internal, "failed to convert pipeline to proto: %w", err)
 		}
 		psProto[i] = pProto
 	}
@@ -203,17 +205,17 @@ type PipelineCreator interface {
 func (s *UIServer) CreatePipeline(ctx context.Context, req *signalcdproto.CreatePipelineRequest) (*signalcdproto.CreatePipelineResponse, error) {
 	p, err := pipeline(req.Pipeline)
 	if err != nil {
-		return nil, fmt.Errorf("failed converting to internal pipeline: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed converting to internal pipeline: %w", err)
 	}
 
 	p, err = s.db.CreatePipeline(p)
 	if err != nil {
-		return nil, fmt.Errorf("failed creating the pipeline: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed creating the pipeline: %w", err)
 	}
 
 	protoPipeline, err := pipelineProto(p)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert to gRPC pipeline: %w", err)
+		return nil, status.Errorf(codes.Internal, "failed to convert to gRPC pipeline: %w", err)
 	}
 
 	return &signalcdproto.CreatePipelineResponse{Pipeline: protoPipeline}, nil
@@ -338,7 +340,7 @@ func (s *UIServer) GetPipeline(ctx context.Context, req *signalcdproto.GetPipeli
 
 	pProto, err := pipelineProto(p)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to convert pipeline to proto: %w", err)
 	}
 
 	return &signalcdproto.GetPipelineResponse{Pipeline: pProto}, nil
