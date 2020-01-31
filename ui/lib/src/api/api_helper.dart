@@ -38,6 +38,8 @@ String parameterToString(dynamic value) {
     return '';
   } else if (value is DateTime) {
     return value.toUtc().toIso8601String();
+  } else if (value is DeploymentStatusPhase) {
+    return DeploymentStatusPhase.encode(value).toString();
   } else {
     return value.toString();
   }

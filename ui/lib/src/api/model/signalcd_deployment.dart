@@ -1,8 +1,8 @@
 part of swagger.api;
 
-class Deployment {
+class SignalcdDeployment {
   
-  num number = null;
+  String number = null;
   
 
   DateTime created = null;
@@ -14,19 +14,19 @@ class Deployment {
   DateTime finished = null;
   
 
-  Deploymentstatus status = null;
+  SignalcdDeploymentStatus status = null;
   
 
-  Pipeline pipeline = null;
+  SignalcdPipeline pipeline = null;
   
-  Deployment();
+  SignalcdDeployment();
 
   @override
   String toString() {
-    return 'Deployment[number=$number, created=$created, started=$started, finished=$finished, status=$status, pipeline=$pipeline, ]';
+    return 'SignalcdDeployment[number=$number, created=$created, started=$started, finished=$finished, status=$status, pipeline=$pipeline, ]';
   }
 
-  Deployment.fromJson(Map<String, dynamic> json) {
+  SignalcdDeployment.fromJson(Map<String, dynamic> json) {
     if (json == null) return;
     number =
         json['number']
@@ -37,12 +37,12 @@ class Deployment {
     status =
       
       
-      new Deploymentstatus.fromJson(json['status'])
+      new SignalcdDeploymentStatus.fromJson(json['status'])
 ;
     pipeline =
       
       
-      new Pipeline.fromJson(json['pipeline'])
+      new SignalcdPipeline.fromJson(json['pipeline'])
 ;
   }
 
@@ -57,14 +57,14 @@ class Deployment {
      };
   }
 
-  static List<Deployment> listFromJson(List<dynamic> json) {
-    return json == null ? new List<Deployment>() : json.map((value) => new Deployment.fromJson(value)).toList();
+  static List<SignalcdDeployment> listFromJson(List<dynamic> json) {
+    return json == null ? new List<SignalcdDeployment>() : json.map((value) => new SignalcdDeployment.fromJson(value)).toList();
   }
 
-  static Map<String, Deployment> mapFromJson(Map<String, Map<String, dynamic>> json) {
-    var map = new Map<String, Deployment>();
+  static Map<String, SignalcdDeployment> mapFromJson(Map<String, Map<String, dynamic>> json) {
+    var map = new Map<String, SignalcdDeployment>();
     if (json != null && json.length > 0) {
-      json.forEach((String key, Map<String, dynamic> value) => map[key] = new Deployment.fromJson(value));
+      json.forEach((String key, Map<String, dynamic> value) => map[key] = new SignalcdDeployment.fromJson(value));
     }
     return map;
   }

@@ -18,7 +18,7 @@ class ApiClient {
   final _RegList = new RegExp(r'^List<(.*)>$');
   final _RegMap = new RegExp(r'^Map<String,(.*)>$');
 
-  ApiClient({this.basePath: "https://localhost:6660/api/v1"}) {
+  ApiClient({this.basePath: "https://localhost"}) {
     // Setup authentications (key: authentication name, value: authentication).
   }
 
@@ -37,20 +37,30 @@ class ApiClient {
           return value is bool ? value : '$value'.toLowerCase() == 'true';
         case 'double':
           return value is double ? value : double.parse('$value');
-        case 'Check':
-          return new Check.fromJson(value);
-        case 'CheckEnvironment':
-          return new CheckEnvironment.fromJson(value);
-        case 'Deployment':
-          return new Deployment.fromJson(value);
-        case 'Deploymentstatus':
-          return new Deploymentstatus.fromJson(value);
-        case 'Pipeline':
-          return new Pipeline.fromJson(value);
-        case 'Step':
-          return new Step.fromJson(value);
-        case 'StepStatus':
-          return new StepStatus.fromJson(value);
+        case 'DeploymentStatusPhase':
+           return new DeploymentStatusPhase.fromJson(value);
+        case 'SignalcdCheck':
+          return new SignalcdCheck.fromJson(value);
+        case 'SignalcdCreatePipelineResponse':
+          return new SignalcdCreatePipelineResponse.fromJson(value);
+        case 'SignalcdDeployment':
+          return new SignalcdDeployment.fromJson(value);
+        case 'SignalcdDeploymentStatus':
+          return new SignalcdDeploymentStatus.fromJson(value);
+        case 'SignalcdGetCurrentDeploymentResponse':
+          return new SignalcdGetCurrentDeploymentResponse.fromJson(value);
+        case 'SignalcdGetPipelineResponse':
+          return new SignalcdGetPipelineResponse.fromJson(value);
+        case 'SignalcdListDeploymentResponse':
+          return new SignalcdListDeploymentResponse.fromJson(value);
+        case 'SignalcdListPipelinesResponse':
+          return new SignalcdListPipelinesResponse.fromJson(value);
+        case 'SignalcdPipeline':
+          return new SignalcdPipeline.fromJson(value);
+        case 'SignalcdSetCurrentDeploymentResponse':
+          return new SignalcdSetCurrentDeploymentResponse.fromJson(value);
+        case 'SignalcdStep':
+          return new SignalcdStep.fromJson(value);
         default:
           {
             Match match;

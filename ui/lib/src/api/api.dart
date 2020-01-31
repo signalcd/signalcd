@@ -13,16 +13,20 @@ part 'auth/api_key_auth.dart';
 part 'auth/oauth.dart';
 part 'auth/http_basic_auth.dart';
 
-part 'api/deployments_api.dart';
-part 'api/pipeline_api.dart';
+part 'api/ui_service_api.dart';
 
-part 'model/check.dart';
-part 'model/check_environment.dart';
-part 'model/deployment.dart';
-part 'model/deploymentstatus.dart';
-part 'model/pipeline.dart';
-part 'model/step.dart';
-part 'model/step_status.dart';
+part 'model/deployment_status_phase.dart';
+part 'model/signalcd_check.dart';
+part 'model/signalcd_create_pipeline_response.dart';
+part 'model/signalcd_deployment.dart';
+part 'model/signalcd_deployment_status.dart';
+part 'model/signalcd_get_current_deployment_response.dart';
+part 'model/signalcd_get_pipeline_response.dart';
+part 'model/signalcd_list_deployment_response.dart';
+part 'model/signalcd_list_pipelines_response.dart';
+part 'model/signalcd_pipeline.dart';
+part 'model/signalcd_set_current_deployment_response.dart';
+part 'model/signalcd_step.dart';
 
 
 ApiClient defaultApiClient = new ApiClient();
