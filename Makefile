@@ -36,7 +36,6 @@ signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
 signalcd/proto/types.pb.go: signalcd/proto/types.proto
 	protoc signalcd/proto/types.proto --go_out=plugins=grpc:.
 
-
 signalcd/proto/ui.pb.go: signalcd/proto/ui.proto
 	protoc signalcd/proto/ui.proto \
 		--go_out=plugins=grpc:. \

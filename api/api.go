@@ -13,15 +13,12 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	"github.com/go-openapi/strfmt"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
-	"github.com/signalcd/signalcd/api/v1/models"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
@@ -129,7 +126,7 @@ func (s *UIServer) ListDeployment(context.Context, *signalcdproto.ListDeployment
 	resp := &signalcdproto.ListDeploymentResponse{}
 
 	for _, d := range list {
-		dProto, err := deployment(d)
+		dProto, err := signalcdproto.DeploymentProto(d)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to convert deployment to proto: %w", err)
 		}
@@ -166,7 +163,7 @@ func (s *UIServer) SetCurrentDeployment(ctx context.Context, req *signalcdproto.
 		return nil, status.Errorf(codes.Internal, "failed to create deployment: %w", err)
 	}
 
-	dProto, err := deployment(d)
+	dProto, err := signalcdproto.DeploymentProto(d)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to convert deployment to proto: %w", err)
 	}
@@ -187,7 +184,7 @@ func (s *UIServer) ListPipelines(context.Context, *signalcdproto.ListPipelinesRe
 
 	psProto := make([]*signalcdproto.Pipeline, len(pipelines))
 	for i, p := range pipelines {
-		pProto, err := pipelineProto(p)
+		pProto, err := signalcdproto.PipelineProto(p)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to convert pipeline to proto: %w", err)
 		}
@@ -203,7 +200,7 @@ type PipelineCreator interface {
 }
 
 func (s *UIServer) CreatePipeline(ctx context.Context, req *signalcdproto.CreatePipelineRequest) (*signalcdproto.CreatePipelineResponse, error) {
-	p, err := pipeline(req.Pipeline)
+	p, err := signalcdproto.PipelineSignalCD(req.Pipeline)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed converting to internal pipeline: %w", err)
 	}
@@ -213,118 +210,13 @@ func (s *UIServer) CreatePipeline(ctx context.Context, req *signalcdproto.Create
 		return nil, status.Errorf(codes.Internal, "failed creating the pipeline: %w", err)
 	}
 
-	protoPipeline, err := pipelineProto(p)
+	protoPipeline, err := signalcdproto.PipelineProto(p)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to convert to gRPC pipeline: %w", err)
 	}
 
 	return &signalcdproto.CreatePipelineResponse{Pipeline: protoPipeline}, nil
 
-}
-
-func deployment(d signalcd.Deployment) (*signalcdproto.Deployment, error) {
-	created, err := ptypes.TimestampProto(d.Created)
-	if err != nil {
-		return nil, err
-	}
-	started, err := ptypes.TimestampProto(d.Started)
-	if err != nil {
-		return nil, err
-	}
-	finished, err := ptypes.TimestampProto(d.Finished)
-	if err != nil {
-		return nil, err
-	}
-	p, err := pipelineProto(d.Pipeline)
-	if err != nil {
-		return nil, err
-	}
-
-	return &signalcdproto.Deployment{
-		Number:   d.Number,
-		Created:  created,
-		Started:  started,
-		Finished: finished,
-		Status: &signalcdproto.DeploymentStatus{
-			Phase: signalcdproto.DeploymentStatus_UNKNOWN,
-		},
-		Pipeline: p,
-	}, nil
-}
-
-func pipeline(p *signalcdproto.Pipeline) (signalcd.Pipeline, error) {
-	created, err := ptypes.Timestamp(p.GetCreated())
-	if err != nil {
-		return signalcd.Pipeline{}, err
-	}
-
-	steps := make([]signalcd.Step, len(p.GetSteps()))
-	for i, s := range p.GetSteps() {
-		steps[i] = signalcd.Step{
-			Name:             s.GetName(),
-			Image:            s.GetImage(),
-			ImagePullSecrets: s.GetImagePullSecrets(),
-			Commands:         s.GetCommands(),
-		}
-	}
-
-	checks := make([]signalcd.Check, len(p.GetChecks()))
-	for i, c := range p.GetChecks() {
-		duration, err := ptypes.Duration(c.GetDuration())
-		if err != nil {
-			return signalcd.Pipeline{}, err
-		}
-
-		checks[i] = signalcd.Check{
-			Name:             c.GetName(),
-			Image:            c.GetImage(),
-			ImagePullSecrets: c.GetImagePullSecrets(),
-			Duration:         duration,
-		}
-	}
-
-	return signalcd.Pipeline{
-		ID:      p.GetId(),
-		Name:    p.GetName(),
-		Created: created,
-		Steps:   steps,
-		Checks:  checks,
-	}, nil
-}
-
-func pipelineProto(p signalcd.Pipeline) (*signalcdproto.Pipeline, error) {
-	created, err := ptypes.TimestampProto(p.Created)
-	if err != nil {
-		return nil, err
-	}
-
-	steps := make([]*signalcdproto.Step, len(p.Steps))
-	for i, s := range p.Steps {
-		steps[i] = &signalcdproto.Step{
-			Name:             s.Name,
-			Image:            s.Image,
-			ImagePullSecrets: s.ImagePullSecrets,
-			Commands:         s.Commands,
-		}
-	}
-
-	checks := make([]*signalcdproto.Check, len(p.Checks))
-	for i, c := range p.Checks {
-		checks[i] = &signalcdproto.Check{
-			Name:             c.Name,
-			Image:            c.Image,
-			ImagePullSecrets: c.ImagePullSecrets,
-			Duration:         ptypes.DurationProto(c.Duration),
-		}
-	}
-
-	return &signalcdproto.Pipeline{
-		Id:      p.ID,
-		Name:    p.Name,
-		Created: created,
-		Steps:   steps,
-		Checks:  checks,
-	}, nil
 }
 
 // PipelineGetter gets a new Pipeline
@@ -338,7 +230,7 @@ func (s *UIServer) GetPipeline(ctx context.Context, req *signalcdproto.GetPipeli
 		return nil, status.Errorf(codes.NotFound, "failed to get pipeline")
 	}
 
-	pProto, err := pipelineProto(p)
+	pProto, err := signalcdproto.PipelineProto(p)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to convert pipeline to proto: %w", err)
 	}
@@ -378,7 +270,10 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 				close(deploymentEvents)
 				return
 			case deployment := <-deploymentEvents:
-				model := getModelsDeployment(deployment)
+				model, err := signalcdproto.DeploymentProto(deployment)
+				if err != nil {
+					return // TODO
+				}
 				j, err := json.Marshal(model)
 				if err != nil {
 					return // TODO
@@ -392,88 +287,5 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 				flusher.Flush()
 			}
 		}
-	}
-}
-
-func getModelsPipeline(p signalcd.Pipeline) *models.Pipeline {
-	mp := &models.Pipeline{
-		ID:      strfmt.UUID(p.ID),
-		Name:    p.Name,
-		Created: strfmt.DateTime(p.Created),
-		Steps:   []*models.Step{},
-		Checks:  []*models.Check{},
-	}
-
-	for _, s := range p.Steps {
-		imagePullSecrets := []string{}
-		if len(s.ImagePullSecrets) > 0 {
-			imagePullSecrets = s.ImagePullSecrets
-		}
-
-		ms := &models.Step{
-			Name:             &s.Name,
-			Image:            &s.Image,
-			ImagePullSecrets: imagePullSecrets,
-			Commands:         s.Commands,
-		}
-
-		if s.Status != nil {
-			ms.Status = &models.StepStatus{
-				Logs: string(s.Status.Logs),
-			}
-		}
-
-		mp.Steps = append(mp.Steps, ms)
-	}
-
-	for _, c := range p.Checks {
-		var env []*models.CheckEnvironmentItems0
-		for key, value := range c.Environment {
-			env = append(env, &models.CheckEnvironmentItems0{
-				Key:   key,
-				Value: value,
-			})
-		}
-
-		imagePullSecrets := []string{}
-		if len(c.ImagePullSecrets) > 0 {
-			imagePullSecrets = c.ImagePullSecrets
-		}
-
-		mp.Checks = append(mp.Checks, &models.Check{
-			Name:             &c.Name,
-			Image:            &c.Image,
-			ImagePullSecrets: imagePullSecrets,
-			Duration:         c.Duration.Seconds(),
-			Environment:      env,
-		})
-	}
-
-	return mp
-}
-
-func getDeploymentStatusPhase(phase signalcd.DeploymentPhase) string {
-	switch phase {
-	case signalcd.Success:
-		return models.DeploymentstatusPhaseSuccess
-	case signalcd.Failure:
-		return models.DeploymentstatusPhaseFailure
-	case signalcd.Progress:
-		return models.DeploymentstatusPhaseProgress
-	default:
-		return models.DeploymentstatusPhaseUnknown
-	}
-}
-
-func getModelsDeployment(fd signalcd.Deployment) *models.Deployment {
-	return &models.Deployment{
-		Number:   &fd.Number,
-		Created:  strfmt.DateTime(fd.Created),
-		Started:  strfmt.DateTime(fd.Started),
-		Finished: strfmt.DateTime(fd.Finished),
-		Pipeline: getModelsPipeline(fd.Pipeline),
-		Status: &models.Deploymentstatus{
-			Phase: getDeploymentStatusPhase(fd.Status.Phase),
-		},
 	}
 }
