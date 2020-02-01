@@ -36,11 +36,6 @@ func DeploymentProto(d signalcd.Deployment) (*Deployment, error) {
 }
 
 func PipelineSignalCD(p *Pipeline) (signalcd.Pipeline, error) {
-	created, err := ptypes.Timestamp(p.GetCreated())
-	if err != nil {
-		return signalcd.Pipeline{}, err
-	}
-
 	steps := make([]signalcd.Step, len(p.GetSteps()))
 	for i, s := range p.GetSteps() {
 		steps[i] = signalcd.Step{
@@ -66,13 +61,22 @@ func PipelineSignalCD(p *Pipeline) (signalcd.Pipeline, error) {
 		}
 	}
 
-	return signalcd.Pipeline{
-		ID:      p.GetId(),
-		Name:    p.GetName(),
-		Created: created,
-		Steps:   steps,
-		Checks:  checks,
-	}, nil
+	pipeline := signalcd.Pipeline{
+		ID:     p.GetId(),
+		Name:   p.GetName(),
+		Steps:  steps,
+		Checks: checks,
+	}
+
+	if p.GetCreated() != nil {
+		created, err := ptypes.Timestamp(p.GetCreated())
+		if err != nil {
+			return signalcd.Pipeline{}, err
+		}
+		pipeline.Created = created
+	}
+
+	return pipeline, nil
 }
 
 func PipelineProto(p signalcd.Pipeline) (*Pipeline, error) {
