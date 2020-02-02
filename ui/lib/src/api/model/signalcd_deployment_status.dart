@@ -1,9 +1,9 @@
-part of swagger.api;
+part of openapi.api;
 
 class SignalcdDeploymentStatus {
   
   DeploymentStatusPhase phase = null;
-  
+  //enum phaseEnum {  DONTUSETHISVALUE,  UNKNOWN,  SUCCESS,  FAILURE,  PROGRESS,  PENDING,  KILLED,  };{
   SignalcdDeploymentStatus();
 
   @override
@@ -13,29 +13,39 @@ class SignalcdDeploymentStatus {
 
   SignalcdDeploymentStatus.fromJson(Map<String, dynamic> json) {
     if (json == null) return;
-    phase =
-      
-      
-      new DeploymentStatusPhase.fromJson(json['phase'])
-;
+    phase = (json['phase'] == null) ?
+      null :
+      DeploymentStatusPhase.fromJson(json['phase']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'phase': phase
-     };
+    Map <String, dynamic> json = {};
+    if (phase != null)
+      json['phase'] = phase;
+    return json;
   }
 
   static List<SignalcdDeploymentStatus> listFromJson(List<dynamic> json) {
-    return json == null ? new List<SignalcdDeploymentStatus>() : json.map((value) => new SignalcdDeploymentStatus.fromJson(value)).toList();
+    return json == null ? List<SignalcdDeploymentStatus>() : json.map((value) => SignalcdDeploymentStatus.fromJson(value)).toList();
   }
 
-  static Map<String, SignalcdDeploymentStatus> mapFromJson(Map<String, Map<String, dynamic>> json) {
-    var map = new Map<String, SignalcdDeploymentStatus>();
-    if (json != null && json.length > 0) {
-      json.forEach((String key, Map<String, dynamic> value) => map[key] = new SignalcdDeploymentStatus.fromJson(value));
+  static Map<String, SignalcdDeploymentStatus> mapFromJson(Map<String, dynamic> json) {
+    var map = Map<String, SignalcdDeploymentStatus>();
+    if (json != null && json.isNotEmpty) {
+      json.forEach((String key, dynamic value) => map[key] = SignalcdDeploymentStatus.fromJson(value));
     }
     return map;
+  }
+
+  // maps a json object with a list of SignalcdDeploymentStatus-objects as value to a dart map
+  static Map<String, List<SignalcdDeploymentStatus>> mapListFromJson(Map<String, dynamic> json) {
+    var map = Map<String, List<SignalcdDeploymentStatus>>();
+     if (json != null && json.isNotEmpty) {
+       json.forEach((String key, dynamic value) {
+         map[key] = SignalcdDeploymentStatus.listFromJson(value);
+       });
+     }
+     return map;
   }
 }
 

@@ -1,9 +1,8 @@
-part of swagger.api;
+part of openapi.api;
 
 class SignalcdListDeploymentResponse {
   
   List<SignalcdDeployment> deployments = [];
-  
   SignalcdListDeploymentResponse();
 
   @override
@@ -13,27 +12,39 @@ class SignalcdListDeploymentResponse {
 
   SignalcdListDeploymentResponse.fromJson(Map<String, dynamic> json) {
     if (json == null) return;
-    deployments =
-      SignalcdDeployment.listFromJson(json['deployments'])
-;
+    deployments = (json['deployments'] == null) ?
+      null :
+      SignalcdDeployment.listFromJson(json['deployments']);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'deployments': deployments
-     };
+    Map <String, dynamic> json = {};
+    if (deployments != null)
+      json['deployments'] = deployments;
+    return json;
   }
 
   static List<SignalcdListDeploymentResponse> listFromJson(List<dynamic> json) {
-    return json == null ? new List<SignalcdListDeploymentResponse>() : json.map((value) => new SignalcdListDeploymentResponse.fromJson(value)).toList();
+    return json == null ? List<SignalcdListDeploymentResponse>() : json.map((value) => SignalcdListDeploymentResponse.fromJson(value)).toList();
   }
 
-  static Map<String, SignalcdListDeploymentResponse> mapFromJson(Map<String, Map<String, dynamic>> json) {
-    var map = new Map<String, SignalcdListDeploymentResponse>();
-    if (json != null && json.length > 0) {
-      json.forEach((String key, Map<String, dynamic> value) => map[key] = new SignalcdListDeploymentResponse.fromJson(value));
+  static Map<String, SignalcdListDeploymentResponse> mapFromJson(Map<String, dynamic> json) {
+    var map = Map<String, SignalcdListDeploymentResponse>();
+    if (json != null && json.isNotEmpty) {
+      json.forEach((String key, dynamic value) => map[key] = SignalcdListDeploymentResponse.fromJson(value));
     }
     return map;
+  }
+
+  // maps a json object with a list of SignalcdListDeploymentResponse-objects as value to a dart map
+  static Map<String, List<SignalcdListDeploymentResponse>> mapListFromJson(Map<String, dynamic> json) {
+    var map = Map<String, List<SignalcdListDeploymentResponse>>();
+     if (json != null && json.isNotEmpty) {
+       json.forEach((String key, dynamic value) {
+         map[key] = SignalcdListDeploymentResponse.listFromJson(value);
+       });
+     }
+     return map;
   }
 }
 

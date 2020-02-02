@@ -1,18 +1,14 @@
-part of swagger.api;
+part of openapi.api;
 
 class SignalcdStep {
   
   String name = null;
   
-
   String image = null;
   
-
   List<String> imagePullSecrets = [];
   
-
   List<String> commands = [];
-  
   SignalcdStep();
 
   @override
@@ -22,39 +18,50 @@ class SignalcdStep {
 
   SignalcdStep.fromJson(Map<String, dynamic> json) {
     if (json == null) return;
-    name =
-        json['name']
-    ;
-    image =
-        json['image']
-    ;
-    imagePullSecrets =
-        (json['ImagePullSecrets'] as List).map((item) => item as String).toList()
-    ;
-    commands =
-        (json['commands'] as List).map((item) => item as String).toList()
-    ;
+    name = json['name'];
+    image = json['image'];
+    imagePullSecrets = (json['ImagePullSecrets'] == null) ?
+      null :
+      (json['ImagePullSecrets'] as List).cast<String>();
+    commands = (json['commands'] == null) ?
+      null :
+      (json['commands'] as List).cast<String>();
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'image': image,
-      'ImagePullSecrets': imagePullSecrets,
-      'commands': commands
-     };
+    Map <String, dynamic> json = {};
+    if (name != null)
+      json['name'] = name;
+    if (image != null)
+      json['image'] = image;
+    if (imagePullSecrets != null)
+      json['ImagePullSecrets'] = imagePullSecrets;
+    if (commands != null)
+      json['commands'] = commands;
+    return json;
   }
 
   static List<SignalcdStep> listFromJson(List<dynamic> json) {
-    return json == null ? new List<SignalcdStep>() : json.map((value) => new SignalcdStep.fromJson(value)).toList();
+    return json == null ? List<SignalcdStep>() : json.map((value) => SignalcdStep.fromJson(value)).toList();
   }
 
-  static Map<String, SignalcdStep> mapFromJson(Map<String, Map<String, dynamic>> json) {
-    var map = new Map<String, SignalcdStep>();
-    if (json != null && json.length > 0) {
-      json.forEach((String key, Map<String, dynamic> value) => map[key] = new SignalcdStep.fromJson(value));
+  static Map<String, SignalcdStep> mapFromJson(Map<String, dynamic> json) {
+    var map = Map<String, SignalcdStep>();
+    if (json != null && json.isNotEmpty) {
+      json.forEach((String key, dynamic value) => map[key] = SignalcdStep.fromJson(value));
     }
     return map;
+  }
+
+  // maps a json object with a list of SignalcdStep-objects as value to a dart map
+  static Map<String, List<SignalcdStep>> mapListFromJson(Map<String, dynamic> json) {
+    var map = Map<String, List<SignalcdStep>>();
+     if (json != null && json.isNotEmpty) {
+       json.forEach((String key, dynamic value) {
+         map[key] = SignalcdStep.listFromJson(value);
+       });
+     }
+     return map;
   }
 }
 

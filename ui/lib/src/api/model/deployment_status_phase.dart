@@ -1,34 +1,41 @@
-part of swagger.api;
+part of openapi.api;
 
 class DeploymentStatusPhase {
   /// The underlying value of this enum member.
-  String value;
+  final String value;
 
-  DeploymentStatusPhase._internal(this.value);
+  const DeploymentStatusPhase._internal(this.value);
 
-  static DeploymentStatusPhase dONTUSETHISVALUE_ = DeploymentStatusPhase._internal("DONTUSETHISVALUE");
-  static DeploymentStatusPhase uNKNOWN_ = DeploymentStatusPhase._internal("UNKNOWN");
-  static DeploymentStatusPhase sUCCESS_ = DeploymentStatusPhase._internal("SUCCESS");
-  static DeploymentStatusPhase fAILURE_ = DeploymentStatusPhase._internal("FAILURE");
-  static DeploymentStatusPhase pROGRESS_ = DeploymentStatusPhase._internal("PROGRESS");
-  static DeploymentStatusPhase pENDING_ = DeploymentStatusPhase._internal("PENDING");
-  static DeploymentStatusPhase kILLED_ = DeploymentStatusPhase._internal("KILLED");
+  static const DeploymentStatusPhase dONTUSETHISVALUE_ = const DeploymentStatusPhase._internal("DONTUSETHISVALUE");
+  static const DeploymentStatusPhase uNKNOWN_ = const DeploymentStatusPhase._internal("UNKNOWN");
+  static const DeploymentStatusPhase sUCCESS_ = const DeploymentStatusPhase._internal("SUCCESS");
+  static const DeploymentStatusPhase fAILURE_ = const DeploymentStatusPhase._internal("FAILURE");
+  static const DeploymentStatusPhase pROGRESS_ = const DeploymentStatusPhase._internal("PROGRESS");
+  static const DeploymentStatusPhase pENDING_ = const DeploymentStatusPhase._internal("PENDING");
+  static const DeploymentStatusPhase kILLED_ = const DeploymentStatusPhase._internal("KILLED");
 
-  DeploymentStatusPhase.fromJson(dynamic data) {
-    switch (data) {
-          case "DONTUSETHISVALUE": value = data; break;
-          case "UNKNOWN": value = data; break;
-          case "SUCCESS": value = data; break;
-          case "FAILURE": value = data; break;
-          case "PROGRESS": value = data; break;
-          case "PENDING": value = data; break;
-          case "KILLED": value = data; break;
-    default: throw('Unknown enum value to decode: $data');
-    }
+  static DeploymentStatusPhase fromJson(String value) {
+    return new DeploymentStatusPhaseTypeTransformer().decode(value);
+  }
+}
+
+class DeploymentStatusPhaseTypeTransformer {
+
+  dynamic encode(DeploymentStatusPhase data) {
+    return data.value;
   }
 
-  static dynamic encode(DeploymentStatusPhase data) {
-    return data.value;
+  DeploymentStatusPhase decode(dynamic data) {
+    switch (data) {
+      case "DONTUSETHISVALUE": return DeploymentStatusPhase.dONTUSETHISVALUE_;
+      case "UNKNOWN": return DeploymentStatusPhase.uNKNOWN_;
+      case "SUCCESS": return DeploymentStatusPhase.sUCCESS_;
+      case "FAILURE": return DeploymentStatusPhase.fAILURE_;
+      case "PROGRESS": return DeploymentStatusPhase.pROGRESS_;
+      case "PENDING": return DeploymentStatusPhase.pENDING_;
+      case "KILLED": return DeploymentStatusPhase.kILLED_;
+      default: throw('Unknown enum value to decode: $data');
+    }
   }
 }
 

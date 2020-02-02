@@ -1,4 +1,4 @@
-part of swagger.api;
+part of openapi.api;
 
 
 
@@ -7,15 +7,15 @@ class UIServiceApi {
 
   UIServiceApi([ApiClient apiClient]) : apiClient = apiClient ?? defaultApiClient;
 
-  /// 
+  ///  with HTTP info returned
   ///
   /// 
-  Future<SignalcdCreatePipelineResponse> createPipeline(SignalcdPipeline body) async {
+  Future<Response> createPipelineWithHttpInfo(SignalcdPipeline body) async {
     Object postBody = body;
 
     // verify required params are set
     if(body == null) {
-     throw new ApiException(400, "Missing required param: body");
+     throw ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -25,21 +25,20 @@ class UIServiceApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
-    
+
     List<String> contentTypes = ["application/json"];
 
-    String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
+    String contentType = contentTypes.isNotEmpty ? contentTypes[0] : "application/json";
     List<String> authNames = [];
 
     if(contentType.startsWith("multipart/form-data")) {
       bool hasFields = false;
-      MultipartRequest mp = new MultipartRequest(null, null);
-      
+      MultipartRequest mp = MultipartRequest(null, null);
       if(hasFields)
         postBody = mp;
     }
     else {
-          }
+    }
 
     var response = await apiClient.invokeAPI(path,
                                              'POST',
@@ -49,21 +48,28 @@ class UIServiceApi {
                                              formParams,
                                              contentType,
                                              authNames);
+    return response;
+  }
 
+  /// 
+  ///
+  /// 
+  Future<SignalcdCreatePipelineResponse> createPipeline(SignalcdPipeline body) async {
+    Response response = await createPipelineWithHttpInfo(body);
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return 
-          apiClient.deserialize(response.body, 'SignalcdCreatePipelineResponse') as SignalcdCreatePipelineResponse ;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'SignalcdCreatePipelineResponse') as SignalcdCreatePipelineResponse;
     } else {
       return null;
     }
   }
-  /// 
+
+  ///  with HTTP info returned
   ///
   /// 
-  Future<SignalcdGetCurrentDeploymentResponse> getCurrentDeployment() async {
-    Object postBody = null;
+  Future<Response> getCurrentDeploymentWithHttpInfo() async {
+    Object postBody;
 
     // verify required params are set
 
@@ -74,21 +80,20 @@ class UIServiceApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
-    
-    List<String> contentTypes = ["application/json"];
 
-    String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
+    List<String> contentTypes = [];
+
+    String contentType = contentTypes.isNotEmpty ? contentTypes[0] : "application/json";
     List<String> authNames = [];
 
     if(contentType.startsWith("multipart/form-data")) {
       bool hasFields = false;
-      MultipartRequest mp = new MultipartRequest(null, null);
-      
+      MultipartRequest mp = MultipartRequest(null, null);
       if(hasFields)
         postBody = mp;
     }
     else {
-          }
+    }
 
     var response = await apiClient.invokeAPI(path,
                                              'GET',
@@ -98,25 +103,32 @@ class UIServiceApi {
                                              formParams,
                                              contentType,
                                              authNames);
+    return response;
+  }
 
+  /// 
+  ///
+  /// 
+  Future<SignalcdGetCurrentDeploymentResponse> getCurrentDeployment() async {
+    Response response = await getCurrentDeploymentWithHttpInfo();
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return 
-          apiClient.deserialize(response.body, 'SignalcdGetCurrentDeploymentResponse') as SignalcdGetCurrentDeploymentResponse ;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'SignalcdGetCurrentDeploymentResponse') as SignalcdGetCurrentDeploymentResponse;
     } else {
       return null;
     }
   }
-  /// 
+
+  ///  with HTTP info returned
   ///
   /// 
-  Future<SignalcdGetPipelineResponse> getPipeline(String id) async {
-    Object postBody = null;
+  Future<Response> getPipelineWithHttpInfo(String id) async {
+    Object postBody;
 
     // verify required params are set
     if(id == null) {
-     throw new ApiException(400, "Missing required param: id");
+     throw ApiException(400, "Missing required param: id");
     }
 
     // create path and map variables
@@ -126,21 +138,20 @@ class UIServiceApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
-    
-    List<String> contentTypes = ["application/json"];
 
-    String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
+    List<String> contentTypes = [];
+
+    String contentType = contentTypes.isNotEmpty ? contentTypes[0] : "application/json";
     List<String> authNames = [];
 
     if(contentType.startsWith("multipart/form-data")) {
       bool hasFields = false;
-      MultipartRequest mp = new MultipartRequest(null, null);
-      
+      MultipartRequest mp = MultipartRequest(null, null);
       if(hasFields)
         postBody = mp;
     }
     else {
-          }
+    }
 
     var response = await apiClient.invokeAPI(path,
                                              'GET',
@@ -150,21 +161,28 @@ class UIServiceApi {
                                              formParams,
                                              contentType,
                                              authNames);
+    return response;
+  }
 
+  /// 
+  ///
+  /// 
+  Future<SignalcdGetPipelineResponse> getPipeline(String id) async {
+    Response response = await getPipelineWithHttpInfo(id);
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return 
-          apiClient.deserialize(response.body, 'SignalcdGetPipelineResponse') as SignalcdGetPipelineResponse ;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'SignalcdGetPipelineResponse') as SignalcdGetPipelineResponse;
     } else {
       return null;
     }
   }
-  /// 
+
+  ///  with HTTP info returned
   ///
   /// 
-  Future<SignalcdListDeploymentResponse> listDeployment() async {
-    Object postBody = null;
+  Future<Response> listDeploymentWithHttpInfo() async {
+    Object postBody;
 
     // verify required params are set
 
@@ -175,21 +193,20 @@ class UIServiceApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
-    
-    List<String> contentTypes = ["application/json"];
 
-    String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
+    List<String> contentTypes = [];
+
+    String contentType = contentTypes.isNotEmpty ? contentTypes[0] : "application/json";
     List<String> authNames = [];
 
     if(contentType.startsWith("multipart/form-data")) {
       bool hasFields = false;
-      MultipartRequest mp = new MultipartRequest(null, null);
-      
+      MultipartRequest mp = MultipartRequest(null, null);
       if(hasFields)
         postBody = mp;
     }
     else {
-          }
+    }
 
     var response = await apiClient.invokeAPI(path,
                                              'GET',
@@ -199,21 +216,28 @@ class UIServiceApi {
                                              formParams,
                                              contentType,
                                              authNames);
+    return response;
+  }
 
+  /// 
+  ///
+  /// 
+  Future<SignalcdListDeploymentResponse> listDeployment() async {
+    Response response = await listDeploymentWithHttpInfo();
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return 
-          apiClient.deserialize(response.body, 'SignalcdListDeploymentResponse') as SignalcdListDeploymentResponse ;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'SignalcdListDeploymentResponse') as SignalcdListDeploymentResponse;
     } else {
       return null;
     }
   }
-  /// 
+
+  ///  with HTTP info returned
   ///
   /// 
-  Future<SignalcdListPipelinesResponse> listPipelines() async {
-    Object postBody = null;
+  Future<Response> listPipelinesWithHttpInfo() async {
+    Object postBody;
 
     // verify required params are set
 
@@ -224,21 +248,20 @@ class UIServiceApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
-    
-    List<String> contentTypes = ["application/json"];
 
-    String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
+    List<String> contentTypes = [];
+
+    String contentType = contentTypes.isNotEmpty ? contentTypes[0] : "application/json";
     List<String> authNames = [];
 
     if(contentType.startsWith("multipart/form-data")) {
       bool hasFields = false;
-      MultipartRequest mp = new MultipartRequest(null, null);
-      
+      MultipartRequest mp = MultipartRequest(null, null);
       if(hasFields)
         postBody = mp;
     }
     else {
-          }
+    }
 
     var response = await apiClient.invokeAPI(path,
                                              'GET',
@@ -248,25 +271,32 @@ class UIServiceApi {
                                              formParams,
                                              contentType,
                                              authNames);
+    return response;
+  }
 
+  /// 
+  ///
+  /// 
+  Future<SignalcdListPipelinesResponse> listPipelines() async {
+    Response response = await listPipelinesWithHttpInfo();
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return 
-          apiClient.deserialize(response.body, 'SignalcdListPipelinesResponse') as SignalcdListPipelinesResponse ;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'SignalcdListPipelinesResponse') as SignalcdListPipelinesResponse;
     } else {
       return null;
     }
   }
-  /// 
+
+  ///  with HTTP info returned
   ///
   /// 
-  Future<SignalcdSetCurrentDeploymentResponse> setCurrentDeployment(String body) async {
+  Future<Response> setCurrentDeploymentWithHttpInfo(String body) async {
     Object postBody = body;
 
     // verify required params are set
     if(body == null) {
-     throw new ApiException(400, "Missing required param: body");
+     throw ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -276,21 +306,20 @@ class UIServiceApi {
     List<QueryParam> queryParams = [];
     Map<String, String> headerParams = {};
     Map<String, String> formParams = {};
-    
+
     List<String> contentTypes = ["application/json"];
 
-    String contentType = contentTypes.length > 0 ? contentTypes[0] : "application/json";
+    String contentType = contentTypes.isNotEmpty ? contentTypes[0] : "application/json";
     List<String> authNames = [];
 
     if(contentType.startsWith("multipart/form-data")) {
       bool hasFields = false;
-      MultipartRequest mp = new MultipartRequest(null, null);
-      
+      MultipartRequest mp = MultipartRequest(null, null);
       if(hasFields)
         postBody = mp;
     }
     else {
-          }
+    }
 
     var response = await apiClient.invokeAPI(path,
                                              'POST',
@@ -300,14 +329,21 @@ class UIServiceApi {
                                              formParams,
                                              contentType,
                                              authNames);
+    return response;
+  }
 
+  /// 
+  ///
+  /// 
+  Future<SignalcdSetCurrentDeploymentResponse> setCurrentDeployment(String body) async {
+    Response response = await setCurrentDeploymentWithHttpInfo(body);
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return 
-          apiClient.deserialize(response.body, 'SignalcdSetCurrentDeploymentResponse') as SignalcdSetCurrentDeploymentResponse ;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'SignalcdSetCurrentDeploymentResponse') as SignalcdSetCurrentDeploymentResponse;
     } else {
       return null;
     }
   }
+
 }

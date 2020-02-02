@@ -1,8 +1,7 @@
-library swagger.api;
+library openapi.api;
 
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/browser_client.dart';
 import 'package:http/http.dart';
 
 part 'api_client.dart';
@@ -29,4 +28,4 @@ part 'model/signalcd_set_current_deployment_response.dart';
 part 'model/signalcd_step.dart';
 
 
-ApiClient defaultApiClient = new ApiClient();
+ApiClient defaultApiClient = ApiClient();
