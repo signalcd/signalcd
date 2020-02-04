@@ -272,6 +272,7 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 			case deployment := <-deploymentEvents:
 				model, err := signalcdproto.DeploymentProto(deployment)
 				if err != nil {
+					level.Warn(logger).Log("msg", "failed to convert deployment to proto", "err", err)
 					return // TODO
 				}
 				j, err := json.Marshal(model)

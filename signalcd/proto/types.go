@@ -5,6 +5,53 @@ import (
 	"github.com/signalcd/signalcd/signalcd"
 )
 
+func DeploymentSignalCD(deployment *Deployment) (signalcd.Deployment, error) {
+	pipeline, err := PipelineSignalCD(deployment.GetPipeline())
+	if err != nil {
+		return signalcd.Deployment{}, err
+	}
+
+	created, err := ptypes.Timestamp(deployment.GetCreated())
+	if err != nil {
+		return signalcd.Deployment{}, err
+	}
+	started, err := ptypes.Timestamp(deployment.GetStarted())
+	if err != nil {
+		return signalcd.Deployment{}, err
+	}
+	finished, err := ptypes.Timestamp(deployment.GetFinished())
+	if err != nil {
+		return signalcd.Deployment{}, err
+	}
+
+	var phase signalcd.DeploymentPhase
+	switch deployment.GetStatus().GetPhase() {
+	case DeploymentStatus_UNKNOWN:
+		phase = signalcd.Unknown
+	case DeploymentStatus_SUCCESS:
+		phase = signalcd.Success
+	case DeploymentStatus_FAILURE:
+		phase = signalcd.Failure
+	case DeploymentStatus_PROGRESS:
+		phase = signalcd.Progress
+	case DeploymentStatus_PENDING:
+		phase = signalcd.Pending
+	case DeploymentStatus_KILLED:
+		phase = signalcd.Killed
+	}
+
+	return signalcd.Deployment{
+		Number:   deployment.GetNumber(),
+		Created:  created,
+		Started:  started,
+		Finished: finished,
+		Pipeline: pipeline,
+		Status: signalcd.DeploymentStatus{
+			Phase: phase,
+		},
+	}, nil
+}
+
 func DeploymentProto(d signalcd.Deployment) (*Deployment, error) {
 	created, err := ptypes.TimestampProto(d.Created)
 	if err != nil {
