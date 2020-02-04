@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -18,6 +20,7 @@ import (
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
@@ -102,9 +105,31 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 				return xerrors.Errorf("failed to listen on %s: %w", addr, err)
 			}
 
-			s := grpc.NewServer()
+			pool, err := x509.SystemCertPool()
+			if err != nil {
+				return err
+			}
 
-			signalcdproto.RegisterAgentServiceServer(s,
+			cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
+			if err != nil {
+				return err
+			}
+
+			ok := pool.AppendCertsFromPEM(cert)
+			if !ok {
+				return fmt.Errorf("failed to appened certificate")
+			}
+
+			var server *grpc.Server
+			{
+				opts := []grpc.ServerOption{
+					grpc.Creds(credentials.NewClientTLSFromCert(pool, addr)),
+				}
+
+				server = grpc.NewServer(opts...)
+			}
+
+			signalcdproto.RegisterAgentServiceServer(server,
 				api.NewRPC(db, log.WithPrefix(logger, "component", "api")),
 			)
 
@@ -113,7 +138,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 					"msg", "running gRPC API",
 					"addr", l.Addr().String(),
 				)
-				if err := s.Serve(l); err != nil {
+				if err := server.Serve(l); err != nil {
 					return xerrors.Errorf("failed to serve: %w", err)
 				}
 				return nil
