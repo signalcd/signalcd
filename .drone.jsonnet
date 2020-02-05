@@ -110,7 +110,7 @@ local docker = {
           'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger',
           'go get -u github.com/golang/protobuf/protoc-gen-go',
           'make signalcd/proto --always-make',
-          'git diff --exit-code',
+          'git diff --exit-code signalcd/proto',
         ],
       },
       {

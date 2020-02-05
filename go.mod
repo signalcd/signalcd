@@ -15,7 +15,7 @@ require (
 	github.com/go-openapi/swag v0.19.0
 	github.com/go-openapi/validate v0.19.0
 	github.com/gogo/protobuf v1.2.1 // indirect
-	github.com/golang/protobuf v1.3.2
+	github.com/golang/protobuf v1.3.3
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.12.2
@@ -32,9 +32,10 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
-	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
-	google.golang.org/grpc v1.24.0
+	google.golang.org/genproto v0.0.0-20200205142000-a86caf926a67
+	google.golang.org/grpc v1.27.0
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 	k8s.io/api v0.0.0-20190313235455-40a48860b5ab
 	k8s.io/apimachinery v0.0.0-20190313205120-d7deff9243b1
 	k8s.io/client-go v11.0.0+incompatible
