@@ -117,11 +117,12 @@ local docker = {
         name: 'dart-swagger',
         image: 'openapitools/openapi-generator-cli:v4.2.3',
         environment: {
-          SWAGGER: '/usr/bin/swagger',
+          SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
         },
         commands: [
+        'apk add -U git make',
           'make ui/lib/src/api --always-make',
-          'git diff --exit-code',
+          'git diff --exit-code ui/lib/src/api',
         ],
       },
     ],

@@ -9,12 +9,12 @@ apiv1: api/v1/client api/v1/models api/v1/restapi ui/lib/src/api
 
 SWAGGER ?= docker run --rm \
 		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
-		-v $(shell pwd):/local \
+		-v $(shell pwd):$(shell pwd) \
 		openapitools/openapi-generator-cli:v4.2.3
 
 ui/lib/src/api: signalcd/proto/ui.swagger.json
 	-rm -rf ui/lib/src/api
-	$(SWAGGER) generate -i /local/signalcd/proto/ui.swagger.json -g dart -o /local/tmp/dart
+	$(SWAGGER) generate -i $(shell pwd)/signalcd/proto/ui.swagger.json -g dart -o $(shell pwd)/tmp/dart
 	mv tmp/dart/lib ui/lib/src/api
 	-rm -rf tmp/
 
