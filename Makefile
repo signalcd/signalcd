@@ -7,16 +7,6 @@ generate: apiv1 signalcd/proto/agent.pb.go
 .PHONY: apiv1
 apiv1: api/v1/client api/v1/models api/v1/restapi ui/lib/src/api
 
-GOSWAGGER ?= docker run --rm \
-	--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
-	-v $(shell pwd):/go/src/github.com/signalcd/signalcd \
-	-w /go/src/github.com/signalcd/signalcd quay.io/goswagger/swagger:v0.19.0
-
-api/v1/client api/v1/models api/v1/restapi: swagger.yaml
-	-rm -r api/v1/{models,restapi}
-	$(GOSWAGGER) generate server -f swagger.yaml --exclude-main -A cd --target api/v1
-	$(GOSWAGGER) generate client -f swagger.yaml --target api/v1
-
 SWAGGER ?= docker run --rm \
 		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
 		-v $(shell pwd):/local \

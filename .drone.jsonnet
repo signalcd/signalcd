@@ -42,11 +42,6 @@ local docker = {
   },
 };
 
-local swagger = {
-  name: 'swagger',
-  image: 'quay.io/goswagger/swagger:v0.19.0',
-};
-
 [
   pipeline {
     steps+: [
@@ -96,30 +91,6 @@ local swagger = {
         environment+: {
           CGO_ENABLED: 1,  // for -race
         },
-      },
-    ],
-  },
-
-  pipeline {
-    name: 'code-generation',
-    steps+: [
-      swagger {
-        name: 'goswagger-apiv1',
-        environment: {
-          GOSWAGGER: '/usr/bin/swagger',
-        },
-        commands: [
-          'make api/v1/client api/v1/models api/v1/restapi',
-          'git diff --exit-code',
-        ],
-      },
-      {
-        name: 'grpc',
-        image: 'grpc/go',
-        commands: [
-          'make signalcd/proto/agent.pb.go',
-          'git diff --exit-code',
-        ],
       },
     ],
   },
