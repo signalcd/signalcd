@@ -22,11 +22,10 @@ The provided `Caddyfile` will be used automatically.
 
 ## Ports
 
-| Component         | Port  |
-|-------------------|-------|
-| Caddy for Dev     | 6060  |
-| API HTTP Public   | 6660  |
-| API HTTP Internal | 6661  |
-| API gRPC UI       | 6662  |
-| API gRPC Agent    | 6663  |
-| UI HTTP Public    | 6670  |
+| Component             | Port  |
+|-----------------------|-------|
+| Caddy for Dev         | 6060  |
+| API HTTP/gRPC Public  | 6660  |
+| API gRPC Agent        | 6661  |
+| API HTTP Internal     | 6662  |
+| UI HTTP Public        | 6670  |

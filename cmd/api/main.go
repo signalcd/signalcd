@@ -17,15 +17,21 @@ import (
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/urfave/cli"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-
 	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
+	"github.com/urfave/cli"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+)
+
+const (
+	flagAddr         = "addr"
+	flagAddrAgent    = "addr.agent"
+	flagAddrInternal = "addr.internal"
+	flagBoltPath     = "bolt.path"
 )
 
 func main() {
@@ -37,8 +43,23 @@ func main() {
 	app.Action = apiAction(logger)
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:  "bolt.path",
+			Name:  flagBoltPath,
 			Value: "./development/data",
+		},
+		cli.StringFlag{
+			Name:  flagAddr,
+			Usage: "The address for the public HTTP/gRPC API server",
+			Value: "localhost:6660",
+		},
+		cli.StringFlag{
+			Name:  flagAddrAgent,
+			Usage: "The address for the agent gRPC server",
+			Value: "localhost:6661",
+		},
+		cli.StringFlag{
+			Name:  flagAddrInternal,
+			Usage: "The address for the internal HTTP server",
+			Value: "localhost:6662",
 		},
 	}
 
@@ -60,7 +81,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var db api.SignalDB
 		{
-			bolt, dbClose, err := boltdb.New(c.String("bolt.path"))
+			bolt, dbClose, err := boltdb.New(c.String(flagBoltPath))
 			if err != nil {
 				return xerrors.Errorf("failed to create bolt db: %w", err)
 			}
@@ -73,7 +94,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var gr run.Group
 		{
-			apiV1, err := api.NewV1(log.WithPrefix(logger, "component", "api"), db, events)
+			apiV1, err := api.NewV1(log.WithPrefix(logger, "component", "api"), db, c.String(flagAddr), events)
 			if err != nil {
 				return fmt.Errorf("failed to initialize api: %w", err)
 			}
@@ -84,13 +105,13 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			r.Mount("/", apiV1)
 
 			s := http.Server{
-				Addr:    ":6660",
+				Addr:    c.String(flagAddr),
 				Handler: r,
 			}
 
 			gr.Add(func() error {
 				level.Info(logger).Log(
-					"msg", "running HTTP API",
+					"msg", "running public HTTP/gRPC API server",
 					"addr", s.Addr,
 				)
 				return s.ListenAndServeTLS("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
@@ -99,7 +120,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			})
 		}
 		{
-			const addr = ":6663"
+			addr := c.String("addr.agent")
 			l, err := net.Listen("tcp", addr)
 			if err != nil {
 				return xerrors.Errorf("failed to listen on %s: %w", addr, err)
@@ -135,7 +156,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 			gr.Add(func() error {
 				level.Info(logger).Log(
-					"msg", "running gRPC API",
+					"msg", "running agent gRPC API server",
 					"addr", l.Addr().String(),
 				)
 				if err := server.Serve(l); err != nil {
@@ -152,7 +173,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			r.Mount("/debug", middleware.Profiler())
 
 			s := http.Server{
-				Addr:    ":6661",
+				Addr:    c.String(flagAddrInternal),
 				Handler: r,
 			}
 			gr.Add(func() error {

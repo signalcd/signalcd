@@ -23,8 +23,6 @@ import (
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
-const addr = "localhost:6660"
-
 // SignalDB is the union of all necessary interfaces for the API
 type SignalDB interface {
 	DeploymentLister
@@ -43,7 +41,7 @@ type Events interface {
 }
 
 // NewV1 creates a new v1 API
-func NewV1(logger log.Logger, db SignalDB, events Events) (*chi.Mux, error) {
+func NewV1(logger log.Logger, db SignalDB, addr string, events Events) (*chi.Mux, error) {
 	router := chi.NewRouter()
 
 	pool, err := x509.SystemCertPool()

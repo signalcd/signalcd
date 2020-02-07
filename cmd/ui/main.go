@@ -21,6 +21,13 @@ func main() {
 
 	app := cli.NewApp()
 	app.Action = uiAction(logger)
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "addr",
+			Usage: "The addr to run the UI HTTP server on",
+			Value: "localhost:6670",
+		},
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		logger.Log("msg", "failed running ui", "err", err)
@@ -39,13 +46,13 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 			router.Get("/main.dart.js", file("main.dart.js", "application/javascript"))
 
 			s := http.Server{
-				Addr:    ":6670",
+				Addr:    c.String("addr"),
 				Handler: router,
 			}
 
 			gr.Add(func() error {
 				level.Info(logger).Log(
-					"msg", "running ui",
+					"msg", "running UI HTTP server",
 					"addr", s.Addr,
 				)
 				return s.ListenAndServeTLS("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
