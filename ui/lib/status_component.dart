@@ -5,7 +5,12 @@ import 'package:angular/angular.dart';
   templateUrl: 'status_component.html',
   directives: [coreDirectives],
 )
-class StatusComponent {
+class StatusComponent implements OnInit {
   @Input()
   String status;
+
+  @override
+  void ngOnInit() {
+    print(status);
+  }
 }

@@ -1,0 +1,309 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "signalcd/proto/ui.proto",
+    "version": "version not set"
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/deployments": {
+      "get": {
+        "operationId": "ListDeployment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdListDeploymentResponse"
+            }
+          }
+        },
+        "tags": [
+          "UIService"
+        ]
+      }
+    },
+    "/api/v1/deployments/current": {
+      "get": {
+        "operationId": "GetCurrentDeployment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdGetCurrentDeploymentResponse"
+            }
+          }
+        },
+        "tags": [
+          "UIService"
+        ]
+      },
+      "post": {
+        "operationId": "SetCurrentDeployment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdSetCurrentDeploymentResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "tags": [
+          "UIService"
+        ]
+      }
+    },
+    "/api/v1/pipelines": {
+      "get": {
+        "operationId": "ListPipelines",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdListPipelinesResponse"
+            }
+          }
+        },
+        "tags": [
+          "UIService"
+        ]
+      },
+      "post": {
+        "operationId": "CreatePipeline",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdCreatePipelineResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/signalcdPipeline"
+            }
+          }
+        ],
+        "tags": [
+          "UIService"
+        ]
+      }
+    },
+    "/api/v1/pipelines/{id}": {
+      "get": {
+        "operationId": "GetPipeline",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/signalcdGetPipelineResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "UIService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "DeploymentStatusPhase": {
+      "type": "string",
+      "enum": [
+        "DONTUSETHISVALUE",
+        "UNKNOWN",
+        "SUCCESS",
+        "FAILURE",
+        "PROGRESS",
+        "PENDING",
+        "KILLED"
+      ],
+      "default": "DONTUSETHISVALUE"
+    },
+    "signalcdCheck": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "ImagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duration": {
+          "type": "string"
+        }
+      }
+    },
+    "signalcdCreatePipelineResponse": {
+      "type": "object",
+      "properties": {
+        "pipeline": {
+          "$ref": "#/definitions/signalcdPipeline"
+        }
+      }
+    },
+    "signalcdDeployment": {
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "string",
+          "format": "int64"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "started": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/signalcdDeploymentStatus"
+        },
+        "pipeline": {
+          "$ref": "#/definitions/signalcdPipeline"
+        }
+      }
+    },
+    "signalcdDeploymentStatus": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "$ref": "#/definitions/DeploymentStatusPhase"
+        }
+      }
+    },
+    "signalcdGetCurrentDeploymentResponse": {
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "$ref": "#/definitions/signalcdDeployment"
+        }
+      }
+    },
+    "signalcdGetPipelineResponse": {
+      "type": "object",
+      "properties": {
+        "pipeline": {
+          "$ref": "#/definitions/signalcdPipeline"
+        }
+      }
+    },
+    "signalcdListDeploymentResponse": {
+      "type": "object",
+      "properties": {
+        "deployments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdDeployment"
+          }
+        }
+      }
+    },
+    "signalcdListPipelinesResponse": {
+      "type": "object",
+      "properties": {
+        "pipelines": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdPipeline"
+          }
+        }
+      }
+    },
+    "signalcdPipeline": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdStep"
+          }
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/signalcdCheck"
+          }
+        }
+      }
+    },
+    "signalcdSetCurrentDeploymentResponse": {
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "$ref": "#/definitions/signalcdDeployment"
+        }
+      }
+    },
+    "signalcdStep": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "ImagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

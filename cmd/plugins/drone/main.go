@@ -1,25 +1,23 @@
 package main
 
 import (
-	"encoding/base64"
+	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
-	"net/http"
-	"net/url"
 	"os"
 	"time"
 
 	"github.com/ghodss/yaml"
-	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/strfmt"
-	"github.com/signalcd/signalcd/api/v1/client"
-	"github.com/signalcd/signalcd/api/v1/client/deployments"
-	"github.com/signalcd/signalcd/api/v1/client/pipeline"
-	"github.com/signalcd/signalcd/api/v1/models"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 func main() {
@@ -85,88 +83,88 @@ func action(c *cli.Context) error {
 		return xerrors.New("no API URL provided")
 	}
 
-	apiURL, err := url.Parse(apiURLFlag)
-	if err != nil {
-		return fmt.Errorf("failed to parse API URL: %w", err)
+	var client signalcdproto.UIServiceClient
+	{
+		pool := x509.NewCertPool()
+
+		cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
+		if err != nil {
+			return err
+		}
+
+		ok := pool.AppendCertsFromPEM(cert)
+		if !ok {
+			return fmt.Errorf("failed to appened certificate")
+		}
+
+		creds := credentials.NewTLS(&tls.Config{
+			RootCAs: pool,
+		})
+		opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+
+		dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		conn, err := grpc.DialContext(dialCtx, apiURLFlag, opts...)
+		if err != nil {
+			return fmt.Errorf("failed to connect to the api: %w", err)
+		}
+		defer conn.Close()
+
+		client = signalcdproto.NewUIServiceClient(conn)
 	}
 
-	httpClient := &http.Client{}
+	var pipelineResp *signalcdproto.CreatePipelineResponse
+	{
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
 
-	username := c.String("basicauth.username")
-	password := c.String("basicauth.password")
-	if username != "" && password != "" {
-		httpClient.Transport = basicAuthTransport{Username: username, Password: password}
+		pipelineResp, err = client.CreatePipeline(ctx, &signalcdproto.CreatePipelineRequest{
+			Pipeline: configToPipeline(config),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create pipeline: %w", err)
+		}
 	}
 
-	client := client.New(
-		httptransport.NewWithClient(
-			apiURL.Host,
-			apiURL.Path,
-			[]string{apiURL.Scheme},
-			httpClient,
-		),
-		strfmt.Default,
-	)
-
-	pipelineParams := &pipeline.CreateParams{Pipeline: configToPipeline(config)}
-	pipelineParams = pipelineParams.WithTimeout(15 * time.Second)
-	pipeline, err := client.Pipeline.Create(pipelineParams)
-	if err != nil {
-		return fmt.Errorf("failed to create pipeline: %w", err)
+	var deploymentResp *signalcdproto.SetCurrentDeploymentResponse
+	{
+		deploymentResp, err = client.SetCurrentDeployment(context.Background(), &signalcdproto.SetCurrentDeploymentRequest{
+			Id: pipelineResp.GetPipeline().GetId(),
+		})
+		if err != nil {
+			return fmt.Errorf("failed to set pipeline as current deployment: %w", err)
+		}
 	}
 
-	deploymentParams := &deployments.SetCurrentDeploymentParams{
-		Pipeline: pipeline.Payload.ID.String(),
-	}
-	deploymentParams.WithTimeout(15 * time.Second)
-	_, err = client.Deployments.SetCurrentDeployment(deploymentParams)
-	if err != nil {
-		return fmt.Errorf("failed to set current deployment: %w", err)
-	}
-
-	// Ignoring error, as this YAML is only for debug printing
-	configYAML, _ := yaml.Marshal(config)
-
-	fmt.Printf("Crated and applied pipeline at %s:\n%s\n", apiURL.String(), string(configYAML))
+	fmt.Printf("Crated and applied pipeline %s as deployment %d\n", pipelineResp.GetPipeline().GetId(), deploymentResp.Deployment.Number)
 
 	return nil
 }
 
-type basicAuthTransport struct {
-	Username, Password string
-}
+func configToPipeline(config signalcd.Config) *signalcdproto.Pipeline {
+	p := &signalcdproto.Pipeline{}
 
-func (b basicAuthTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	token := base64.StdEncoding.EncodeToString([]byte(
-		fmt.Sprintf("%s:%s", b.Username, b.Password)),
-	)
-	r.Header.Set("Authorization", fmt.Sprintf("Basic %s", token))
-
-	return http.DefaultTransport.RoundTrip(r)
-}
-
-func configToPipeline(config signalcd.Config) *models.Pipeline {
-	p := models.Pipeline{Name: config.Name}
+	p.Name = config.Name
 
 	for _, s := range config.Steps {
-		p.Steps = append(p.Steps, &models.Step{
-			Name:             &s.Name,
-			Image:            &s.Image,
+		p.Steps = append(p.Steps, &signalcdproto.Step{
+			Name:             s.Name,
+			Image:            s.Image,
 			ImagePullSecrets: s.ImagePullSecrets,
 			Commands:         s.Commands,
 		})
 	}
+
 	for _, c := range config.Checks {
-		p.Checks = append(p.Checks, &models.Check{
-			Name:             &c.Name,
-			Image:            &c.Image,
+		p.Checks = append(p.Checks, &signalcdproto.Check{
+			Name:             c.Name,
+			Image:            c.Image,
 			ImagePullSecrets: c.ImagePullSecrets,
-			Duration:         c.Duration.Seconds(),
-			Environment:      nil,
+			Duration:         ptypes.DurationProto(c.Duration),
 		})
 	}
 
-	return &p
+	return p
 }
 
 func evalAction(c *cli.Context) error {

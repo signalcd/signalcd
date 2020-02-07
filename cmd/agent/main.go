@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,19 +17,21 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
-	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
-const apiURL = "localhost:6661"
+const apiURL = "localhost:6663"
 
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
@@ -77,17 +81,35 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			return errors.New("no api.url to API gRPC endpoint given, use --api.url flag")
 		}
 
-		conn, err := grpc.Dial(c.String("api.url"), grpc.WithInsecure())
-		if err != nil {
-			level.Error(logger).Log(
-				"msg", "failed to dial gRPC target",
-				"err", err,
-			)
-			os.Exit(2)
-		}
-		defer conn.Close()
+		var client signalcdproto.AgentServiceClient
+		{
+			pool := x509.NewCertPool()
 
-		client := signalcdproto.NewAgentServiceClient(conn)
+			cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
+			if err != nil {
+				return err
+			}
+
+			ok := pool.AppendCertsFromPEM(cert)
+			if !ok {
+				return fmt.Errorf("failed to appened certificate")
+			}
+
+			creds := credentials.NewTLS(&tls.Config{
+				RootCAs: pool,
+			})
+			opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+
+			dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			conn, err := grpc.DialContext(dialCtx, c.String("api.url"), opts...)
+			if err != nil {
+				return fmt.Errorf("failed to connect to the api: %w", err)
+			}
+			defer conn.Close()
+
+			client = signalcdproto.NewAgentServiceClient(conn)
+		}
 
 		konfig, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
 		if err != nil {
@@ -221,57 +243,16 @@ func deploymentStatusPhase(phase signalcdproto.DeploymentStatus_Phase) signalcd.
 	}
 }
 
-func deploymentFromRPC(deployment *signalcdproto.Deployment) signalcd.Deployment {
-	return signalcd.Deployment{
-		Number:   deployment.GetNumber(),
-		Created:  time.Unix(deployment.GetCreated(), 0),
-		Pipeline: pipelineFromRPC(deployment.GetPipeline()),
-		Status: signalcd.DeploymentStatus{
-			Phase: deploymentStatusPhase(deployment.GetStatus().GetPhase()),
-		},
-	}
-}
-
-func pipelineFromRPC(pipeline *signalcdproto.Pipeline) signalcd.Pipeline {
-	p := signalcd.Pipeline{
-		ID:   pipeline.GetId(),
-		Name: pipeline.GetName(),
-	}
-
-	for _, step := range pipeline.GetSteps() {
-		p.Steps = append(p.Steps, signalcd.Step{
-			Name:             step.GetName(),
-			Image:            step.GetImage(),
-			ImagePullSecrets: step.GetImagePullSecrets(),
-			Commands:         step.GetCommands(),
-		})
-	}
-
-	for _, check := range pipeline.GetChecks() {
-		//env := map[string]string{}
-		//for _, item := range check.Environment {
-		//	env[item.Key] = item.Value
-		//}
-
-		p.Checks = append(p.Checks, signalcd.Check{
-			Name:             check.GetName(),
-			Image:            check.GetImage(),
-			ImagePullSecrets: check.GetImagePullSecrets(),
-			Duration:         time.Duration(check.Duration) * time.Second,
-			Environment:      map[string]string{},
-		})
-	}
-
-	return p
-}
-
 func (u *updater) poll(ctx context.Context) error {
 	resp, err := u.client.CurrentDeployment(ctx, &signalcdproto.CurrentDeploymentRequest{})
 	if err != nil {
 		return xerrors.Errorf("failed to get current deployment: %w", err)
 	}
 
-	deployment := deploymentFromRPC(resp.GetCurrentDeployment())
+	deployment, err := signalcdproto.DeploymentSignalCD(resp.GetCurrentDeployment())
+	if err != nil {
+		return fmt.Errorf("failed to convert deploment to signalcd: %w", err)
+	}
 
 	if u.currentDeployment.get() == nil {
 		loaded, err := u.loadDeployment()

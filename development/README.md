@@ -18,3 +18,15 @@ and everything starting with `/api` is forwarded to the API.
 [Download Caddy](https://caddyserver.com/download) and extract the `caddy` binary
 into this directory and start it using by simply running `./caddy`.
 The provided `Caddyfile` will be used automatically.
+
+
+## Ports
+
+| Component         | Port  |
+|-------------------|-------|
+| Caddy for Dev     | 6060  |
+| API HTTP Public   | 6660  |
+| API HTTP Internal | 6661  |
+| API gRPC UI       | 6662  |
+| API gRPC Agent    | 6663  |
+| UI HTTP Public    | 6670  |

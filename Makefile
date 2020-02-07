@@ -7,29 +7,31 @@ generate: apiv1 signalcd/proto/agent.pb.go
 .PHONY: apiv1
 apiv1: api/v1/client api/v1/models api/v1/restapi ui/lib/src/api
 
-GOSWAGGER ?= docker run --rm \
-	--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
-	-v $(shell pwd):/go/src/github.com/signalcd/signalcd \
-	-w /go/src/github.com/signalcd/signalcd quay.io/goswagger/swagger:v0.19.0
-
-api/v1/client api/v1/models api/v1/restapi: swagger.yaml
-	-rm -r api/v1/{models,restapi}
-	$(GOSWAGGER) generate server -f swagger.yaml --exclude-main -A cd --target api/v1
-	$(GOSWAGGER) generate client -f swagger.yaml --target api/v1
-
 SWAGGER ?= docker run --rm \
 		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
-		-v $(shell pwd):/local \
-		swaggerapi/swagger-codegen-cli:2.4.9
+		-v $(shell pwd):$(shell pwd) \
+		openapitools/openapi-generator-cli:v4.2.3
 
-ui/lib/src/api: swagger.yaml
+ui/lib/src/api: signalcd/proto/ui.swagger.json
 	-rm -rf ui/lib/src/api
-	$(SWAGGER) generate -i /local/swagger.yaml -l dart -o /local/tmp/dart
+	$(SWAGGER) generate -i $(shell pwd)/signalcd/proto/ui.swagger.json -g dart -o $(shell pwd)/tmp/dart
 	mv tmp/dart/lib ui/lib/src/api
 	-rm -rf tmp/
 
+signalcd/proto: signalcd/proto/agent.pb.go signalcd/proto/types.pb.go signalcd/proto/ui.pb.go
+
 signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
-	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:.
+	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:. -I=. -I=signalcd/proto/vendor
+
+signalcd/proto/types.pb.go: signalcd/proto/types.proto
+	protoc signalcd/proto/types.proto --go_out=plugins=grpc:. -I=. -I=signalcd/proto/vendor
+
+signalcd/proto/ui.pb.go: signalcd/proto/ui.proto
+	protoc signalcd/proto/ui.proto \
+		--go_out=plugins=grpc:. \
+		--swagger_out=logtostderr=true:. \
+		--grpc-gateway_out=logtostderr=true:. \
+		-I=. -I=signalcd/proto/vendor -I=$(GOPATH)/src
 
 .PHONY: build
 build: \

@@ -42,11 +42,6 @@ local docker = {
   },
 };
 
-local swagger = {
-  name: 'swagger',
-  image: 'quay.io/goswagger/swagger:v0.19.0',
-};
-
 [
   pipeline {
     steps+: [
@@ -103,22 +98,31 @@ local swagger = {
   pipeline {
     name: 'code-generation',
     steps+: [
-      swagger {
-        name: 'goswagger-apiv1',
+      {
+        name: 'grpc',
+        image: 'golang:1.13-alpine',
         environment: {
-          GOSWAGGER: '/usr/bin/swagger',
+          GOPROXY: 'https://proxy.golang.org',
         },
         commands: [
-          'make api/v1/client api/v1/models api/v1/restapi',
-          'git diff --exit-code',
+          'apk add -U git make protobuf protoc',
+          'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway',
+          'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger',
+          'go get -u github.com/golang/protobuf/protoc-gen-go',
+          'make signalcd/proto --always-make',
+          'git diff --exit-code signalcd/proto',
         ],
       },
       {
-        name: 'grpc',
-        image: 'grpc/go',
+        name: 'dart-swagger',
+        image: 'openapitools/openapi-generator-cli:v4.2.3',
+        environment: {
+          SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
+        },
         commands: [
-          'make signalcd/proto/agent.pb.go',
-          'git diff --exit-code',
+        'apk add -U git make',
+          'make ui/lib/src/api --always-make',
+          'git diff --exit-code ui/lib/src/api',
         ],
       },
     ],

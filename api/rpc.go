@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
-	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"golang.org/x/net/context"
 	"golang.org/x/xerrors"
+
+	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
 // RPC implement the gRPC server connecting it to a SignalDB
@@ -28,48 +29,15 @@ func NewRPC(db SignalDB, logger log.Logger) *RPC {
 func (r *RPC) CurrentDeployment(ctx context.Context, req *signalcdproto.CurrentDeploymentRequest) (*signalcdproto.CurrentDeploymentResponse, error) {
 	deployment, err := r.DB.GetCurrentDeployment()
 	if err != nil {
-		return nil, xerrors.Errorf("failed to get current deployment: %w", err)
+		return nil, fmt.Errorf("failed to get current deployment: %w", err)
 	}
 
-	steps := func(steps1 []signalcd.Step) []*signalcdproto.Step {
-		var steps2 []*signalcdproto.Step
-		for _, s := range steps1 {
-			steps2 = append(steps2, &signalcdproto.Step{
-				Name:             s.Name,
-				Image:            s.Image,
-				ImagePullSecrets: s.ImagePullSecrets,
-				Commands:         s.Commands,
-			})
-		}
-		return steps2
+	dProto, err := signalcdproto.DeploymentProto(deployment)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert deployment to proto: %w", err)
 	}
 
-	checks := func(checks1 []signalcd.Check) []*signalcdproto.Check {
-		var checks2 []*signalcdproto.Check
-		for _, c := range checks1 {
-			checks2 = append(checks2, &signalcdproto.Check{
-				Name:             c.Name,
-				Image:            c.Image,
-				ImagePullSecrets: c.ImagePullSecrets,
-				Duration:         int64(c.Duration.Seconds()),
-			})
-		}
-		return checks2
-	}
-
-	return &signalcdproto.CurrentDeploymentResponse{
-		CurrentDeployment: &signalcdproto.Deployment{
-			Number:  deployment.Number,
-			Created: deployment.Created.Unix(),
-
-			Pipeline: &signalcdproto.Pipeline{
-				Id:     deployment.Pipeline.ID,
-				Name:   deployment.Pipeline.Name,
-				Steps:  steps(deployment.Pipeline.Steps),
-				Checks: checks(deployment.Pipeline.Checks),
-			},
-		},
-	}, nil
+	return &signalcdproto.CurrentDeploymentResponse{CurrentDeployment: dProto}, nil
 }
 
 // DeploymentStatusSetter sets the phase for a specific Deployment by its number

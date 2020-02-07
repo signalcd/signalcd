@@ -22,19 +22,19 @@ class PipelinesComponent implements OnInit {
 
   PipelinesComponent(this._deploymentsService, this._pipelinesService);
 
-  List<Pipeline> pipelines = [];
+  List<SignalcdPipeline> pipelines = [];
 
   @override
   void ngOnInit() {
     _pipelinesService
         .pipelines()
-        .then((List<Pipeline> pipelines) => this.pipelines = pipelines);
+        .then((List<SignalcdPipeline> pipelines) => this.pipelines = pipelines);
   }
 
-  void deploy(Pipeline pipeline) {
+  void deploy(SignalcdPipeline pipeline) {
     _deploymentsService
         .deploy(pipeline.id)
-        .then((Deployment deployment) =>
+        .then((SignalcdDeployment deployment) =>
             print('pipeline ${deployment.number} deployed!'))
         .catchError(() => print('error deploying pipeline'));
   }

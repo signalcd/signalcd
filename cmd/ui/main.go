@@ -39,7 +39,7 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 			router.Get("/main.dart.js", file("main.dart.js", "application/javascript"))
 
 			s := http.Server{
-				Addr:    ":6662",
+				Addr:    ":6670",
 				Handler: router,
 			}
 
@@ -48,7 +48,7 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 					"msg", "running ui",
 					"addr", s.Addr,
 				)
-				return s.ListenAndServe()
+				return s.ListenAndServeTLS("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
 			}, func(err error) {
 				_ = s.Shutdown(context.Background())
 			})
@@ -63,7 +63,7 @@ func uiAction(logger log.Logger) cli.ActionFunc {
 }
 
 func file(name, mime string) http.HandlerFunc {
-	file, _ := ioutil.ReadFile("/assets/" + name)
+	file, _ := ioutil.ReadFile("./cmd/ui/assets/" + name)
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mime)
 		_, _ = w.Write(file)

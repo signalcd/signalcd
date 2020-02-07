@@ -109,19 +109,26 @@ platform:
   arch: amd64
 
 steps:
-- name: goswagger-apiv1
-  image: quay.io/goswagger/swagger:v0.19.0
-  commands:
-  - make api/v1/client api/v1/models api/v1/restapi
-  - git diff --exit-code
-  environment:
-    GOSWAGGER: /usr/bin/swagger
-
 - name: grpc
-  image: grpc/go
+  image: golang:1.13-alpine
   commands:
-  - make signalcd/proto/agent.pb.go
-  - git diff --exit-code
+  - apk add -U git make protobuf protoc
+  - go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+  - go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
+  - go get -u github.com/golang/protobuf/protoc-gen-go
+  - make signalcd/proto --always-make
+  - git diff --exit-code signalcd/proto
+  environment:
+    GOPROXY: https://proxy.golang.org
+
+- name: dart-swagger
+  image: openapitools/openapi-generator-cli:v4.2.3
+  commands:
+  - apk add -U git make
+  - make ui/lib/src/api --always-make
+  - git diff --exit-code ui/lib/src/api
+  environment:
+    SWAGGER: /usr/local/bin/docker-entrypoint.sh
 
 ---
 kind: pipeline
