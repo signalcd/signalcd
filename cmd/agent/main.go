@@ -83,12 +83,17 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 
 		var client signalcdproto.AgentServiceClient
 		{
-			pool := x509.NewCertPool()
+			pair, err := tls.LoadX509KeyPair("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
+			if err != nil {
+				return err
+			}
 
 			cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
 			if err != nil {
 				return err
 			}
+
+			pool := x509.NewCertPool()
 
 			ok := pool.AppendCertsFromPEM(cert)
 			if !ok {
@@ -96,7 +101,8 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			}
 
 			creds := credentials.NewTLS(&tls.Config{
-				RootCAs: pool,
+				RootCAs:      pool,
+				Certificates: []tls.Certificate{pair},
 			})
 			opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 

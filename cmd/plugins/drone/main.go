@@ -85,12 +85,17 @@ func action(c *cli.Context) error {
 
 	var client signalcdproto.UIServiceClient
 	{
-		pool := x509.NewCertPool()
+		pair, err := tls.LoadX509KeyPair("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
+		if err != nil {
+			return err
+		}
 
 		cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
 		if err != nil {
 			return err
 		}
+
+		pool := x509.NewCertPool()
 
 		ok := pool.AppendCertsFromPEM(cert)
 		if !ok {
@@ -98,7 +103,8 @@ func action(c *cli.Context) error {
 		}
 
 		creds := credentials.NewTLS(&tls.Config{
-			RootCAs: pool,
+			RootCAs:      pool,
+			Certificates: []tls.Certificate{pair},
 		})
 		opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 
