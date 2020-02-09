@@ -12,7 +12,7 @@ spec:
     - port: 6660
       name: http
     - port: 6661
-      name: grpc
+      name: agent
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -40,4 +40,4 @@ spec:
             - containerPort: 6660
               name: http
             - containerPort: 6661
-              name: grpc
+              name: agent
