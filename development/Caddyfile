@@ -1,4 +1,4 @@
-http://localhost:6060 {
+https://localhost:6060 {
     proxy /     https://localhost:6670 {
         ca_certificates ./development/signalcd.dev+6.pem
     }
