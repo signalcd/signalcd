@@ -50,17 +50,17 @@ func main() {
 		cli.StringFlag{
 			Name:  flagAddr,
 			Usage: "The address for the public HTTP/gRPC API server",
-			Value: "localhost:6660",
+			Value: ":6660",
 		},
 		cli.StringFlag{
 			Name:  flagAddrAgent,
 			Usage: "The address for the agent gRPC server",
-			Value: "localhost:6661",
+			Value: ":6661",
 		},
 		cli.StringFlag{
 			Name:  flagAddrInternal,
 			Usage: "The address for the internal HTTP server",
-			Value: "localhost:6662",
+			Value: ":6662",
 		},
 		cli.StringFlag{
 			Name:  flagTLSCert,
