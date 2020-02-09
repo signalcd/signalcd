@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -117,7 +118,18 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 			r := chi.NewRouter()
 			r.Use(Logger(logger))
 			r.Use(HTTPMetrics(registry))
-			r.Mount("/", apiV1)
+
+			{
+				// Serving the HTTP/gRPC API
+				r.Mount("/", apiV1)
+			}
+			{
+				// Serving the UI assets
+				r.Get("/", file("index.html", "text/html"))
+				r.Get("/bulma.min.css", file("bulma.min.css", "text/css"))
+				r.Get("/main.dart.js", file("main.dart.js", "application/javascript"))
+				r.NotFound(file("index.html", "text/html"))
+			}
 
 			s := http.Server{
 				Addr:    c.String(flagAddr),
@@ -208,6 +220,14 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 		}
 
 		return nil
+	}
+}
+
+func file(name, mime string) http.HandlerFunc {
+	file, _ := ioutil.ReadFile("./cmd/api/assets/" + name)
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", mime)
+		_, _ = w.Write(file)
 	}
 }
 

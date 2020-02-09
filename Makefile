@@ -2,10 +2,7 @@ GO := CGO_ENABLED=0 GO111MODULE=on go
 
 all: build
 
-generate: apiv1 signalcd/proto/agent.pb.go
-
-.PHONY: apiv1
-apiv1: api/v1/client api/v1/models api/v1/restapi ui/lib/src/api
+generate: signalcd/proto ui/lib/src/api
 
 SWAGGER ?= docker run --rm \
 		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
@@ -37,7 +34,6 @@ signalcd/proto/ui.pb.go: signalcd/proto/ui.proto
 build: \
 	cmd/agent/agent \
 	cmd/api/api \
-	cmd/ui/ui \
 	cmd/checks/kubernetes-status/kubernetes-status \
 	cmd/plugins/drone/drone
 
@@ -48,10 +44,6 @@ cmd/agent/agent:
 .PHONY: cmd/api/api
 cmd/api/api:
 	$(GO) build -v -o ./cmd/api/api ./cmd/api
-
-.PHONY: cmd/ui/ui
-cmd/ui/ui:
-	$(GO) build -v -o ./cmd/ui/ui ./cmd/ui
 
 .PHONY: cmd/checks/http/http
 cmd/checks/http/http:
@@ -68,6 +60,7 @@ cmd/plugins/drone/drone:
 .PHONY: ui
 ui:
 	cd ui && webdev build
+	cp ui/build/{bulma.min.css,index.html,main.dart.js} ./cmd/api/assets/
 
 .PHONY: ui-serve
 ui-serve:
@@ -88,11 +81,6 @@ container-agent: cmd/agent/agent
 .PHONY: container-api
 container-api: cmd/api/api
 	docker build -t cd-api ./cmd/api
-
-.PHONY: container-ui
-container-ui: ui cmd/ui/ui
-	cp ui/build/{bulma.min.css,index.html,main.dart.js} ./cmd/ui/assets/
-	docker build -t cd-ui ./cmd/ui
 
 .PHONY: container-kubernetes-status
 container-kubernetes-status: cmd/checks/kubernetes-status/kubernetes-status

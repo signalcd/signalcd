@@ -50,7 +50,6 @@ local docker = {
         commands: [
           'make cmd/agent/agent',
           'make cmd/api/api',
-          'make cmd/ui/ui',
         ],
       },
       {
@@ -63,7 +62,7 @@ local docker = {
           'pub global activate webdev',
           '~/.pub-cache/bin/webdev build',
           'rm -rf build/packages',
-          'cp -r build/ ../cmd/ui/assets/',
+          'cp -r build/ ../cmd/api/assets/',
         ],
       },
     ] + [
@@ -75,7 +74,7 @@ local docker = {
           context: './cmd/%s/' % name,
         },
       }
-      for name in ['api', 'agent', 'ui']
+      for name in ['api', 'agent']
     ],
   },
 
@@ -120,7 +119,7 @@ local docker = {
           SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
         },
         commands: [
-        'apk add -U git make',
+          'apk add -U git make',
           'make ui/lib/src/api --always-make',
           'git diff --exit-code ui/lib/src/api',
         ],

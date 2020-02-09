@@ -28,4 +28,3 @@ The provided `Caddyfile` will be used automatically.
 | API HTTP/gRPC Public  | 6660  |
 | API gRPC Agent        | 6661  |
 | API HTTP Internal     | 6662  |
-| UI HTTP Public        | 6670  |

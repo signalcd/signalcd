@@ -5,11 +5,11 @@ set -euo pipefail
 trap 'kill $(jobs -p); exit 0' EXIT
 
 (
-  ./development/caddy -conf ./development/Caddyfile
+  ./development/caddy -conf ./development/Caddyfile-dart
 ) &
 
 (
-  ./cmd/api/api
+  ./cmd/api/api --tls.cert ./development/signalcd.dev+6.pem --tls.key ./development/signalcd.dev+6-key.pem
 ) &
 
 (
