@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
@@ -18,6 +16,10 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+)
+
+const (
+	flagTLSCert = "tls.cert"
 )
 
 func main() {
@@ -47,6 +49,10 @@ func main() {
 			Name:   "basicauth.password",
 			Usage:  "The user's password to authenticate with",
 			EnvVar: "PLUGIN_BASICAUTH_PASSWORD",
+		},
+		cli.StringFlag{
+			Name:  flagTLSCert,
+			Usage: "The path to the certificate to use when making requests",
 		},
 	}
 
@@ -85,28 +91,22 @@ func action(c *cli.Context) error {
 
 	var client signalcdproto.UIServiceClient
 	{
-		pair, err := tls.LoadX509KeyPair("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
-		if err != nil {
-			return err
+		var opts []grpc.DialOption
+
+		tlsCert := c.String(flagTLSCert)
+		if tlsCert != "" {
+			creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
+			if err != nil {
+				return fmt.Errorf("failed to load credentials: %w", err)
+			}
+
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+
+			stdlog.Println("Making requests with TLS")
+		} else {
+			stdlog.Println("Making requests unencrypted")
+			opts = append(opts, grpc.WithInsecure())
 		}
-
-		cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
-		if err != nil {
-			return err
-		}
-
-		pool := x509.NewCertPool()
-
-		ok := pool.AppendCertsFromPEM(cert)
-		if !ok {
-			return fmt.Errorf("failed to appened certificate")
-		}
-
-		creds := credentials.NewTLS(&tls.Config{
-			RootCAs:      pool,
-			Certificates: []tls.Certificate{pair},
-		})
-		opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 
 		dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()

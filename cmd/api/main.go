@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -32,6 +30,8 @@ const (
 	flagAddrAgent    = "addr.agent"
 	flagAddrInternal = "addr.internal"
 	flagBoltPath     = "bolt.path"
+	flagTLSCert      = "tls.cert"
+	flagTLSKey       = "tls.key"
 )
 
 func main() {
@@ -60,6 +60,14 @@ func main() {
 			Name:  flagAddrInternal,
 			Usage: "The address for the internal HTTP server",
 			Value: "localhost:6662",
+		},
+		cli.StringFlag{
+			Name:  flagTLSCert,
+			Usage: "The path to the TLS certificate",
+		},
+		cli.StringFlag{
+			Name:  flagTLSKey,
+			Usage: "The path to the TLS key",
 		},
 	}
 
@@ -94,7 +102,14 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var gr run.Group
 		{
-			apiV1, err := api.NewV1(log.WithPrefix(logger, "component", "api"), db, c.String(flagAddr), events)
+			apiV1, err := api.NewV1(
+				log.WithPrefix(logger, "component", "api"),
+				db,
+				events,
+				c.String(flagAddr),
+				c.String(flagTLSCert),
+				c.String(flagTLSKey),
+			)
 			if err != nil {
 				return fmt.Errorf("failed to initialize api: %w", err)
 			}
@@ -114,37 +129,37 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 					"msg", "running public HTTP/gRPC API server",
 					"addr", s.Addr,
 				)
-				return s.ListenAndServeTLS("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
+
+				tlsCert, tlsKey := c.String(flagTLSCert), c.String(flagTLSKey)
+				if tlsCert != "" && tlsKey != "" {
+					return s.ListenAndServeTLS(tlsCert, tlsKey)
+				} else {
+					return s.ListenAndServe()
+				}
 			}, func(err error) {
 				_ = s.Shutdown(context.TODO())
 			})
 		}
 		{
-			addr := c.String("addr.agent")
+			addr := c.String(flagAddrAgent)
 			l, err := net.Listen("tcp", addr)
 			if err != nil {
 				return xerrors.Errorf("failed to listen on %s: %w", addr, err)
 			}
 
-			pool, err := x509.SystemCertPool()
-			if err != nil {
-				return err
-			}
-
-			cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
-			if err != nil {
-				return err
-			}
-
-			ok := pool.AppendCertsFromPEM(cert)
-			if !ok {
-				return fmt.Errorf("failed to appened certificate")
-			}
-
 			var server *grpc.Server
 			{
-				opts := []grpc.ServerOption{
-					grpc.Creds(credentials.NewClientTLSFromCert(pool, addr)),
+				var opts []grpc.ServerOption
+
+				tlsCert, tlsKey := c.String(flagTLSCert), c.String(flagTLSKey)
+				if tlsCert != "" && tlsKey != "" {
+					creds, err := credentials.NewServerTLSFromFile(tlsCert, tlsKey)
+					if err != nil {
+						return fmt.Errorf("failed to create credentials: %w", err)
+					}
+					opts = append(opts, grpc.Creds(creds))
+
+					level.Debug(logger).Log("msg", "serving requests with TLS", "cert", tlsCert, "key", tlsKey)
 				}
 
 				server = grpc.NewServer(opts...)

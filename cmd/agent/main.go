@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +15,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
+	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -26,12 +26,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
-
-	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
-const apiURL = "localhost:6663"
+const (
+	apiURL      = "localhost:6663"
+	flagTLSCert = "tls.cert"
+	flagTLSKey  = "tls.key"
+)
 
 func main() {
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
@@ -62,6 +63,14 @@ func main() {
 			Usage: "The name of the ServiceAccount to use",
 			Value: "signalcd",
 		},
+		cli.StringFlag{
+			Name:  flagTLSCert,
+			Usage: "The path to the certificate to use when making requests",
+		},
+		cli.StringFlag{
+			Name:  flagTLSKey,
+			Usage: "The path to the key to use then making requests",
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
@@ -83,28 +92,21 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 
 		var client signalcdproto.AgentServiceClient
 		{
-			pair, err := tls.LoadX509KeyPair("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
-			if err != nil {
-				return err
+			var opts []grpc.DialOption
+
+			tlsCert, tlsKey := c.String(flagTLSCert), c.String(flagTLSKey)
+			if tlsCert != "" && tlsKey != "" {
+				creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
+				if err != nil {
+					return fmt.Errorf("failed to load credentials: %w", err)
+				}
+
+				opts = append(opts, grpc.WithTransportCredentials(creds))
+				level.Debug(logger).Log("msg", "making requests with TLS", "cert", tlsCert, "key", tlsKey)
+			} else {
+				opts = append(opts, grpc.WithInsecure())
+				level.Debug(logger).Log("msg", "making requests unencrypted")
 			}
-
-			cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
-			if err != nil {
-				return err
-			}
-
-			pool := x509.NewCertPool()
-
-			ok := pool.AppendCertsFromPEM(cert)
-			if !ok {
-				return fmt.Errorf("failed to appened certificate")
-			}
-
-			creds := credentials.NewTLS(&tls.Config{
-				RootCAs:      pool,
-				Certificates: []tls.Certificate{pair},
-			})
-			opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
 
 			dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()

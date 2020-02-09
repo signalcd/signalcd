@@ -2,11 +2,8 @@ package api
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -14,13 +11,12 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/signalcd/signalcd/signalcd"
+	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
-
-	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 )
 
 // SignalDB is the union of all necessary interfaces for the API
@@ -41,28 +37,20 @@ type Events interface {
 }
 
 // NewV1 creates a new v1 API
-func NewV1(logger log.Logger, db SignalDB, addr string, events Events) (*chi.Mux, error) {
+func NewV1(logger log.Logger, db SignalDB, events Events, addr string, certPath string, keyPath string) (*chi.Mux, error) {
 	router := chi.NewRouter()
-
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, err
-	}
-
-	cert, err := ioutil.ReadFile("./development/signalcd.dev+6.pem")
-	if err != nil {
-		return nil, err
-	}
-
-	ok := pool.AppendCertsFromPEM(cert)
-	if !ok {
-		return nil, fmt.Errorf("failed to appened certificate")
-	}
 
 	var server *grpc.Server
 	{
-		opts := []grpc.ServerOption{
-			grpc.Creds(credentials.NewClientTLSFromCert(pool, addr)),
+		var opts []grpc.ServerOption
+
+		if certPath != "" && keyPath != "" {
+			creds, err := credentials.NewServerTLSFromFile(certPath, keyPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create credentials: %w", err)
+			}
+
+			opts = append(opts, grpc.Creds(creds))
 		}
 
 		server = grpc.NewServer(opts...)
@@ -74,19 +62,21 @@ func NewV1(logger log.Logger, db SignalDB, addr string, events Events) (*chi.Mux
 
 	var mux *runtime.ServeMux
 	{
-		keyPair, err := tls.LoadX509KeyPair("./development/signalcd.dev+6.pem", "./development/signalcd.dev+6-key.pem")
-		if err != nil {
-			return nil, err
+		var opts []grpc.DialOption
+
+		if certPath != "" && keyPath != "" {
+			creds, err := credentials.NewClientTLSFromFile(certPath, "")
+			if err != nil {
+				return nil, fmt.Errorf("failed to load credentials: %w", err)
+			}
+
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+		} else {
+			opts = append(opts, grpc.WithInsecure())
 		}
 
-		creds := credentials.NewTLS(&tls.Config{
-			RootCAs:      pool,
-			Certificates: []tls.Certificate{keyPair},
-		})
-		opts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
-
 		mux = runtime.NewServeMux()
-		err = signalcdproto.RegisterUIServiceHandlerFromEndpoint(context.Background(), mux, addr, opts)
+		err := signalcdproto.RegisterUIServiceHandlerFromEndpoint(context.Background(), mux, addr, opts)
 		if err != nil {
 			return nil, err
 		}
