@@ -60,7 +60,6 @@ cmd/plugins/drone/drone:
 .PHONY: ui
 ui:
 	cd ui && webdev build
-	cp ui/build/{bulma.min.css,index.html,main.dart.js} ./cmd/api/assets/
 
 .PHONY: ui-serve
 ui-serve:
