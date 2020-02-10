@@ -234,23 +234,6 @@ func (u *updater) pollLoop(ctx context.Context) error {
 	}
 }
 
-func deploymentStatusPhase(phase signalcdproto.DeploymentStatus_Phase) signalcd.DeploymentPhase {
-	switch phase {
-	case signalcdproto.DeploymentStatus_SUCCESS:
-		return signalcd.Success
-	case signalcdproto.DeploymentStatus_FAILURE:
-		return signalcd.Failure
-	case signalcdproto.DeploymentStatus_PROGRESS:
-		return signalcd.Progress
-	case signalcdproto.DeploymentStatus_PENDING:
-		return signalcd.Pending
-	case signalcdproto.DeploymentStatus_KILLED:
-		return signalcd.Killed
-	default:
-		return signalcd.Unknown
-	}
-}
-
 func (u *updater) poll(ctx context.Context) error {
 	resp, err := u.client.CurrentDeployment(ctx, &signalcdproto.CurrentDeploymentRequest{})
 	if err != nil {

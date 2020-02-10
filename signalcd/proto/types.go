@@ -70,13 +70,29 @@ func DeploymentProto(d signalcd.Deployment) (*Deployment, error) {
 		return nil, err
 	}
 
+	var phase DeploymentStatus_Phase
+	switch d.Status.Phase {
+	case signalcd.Unknown:
+		phase = DeploymentStatus_UNKNOWN
+	case signalcd.Success:
+		phase = DeploymentStatus_SUCCESS
+	case signalcd.Failure:
+		phase = DeploymentStatus_FAILURE
+	case signalcd.Progress:
+		phase = DeploymentStatus_PROGRESS
+	case signalcd.Pending:
+		phase = DeploymentStatus_PENDING
+	case signalcd.Killed:
+		phase = DeploymentStatus_KILLED
+	}
+
 	return &Deployment{
 		Number:   d.Number,
 		Created:  created,
 		Started:  started,
 		Finished: finished,
 		Status: &DeploymentStatus{
-			Phase: DeploymentStatus_UNKNOWN,
+			Phase: phase,
 		},
 		Pipeline: p,
 	}, nil
