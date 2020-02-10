@@ -13,6 +13,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -82,14 +84,15 @@ func NewV1(logger log.Logger, db SignalDB, events Events, addr string, certPath 
 		}
 	}
 
-	router.Mount("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 			server.ServeHTTP(w, r)
 		} else {
 			mux.ServeHTTP(w, r)
 		}
-	}))
+	}), &http2.Server{})
 
+	router.Mount("/", handler)
 	router.Get("/api/v1/deployments/events", deploymentEventsHandler(logger, events))
 
 	return router, nil
