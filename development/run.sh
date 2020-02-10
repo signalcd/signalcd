@@ -9,7 +9,10 @@ trap 'kill $(jobs -p); exit 0' EXIT
 ) &
 
 (
-  ./cmd/api/api --tls.cert ./development/signalcd.dev+6.pem --tls.key ./development/signalcd.dev+6-key.pem
+  ./cmd/api/api \
+      --tls.cert ./development/signalcd.dev+6.pem \
+      --tls.key ./development/signalcd.dev+6-key.pem \
+      --ui.assets ./ui/build
 ) &
 
 for i in `jobs -p`; do wait $i; done

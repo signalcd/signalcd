@@ -65,7 +65,7 @@ func NewV1(logger log.Logger, db SignalDB, events Events, addr string, certPath 
 		var opts []grpc.DialOption
 
 		if certPath != "" && keyPath != "" {
-			creds, err := credentials.NewClientTLSFromFile(certPath, "")
+			creds, err := credentials.NewClientTLSFromFile(certPath, "localhost")
 			if err != nil {
 				return nil, fmt.Errorf("failed to load credentials: %w", err)
 			}

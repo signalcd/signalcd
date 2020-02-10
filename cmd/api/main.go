@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -33,6 +34,7 @@ const (
 	flagBoltPath     = "bolt.path"
 	flagTLSCert      = "tls.cert"
 	flagTLSKey       = "tls.key"
+	flagUIAssets     = "ui.assets"
 )
 
 func main() {
@@ -69,6 +71,11 @@ func main() {
 		cli.StringFlag{
 			Name:  flagTLSKey,
 			Usage: "The path to the TLS key",
+		},
+		cli.StringFlag{
+			Name:  flagUIAssets,
+			Usage: "The path to the UI assets on disk",
+			Value: "/assets",
 		},
 	}
 
@@ -124,11 +131,16 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 				r.Mount("/", apiV1)
 			}
 			{
+				directory := c.String(flagUIAssets)
+				if _, err := os.Stat(directory); os.IsNotExist(err) {
+					return fmt.Errorf("assets directory does not exist: %s", directory)
+				}
+
 				// Serving the UI assets
-				r.Get("/", file("index.html", "text/html"))
-				r.Get("/bulma.min.css", file("bulma.min.css", "text/css"))
-				r.Get("/main.dart.js", file("main.dart.js", "application/javascript"))
-				r.NotFound(file("index.html", "text/html"))
+				r.Get("/", file(directory, "index.html", "text/html"))
+				r.Get("/bulma.min.css", file(directory, "bulma.min.css", "text/css"))
+				r.Get("/main.dart.js", file(directory, "main.dart.js", "application/javascript"))
+				r.NotFound(file(directory, "index.html", "text/html"))
 			}
 
 			s := http.Server{
@@ -223,8 +235,8 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 	}
 }
 
-func file(name, mime string) http.HandlerFunc {
-	file, _ := ioutil.ReadFile("./cmd/api/assets/" + name)
+func file(directory, name, mime string) http.HandlerFunc {
+	file, _ := ioutil.ReadFile(filepath.Join(directory, name))
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", mime)
 		_, _ = w.Write(file)
