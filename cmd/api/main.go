@@ -14,6 +14,8 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_gokit "github.com/grpc-ecosystem/go-grpc-middleware/logging/kit"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -185,6 +187,13 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 					level.Debug(logger).Log("msg", "serving requests with TLS", "cert", tlsCert, "key", tlsKey)
 				}
+
+				opts = append(opts, grpc_middleware.WithUnaryServerChain(
+					// TODO: we can still improve the key-value pairs logged to reduce noise
+					grpc_gokit.UnaryServerInterceptor(logger,
+						grpc_gokit.WithLevels(api.LoggerGRPC()),
+					),
+				))
 
 				server = grpc.NewServer(opts...)
 			}

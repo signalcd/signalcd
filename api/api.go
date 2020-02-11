@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_gokit "github.com/grpc-ecosystem/go-grpc-middleware/logging/kit"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
@@ -54,6 +56,13 @@ func NewV1(logger log.Logger, db SignalDB, events Events, addr string, certPath 
 
 			opts = append(opts, grpc.Creds(creds))
 		}
+
+		opts = append(opts, grpc_middleware.WithUnaryServerChain(
+			// TODO: we can still improve the key-value pairs logged to reduce noise
+			grpc_gokit.UnaryServerInterceptor(logger,
+				grpc_gokit.WithLevels(LoggerGRPC()),
+			),
+		))
 
 		server = grpc.NewServer(opts...)
 		signalcdproto.RegisterUIServiceServer(server, &UIServer{
@@ -278,6 +287,18 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 
 				flusher.Flush()
 			}
+		}
+	}
+}
+
+// LoggerGRPC overwrites to log normal requests as debug logs, defaults to grpc_gokit otherwise
+func LoggerGRPC() func(code codes.Code, logger log.Logger) log.Logger {
+	return func(code codes.Code, logger log.Logger) log.Logger {
+		switch code {
+		case codes.OK, codes.Canceled, codes.InvalidArgument, codes.NotFound, codes.AlreadyExists, codes.Unauthenticated:
+			return level.Debug(logger)
+		default:
+			return grpc_gokit.DefaultCodeToLevel(code, logger)
 		}
 	}
 }
