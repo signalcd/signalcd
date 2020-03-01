@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-kit/kit/log"
+	"github.com/golang/protobuf/ptypes"
 	"golang.org/x/net/context"
 	"golang.org/x/xerrors"
 
@@ -73,6 +74,34 @@ func (r *RPC) SetDeploymentStatus(ctx context.Context, req *signalcdproto.SetDep
 	return &signalcdproto.SetDeploymentStatusResponse{}, nil
 }
 
+type StepStatusSetter interface {
+	SetStepStatus(deployment int64, step int64, status signalcd.Status) error
+}
+
+func (r *RPC) StepStatus(ctx context.Context, req *signalcdproto.StepStatusRequest) (*signalcdproto.StepStatusResponse, error) {
+	status := signalcd.Status{
+		ExitCode: req.GetStatus().GetExitCode(),
+	}
+
+	if req.GetStatus().GetStarted() != nil {
+		started, err := ptypes.Timestamp(req.GetStatus().GetStarted())
+		if err != nil {
+			return nil, err
+		}
+		status.Started = started
+	}
+	if req.GetStatus().GetStopped() != nil {
+		stopped, err := ptypes.Timestamp(req.GetStatus().GetStopped())
+		if err != nil {
+			return nil, err
+		}
+		status.Stopped = stopped
+	}
+
+	err := r.DB.SetStepStatus(req.GetDeployment(), req.GetStep(), status)
+	return &signalcdproto.StepStatusResponse{}, err
+}
+
 // StepLogsSaver saves the logs for a Deployment step by its number
 type StepLogsSaver interface {
 	SaveStepLogs(ctx context.Context, deployment int64, step int64, logs []byte) error
@@ -80,7 +109,7 @@ type StepLogsSaver interface {
 
 //StepLogs saves the logs for a specific deployment and step coming from an agent
 func (r *RPC) StepLogs(ctx context.Context, req *signalcdproto.StepLogsRequest) (*signalcdproto.StepLogsResponse, error) {
-	err := r.DB.SaveStepLogs(ctx, req.GetNumber(), req.GetStep(), req.GetLogs())
+	err := r.DB.SaveStepLogs(ctx, req.GetDeployment(), req.GetStep(), req.GetLogs())
 	if err != nil {
 		return nil, fmt.Errorf("failed to save logs: %w", err)
 	}

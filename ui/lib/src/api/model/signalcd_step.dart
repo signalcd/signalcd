@@ -9,11 +9,13 @@ class SignalcdStep {
   List<String> imagePullSecrets = [];
   
   List<String> commands = [];
+  
+  SignalcdStatus status = null;
   SignalcdStep();
 
   @override
   String toString() {
-    return 'SignalcdStep[name=$name, image=$image, imagePullSecrets=$imagePullSecrets, commands=$commands, ]';
+    return 'SignalcdStep[name=$name, image=$image, imagePullSecrets=$imagePullSecrets, commands=$commands, status=$status, ]';
   }
 
   SignalcdStep.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,9 @@ class SignalcdStep {
     commands = (json['commands'] == null) ?
       null :
       (json['commands'] as List).cast<String>();
+    status = (json['status'] == null) ?
+      null :
+      SignalcdStatus.fromJson(json['status']);
   }
 
   Map<String, dynamic> toJson() {
@@ -38,6 +43,8 @@ class SignalcdStep {
       json['ImagePullSecrets'] = imagePullSecrets;
     if (commands != null)
       json['commands'] = commands;
+    if (status != null)
+      json['status'] = status;
     return json;
   }
 

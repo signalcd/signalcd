@@ -63,6 +63,8 @@ class ApiClient {
           return SignalcdPipeline.fromJson(value);
         case 'SignalcdSetCurrentDeploymentResponse':
           return SignalcdSetCurrentDeploymentResponse.fromJson(value);
+        case 'SignalcdStatus':
+          return SignalcdStatus.fromJson(value);
         case 'SignalcdStep':
           return SignalcdStep.fromJson(value);
         default:

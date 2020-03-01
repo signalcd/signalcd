@@ -150,11 +150,31 @@ func PipelineProto(p signalcd.Pipeline) (*Pipeline, error) {
 
 	steps := make([]*Step, len(p.Steps))
 	for i, s := range p.Steps {
+		var status *Status
+		if s.Status != nil {
+			status = &Status{
+				ExitCode: s.Status.ExitCode,
+			}
+
+			started, err := ptypes.TimestampProto(s.Status.Started)
+			if err != nil {
+				return nil, err
+			}
+			stopped, err := ptypes.TimestampProto(s.Status.Stopped)
+			if err != nil {
+				return nil, err
+			}
+
+			status.Started = started
+			status.Stopped = stopped
+		}
+
 		steps[i] = &Step{
 			Name:             s.Name,
 			Image:            s.Image,
 			ImagePullSecrets: s.ImagePullSecrets,
 			Commands:         s.Commands,
+			Status:           status,
 		}
 	}
 

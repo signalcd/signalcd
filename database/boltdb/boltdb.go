@@ -3,6 +3,7 @@ package boltdb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -23,6 +24,8 @@ const (
 type BoltDB struct {
 	db *bolt.DB
 }
+
+var ErrNotFound = errors.New("boltdb: not found")
 
 // New creates a new BoltDB instance
 func New(path string) (*BoltDB, func() error, error) {
@@ -266,4 +269,48 @@ func (bdb *BoltDB) CreatePipeline(p signalcd.Pipeline) (signalcd.Pipeline, error
 	})
 
 	return p, err
+}
+
+func (bdb *BoltDB) SetStepStatus(deployment int64, step int64, status signalcd.Status) error {
+	return bdb.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(bucketDeployments))
+		key := []byte(strconv.Itoa(int(deployment)))
+
+		value := b.Get(key)
+		if len(value) == 0 {
+			return ErrNotFound
+		}
+
+		var d signalcd.Deployment
+		if err := json.Unmarshal(value, &d); err != nil {
+			return err
+		}
+
+		if len(d.Pipeline.Steps) <= int(step) {
+			return fmt.Errorf("step does not exist: %w", ErrNotFound)
+		}
+
+		s := d.Pipeline.Steps[step]
+		if s.Status == nil {
+			s.Status = &signalcd.Status{}
+		}
+		if status.ExitCode != 0 {
+			s.Status.ExitCode = status.ExitCode
+		}
+		if !status.Started.IsZero() {
+			s.Status.Started = status.Started
+		}
+		if !status.Stopped.IsZero() {
+			s.Status.Stopped = status.Stopped
+		}
+
+		d.Pipeline.Steps[step] = s
+
+		value, err := json.Marshal(d)
+		if err != nil {
+			return err
+		}
+
+		return b.Put(key, value)
+	})
 }

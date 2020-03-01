@@ -21,9 +21,9 @@ import "signalcd/proto/types.proto";
 service AgentService {
     rpc CurrentDeployment (CurrentDeploymentRequest) returns (CurrentDeploymentResponse);
     rpc SetDeploymentStatus (SetDeploymentStatusRequest) returns (SetDeploymentStatusResponse);
+    rpc StepStatus (StepStatusRequest) returns (StepStatusResponse);
     rpc StepLogs (StepLogsRequest) returns (StepLogsResponse);
 }
-
 
 message CurrentDeploymentRequest {
 }
@@ -40,8 +40,17 @@ message SetDeploymentStatusRequest {
 message SetDeploymentStatusResponse {
 }
 
+message StepStatusRequest {
+    int64 deployment = 1;
+    int64 step = 2;
+    Status status = 3;
+}
+
+message StepStatusResponse {
+}
+
 message StepLogsRequest {
-    int64 number = 1;
+    int64 deployment = 1;
     int64 step = 2;
     bytes logs = 3;
 }

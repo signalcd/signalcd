@@ -27,6 +27,7 @@ part 'model/signalcd_list_deployment_response.dart';
 part 'model/signalcd_list_pipelines_response.dart';
 part 'model/signalcd_pipeline.dart';
 part 'model/signalcd_set_current_deployment_response.dart';
+part 'model/signalcd_status.dart';
 part 'model/signalcd_step.dart';
 
 

@@ -31,6 +31,7 @@ type SignalDB interface {
 	PipelinesLister
 	PipelineCreator
 	StepLogsSaver
+	StepStatusSetter
 }
 
 // Events to Deployments that should be sent via SSE (Server Sent Events)

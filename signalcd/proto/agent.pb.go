@@ -172,8 +172,94 @@ func (m *SetDeploymentStatusResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SetDeploymentStatusResponse proto.InternalMessageInfo
 
+type StepStatusRequest struct {
+	Deployment           int64    `protobuf:"varint,1,opt,name=deployment,proto3" json:"deployment,omitempty"`
+	Step                 int64    `protobuf:"varint,2,opt,name=step,proto3" json:"step,omitempty"`
+	Status               *Status  `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StepStatusRequest) Reset()         { *m = StepStatusRequest{} }
+func (m *StepStatusRequest) String() string { return proto.CompactTextString(m) }
+func (*StepStatusRequest) ProtoMessage()    {}
+func (*StepStatusRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7aa30ce6e358323, []int{4}
+}
+
+func (m *StepStatusRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StepStatusRequest.Unmarshal(m, b)
+}
+func (m *StepStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StepStatusRequest.Marshal(b, m, deterministic)
+}
+func (m *StepStatusRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StepStatusRequest.Merge(m, src)
+}
+func (m *StepStatusRequest) XXX_Size() int {
+	return xxx_messageInfo_StepStatusRequest.Size(m)
+}
+func (m *StepStatusRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_StepStatusRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StepStatusRequest proto.InternalMessageInfo
+
+func (m *StepStatusRequest) GetDeployment() int64 {
+	if m != nil {
+		return m.Deployment
+	}
+	return 0
+}
+
+func (m *StepStatusRequest) GetStep() int64 {
+	if m != nil {
+		return m.Step
+	}
+	return 0
+}
+
+func (m *StepStatusRequest) GetStatus() *Status {
+	if m != nil {
+		return m.Status
+	}
+	return nil
+}
+
+type StepStatusResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *StepStatusResponse) Reset()         { *m = StepStatusResponse{} }
+func (m *StepStatusResponse) String() string { return proto.CompactTextString(m) }
+func (*StepStatusResponse) ProtoMessage()    {}
+func (*StepStatusResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e7aa30ce6e358323, []int{5}
+}
+
+func (m *StepStatusResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_StepStatusResponse.Unmarshal(m, b)
+}
+func (m *StepStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_StepStatusResponse.Marshal(b, m, deterministic)
+}
+func (m *StepStatusResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StepStatusResponse.Merge(m, src)
+}
+func (m *StepStatusResponse) XXX_Size() int {
+	return xxx_messageInfo_StepStatusResponse.Size(m)
+}
+func (m *StepStatusResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_StepStatusResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StepStatusResponse proto.InternalMessageInfo
+
 type StepLogsRequest struct {
-	Number               int64    `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
+	Deployment           int64    `protobuf:"varint,1,opt,name=deployment,proto3" json:"deployment,omitempty"`
 	Step                 int64    `protobuf:"varint,2,opt,name=step,proto3" json:"step,omitempty"`
 	Logs                 []byte   `protobuf:"bytes,3,opt,name=logs,proto3" json:"logs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -185,7 +271,7 @@ func (m *StepLogsRequest) Reset()         { *m = StepLogsRequest{} }
 func (m *StepLogsRequest) String() string { return proto.CompactTextString(m) }
 func (*StepLogsRequest) ProtoMessage()    {}
 func (*StepLogsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e7aa30ce6e358323, []int{4}
+	return fileDescriptor_e7aa30ce6e358323, []int{6}
 }
 
 func (m *StepLogsRequest) XXX_Unmarshal(b []byte) error {
@@ -206,9 +292,9 @@ func (m *StepLogsRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_StepLogsRequest proto.InternalMessageInfo
 
-func (m *StepLogsRequest) GetNumber() int64 {
+func (m *StepLogsRequest) GetDeployment() int64 {
 	if m != nil {
-		return m.Number
+		return m.Deployment
 	}
 	return 0
 }
@@ -237,7 +323,7 @@ func (m *StepLogsResponse) Reset()         { *m = StepLogsResponse{} }
 func (m *StepLogsResponse) String() string { return proto.CompactTextString(m) }
 func (*StepLogsResponse) ProtoMessage()    {}
 func (*StepLogsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e7aa30ce6e358323, []int{5}
+	return fileDescriptor_e7aa30ce6e358323, []int{7}
 }
 
 func (m *StepLogsResponse) XXX_Unmarshal(b []byte) error {
@@ -263,6 +349,8 @@ func init() {
 	proto.RegisterType((*CurrentDeploymentResponse)(nil), "signalcd.CurrentDeploymentResponse")
 	proto.RegisterType((*SetDeploymentStatusRequest)(nil), "signalcd.SetDeploymentStatusRequest")
 	proto.RegisterType((*SetDeploymentStatusResponse)(nil), "signalcd.SetDeploymentStatusResponse")
+	proto.RegisterType((*StepStatusRequest)(nil), "signalcd.StepStatusRequest")
+	proto.RegisterType((*StepStatusResponse)(nil), "signalcd.StepStatusResponse")
 	proto.RegisterType((*StepLogsRequest)(nil), "signalcd.StepLogsRequest")
 	proto.RegisterType((*StepLogsResponse)(nil), "signalcd.StepLogsResponse")
 }
@@ -272,27 +360,30 @@ func init() {
 }
 
 var fileDescriptor_e7aa30ce6e358323 = []byte{
-	// 309 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0x51, 0x4b, 0xc3, 0x30,
-	0x10, 0xc7, 0xd9, 0x2a, 0x65, 0x9c, 0x93, 0xb9, 0x28, 0xd2, 0x45, 0x84, 0x11, 0x15, 0xf6, 0xd4,
-	0x41, 0xfd, 0x04, 0x9b, 0x3e, 0xfa, 0x62, 0xfb, 0x26, 0x82, 0xb4, 0xf5, 0xa8, 0x83, 0x2e, 0x89,
-	0x4d, 0x2a, 0xec, 0x73, 0xf8, 0x85, 0x65, 0x69, 0x4a, 0xeb, 0xd6, 0xb9, 0xa7, 0x5e, 0xef, 0xff,
-	0xbf, 0xfb, 0x71, 0x77, 0x01, 0xaa, 0x56, 0x19, 0x8f, 0xf3, 0xf4, 0x63, 0x2e, 0x0b, 0xa1, 0xc5,
-	0x3c, 0xce, 0x90, 0x6b, 0xdf, 0xc4, 0x64, 0x50, 0x6b, 0x74, 0xd7, 0xa5, 0x37, 0x12, 0x55, 0xe5,
-	0x62, 0x14, 0xbc, 0xc7, 0xb2, 0x28, 0x90, 0xeb, 0x27, 0x94, 0xb9, 0xd8, 0xac, 0x91, 0xeb, 0x10,
-	0xbf, 0x4a, 0x54, 0x9a, 0xbd, 0xc3, 0xa4, 0x43, 0x53, 0x52, 0x70, 0x85, 0x64, 0x09, 0xe3, 0x74,
-	0x57, 0xf4, 0x7a, 0xd3, 0xde, 0xec, 0x34, 0xb8, 0xf4, 0x6b, 0xa0, 0xdf, 0x2a, 0xdc, 0xb7, 0xb3,
-	0x4f, 0xa0, 0x11, 0xb6, 0x12, 0x91, 0x8e, 0x75, 0xa9, 0x2c, 0x9e, 0x5c, 0x81, 0xcb, 0xcb, 0x75,
-	0x82, 0x85, 0x69, 0xeb, 0x84, 0xf6, 0x8f, 0x04, 0xe0, 0x2a, 0x63, 0xf4, 0xfa, 0x06, 0x47, 0xbb,
-	0x70, 0xb6, 0x95, 0x75, 0xb2, 0x1b, 0xb8, 0xee, 0x24, 0x55, 0xc3, 0xb0, 0x17, 0x18, 0x45, 0x1a,
-	0xe5, 0xb3, 0xc8, 0x8e, 0xd2, 0x09, 0x9c, 0x28, 0x8d, 0xd2, 0xb0, 0x9d, 0xd0, 0xc4, 0xdb, 0x5c,
-	0x2e, 0x32, 0xe5, 0x39, 0xd3, 0xde, 0x6c, 0x18, 0x9a, 0x98, 0x11, 0x38, 0x6f, 0x5a, 0x56, 0x98,
-	0xe0, 0xa7, 0x0f, 0xc3, 0xc5, 0xf6, 0x44, 0x11, 0x16, 0xdf, 0xab, 0x14, 0xc9, 0x1b, 0x8c, 0xf7,
-	0x36, 0x4c, 0x58, 0x33, 0xcf, 0xa1, 0xd3, 0xd0, 0xdb, 0x7f, 0x3d, 0xf6, 0x44, 0x09, 0x5c, 0x74,
-	0x0c, 0x4d, 0xee, 0x9a, 0xda, 0xc3, 0xdb, 0xa7, 0xf7, 0x47, 0x5c, 0x96, 0xb1, 0x80, 0x41, 0x3d,
-	0x26, 0x99, 0xb4, 0x4a, 0xfe, 0x6e, 0x93, 0xd2, 0x2e, 0xa9, 0x6a, 0xb1, 0x1c, 0xbd, 0x9e, 0xd5,
-	0xa2, 0x79, 0x93, 0x89, 0x6b, 0x3e, 0x0f, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x61, 0xf9, 0x32,
-	0x40, 0xde, 0x02, 0x00, 0x00,
+	// 358 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x53, 0x4d, 0x4f, 0xc2, 0x40,
+	0x10, 0x0d, 0x94, 0x10, 0x32, 0x62, 0x80, 0x91, 0x18, 0x58, 0xd4, 0x98, 0x55, 0x13, 0x4e, 0x90,
+	0xe0, 0x2f, 0x00, 0x4d, 0xbc, 0x78, 0x6a, 0x4f, 0x1a, 0x13, 0xc3, 0xc7, 0xa4, 0x92, 0x40, 0x5b,
+	0xba, 0x5b, 0x13, 0xfe, 0xab, 0x3f, 0xc6, 0xb0, 0xdd, 0xda, 0xa5, 0x2c, 0x7a, 0xf0, 0xd4, 0xe9,
+	0xbc, 0xd7, 0x79, 0x6f, 0x3e, 0x0a, 0x4c, 0x2c, 0xfd, 0x60, 0xba, 0x9a, 0x2f, 0x86, 0x51, 0x1c,
+	0xca, 0x70, 0x38, 0xf5, 0x29, 0x90, 0x03, 0x15, 0x63, 0x2d, 0xc3, 0x58, 0x91, 0x25, 0xb7, 0x11,
+	0x89, 0x94, 0xc5, 0x19, 0x74, 0x1e, 0x92, 0x38, 0xa6, 0x40, 0x3e, 0x52, 0xb4, 0x0a, 0xb7, 0x6b,
+	0x0a, 0xa4, 0x4b, 0x9b, 0x84, 0x84, 0xe4, 0xef, 0xd0, 0xb5, 0x60, 0x22, 0x0a, 0x03, 0x41, 0x38,
+	0x81, 0xd6, 0xbc, 0x08, 0x76, 0x4a, 0xd7, 0xa5, 0xfe, 0xc9, 0xa8, 0x3d, 0xc8, 0x04, 0x07, 0xc6,
+	0x87, 0x87, 0x74, 0xfe, 0x01, 0xcc, 0x23, 0x23, 0xe1, 0xc9, 0xa9, 0x4c, 0x84, 0x96, 0xc7, 0x73,
+	0xa8, 0x06, 0xc9, 0x7a, 0x46, 0xb1, 0x2a, 0xeb, 0xb8, 0xfa, 0x0d, 0x47, 0x50, 0x15, 0x8a, 0xd8,
+	0x29, 0x2b, 0x39, 0x66, 0x93, 0xd3, 0xa5, 0x34, 0x93, 0x5f, 0x42, 0xcf, 0xaa, 0x94, 0x36, 0xc3,
+	0x37, 0xd0, 0xf2, 0x24, 0x45, 0xfb, 0xfa, 0x57, 0x00, 0x8b, 0xfd, 0xd6, 0x1c, 0xd7, 0xc8, 0x20,
+	0x42, 0x45, 0x48, 0x8a, 0x94, 0x0b, 0xc7, 0x55, 0x31, 0xf6, 0x7f, 0xbc, 0x39, 0xca, 0x5b, 0x33,
+	0xf7, 0x56, 0x70, 0xd4, 0x06, 0x34, 0x25, 0xb5, 0x91, 0x17, 0x68, 0xec, 0xb2, 0xcf, 0xa1, 0xff,
+	0x2f, 0x1b, 0x08, 0x95, 0x55, 0xe8, 0xa7, 0x26, 0xea, 0xae, 0x8a, 0x39, 0x42, 0x33, 0x2f, 0x9d,
+	0xca, 0x8d, 0xbe, 0xca, 0x50, 0x1f, 0xef, 0x6e, 0xc6, 0xa3, 0xf8, 0x73, 0x39, 0x27, 0x7c, 0x83,
+	0xd6, 0xc1, 0xca, 0x91, 0xe7, 0x4d, 0x1c, 0xbb, 0x15, 0x76, 0xf3, 0x2b, 0x47, 0xdf, 0xcc, 0x0c,
+	0xce, 0x2c, 0x5b, 0xc0, 0x5b, 0x63, 0x48, 0x47, 0xcf, 0x81, 0xdd, 0xfd, 0xc1, 0xd2, 0x1a, 0x4f,
+	0x00, 0xf9, 0x5c, 0xb1, 0x67, 0xce, 0xbf, 0xb0, 0x60, 0x76, 0x61, 0x07, 0x75, 0xa1, 0x31, 0xd4,
+	0xb2, 0x79, 0x61, 0x77, 0x9f, 0x69, 0xac, 0x87, 0x31, 0x1b, 0x94, 0x96, 0x98, 0x34, 0x5e, 0x4f,
+	0x33, 0x50, 0xfd, 0x6d, 0xb3, 0xaa, 0x7a, 0xdc, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0x11, 0xc4,
+	0xe9, 0x15, 0xb8, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -309,6 +400,7 @@ const _ = grpc.SupportPackageIsVersion6
 type AgentServiceClient interface {
 	CurrentDeployment(ctx context.Context, in *CurrentDeploymentRequest, opts ...grpc.CallOption) (*CurrentDeploymentResponse, error)
 	SetDeploymentStatus(ctx context.Context, in *SetDeploymentStatusRequest, opts ...grpc.CallOption) (*SetDeploymentStatusResponse, error)
+	StepStatus(ctx context.Context, in *StepStatusRequest, opts ...grpc.CallOption) (*StepStatusResponse, error)
 	StepLogs(ctx context.Context, in *StepLogsRequest, opts ...grpc.CallOption) (*StepLogsResponse, error)
 }
 
@@ -338,6 +430,15 @@ func (c *agentServiceClient) SetDeploymentStatus(ctx context.Context, in *SetDep
 	return out, nil
 }
 
+func (c *agentServiceClient) StepStatus(ctx context.Context, in *StepStatusRequest, opts ...grpc.CallOption) (*StepStatusResponse, error) {
+	out := new(StepStatusResponse)
+	err := c.cc.Invoke(ctx, "/signalcd.AgentService/StepStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *agentServiceClient) StepLogs(ctx context.Context, in *StepLogsRequest, opts ...grpc.CallOption) (*StepLogsResponse, error) {
 	out := new(StepLogsResponse)
 	err := c.cc.Invoke(ctx, "/signalcd.AgentService/StepLogs", in, out, opts...)
@@ -351,6 +452,7 @@ func (c *agentServiceClient) StepLogs(ctx context.Context, in *StepLogsRequest, 
 type AgentServiceServer interface {
 	CurrentDeployment(context.Context, *CurrentDeploymentRequest) (*CurrentDeploymentResponse, error)
 	SetDeploymentStatus(context.Context, *SetDeploymentStatusRequest) (*SetDeploymentStatusResponse, error)
+	StepStatus(context.Context, *StepStatusRequest) (*StepStatusResponse, error)
 	StepLogs(context.Context, *StepLogsRequest) (*StepLogsResponse, error)
 }
 
@@ -363,6 +465,9 @@ func (*UnimplementedAgentServiceServer) CurrentDeployment(ctx context.Context, r
 }
 func (*UnimplementedAgentServiceServer) SetDeploymentStatus(ctx context.Context, req *SetDeploymentStatusRequest) (*SetDeploymentStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetDeploymentStatus not implemented")
+}
+func (*UnimplementedAgentServiceServer) StepStatus(ctx context.Context, req *StepStatusRequest) (*StepStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StepStatus not implemented")
 }
 func (*UnimplementedAgentServiceServer) StepLogs(ctx context.Context, req *StepLogsRequest) (*StepLogsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StepLogs not implemented")
@@ -408,6 +513,24 @@ func _AgentService_SetDeploymentStatus_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AgentService_StepStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StepStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AgentServiceServer).StepStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/signalcd.AgentService/StepStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AgentServiceServer).StepStatus(ctx, req.(*StepStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _AgentService_StepLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StepLogsRequest)
 	if err := dec(in); err != nil {
@@ -437,6 +560,10 @@ var _AgentService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetDeploymentStatus",
 			Handler:    _AgentService_SetDeploymentStatus_Handler,
+		},
+		{
+			MethodName: "StepStatus",
+			Handler:    _AgentService_StepStatus_Handler,
 		},
 		{
 			MethodName: "StepLogs",

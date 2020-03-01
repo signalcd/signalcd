@@ -41,12 +41,19 @@ message Step {
     string image = 2;
     repeated string ImagePullSecrets = 3;
     repeated string commands = 4;
+    Status status = 5;
 }
 
 message Check {
-
     string name = 1;
     string image = 2;
     repeated string ImagePullSecrets = 3;
     google.protobuf.Duration duration = 4;
+    Status status = 5;
+}
+
+message Status {
+    int64 exitCode = 1;
+    google.protobuf.Timestamp started = 2;
+    google.protobuf.Timestamp stopped = 3;
 }

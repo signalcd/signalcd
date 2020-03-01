@@ -232,6 +232,9 @@
         },
         "duration": {
           "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/signalcdStatus"
         }
       }
     },
@@ -351,6 +354,23 @@
         }
       }
     },
+    "signalcdStatus": {
+      "type": "object",
+      "properties": {
+        "exitCode": {
+          "type": "string",
+          "format": "int64"
+        },
+        "started": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stopped": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "signalcdStep": {
       "type": "object",
       "properties": {
@@ -371,6 +391,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "status": {
+          "$ref": "#/definitions/signalcdStatus"
         }
       }
     }

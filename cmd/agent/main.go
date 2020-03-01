@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/oklog/run"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
@@ -382,6 +383,15 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
+	_, err := u.client.StepStatus(ctx, &signalcdproto.StepStatusRequest{
+		Deployment: deploymentNumber,
+		Step:       stepNumber,
+		Status:     &signalcdproto.Status{Started: ptypes.TimestampNow()},
+	})
+	if err != nil {
+		return fmt.Errorf("failed updating step status: %w", err)
+	}
+
 	args := []string{"-c"}
 	for _, c := range step.Commands {
 		args = append(args, c)
@@ -421,7 +431,7 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 	podLogger := log.With(u.logger, "namespace", u.namespace, "pod", p.Name)
 
 	// Clean up previous runs if the pods still exists
-	err := u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+	err = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete previous pod: %w", err)
 	}
@@ -440,9 +450,9 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 		level.Debug(podLogger).Log("msg", "step logs", "logs", string(logs))
 
 		_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
-			Number: deploymentNumber,
-			Step:   stepNumber,
-			Logs:   logs,
+			Deployment: deploymentNumber,
+			Step:       stepNumber,
+			Logs:       logs,
 		})
 		if err != nil {
 			level.Warn(podLogger).Log("msg", "failed to ship logs", "err", err)
@@ -464,13 +474,28 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 		return fmt.Errorf("failed to watch pods %s: %w", labelsSelector(p.GetLabels()), err)
 	}
 
+	reportStepStatus := func(pod *corev1.Pod) {
+		_, _ = u.client.StepStatus(ctx, &signalcdproto.StepStatusRequest{
+			Deployment: deploymentNumber,
+			Step:       stepNumber,
+			Status: &signalcdproto.Status{
+				ExitCode: int64(pod.Status.ContainerStatuses[0].State.Terminated.ExitCode),
+				Stopped:  ptypes.TimestampNow(),
+			},
+		})
+	}
+
 	for event := range watch.ResultChan() {
 		pod := event.Object.(*corev1.Pod)
 
 		if pod.Status.Phase == corev1.PodSucceeded {
+			reportStepStatus(pod)
+
 			return nil
 		}
 		if pod.Status.Phase == corev1.PodFailed {
+			reportStepStatus(pod)
+
 			return fmt.Errorf("step failed")
 		}
 	}

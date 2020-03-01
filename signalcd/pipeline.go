@@ -24,9 +24,9 @@ type Step struct {
 
 // Status is the state of a Step in a Pipeline
 type Status struct {
-	ExitCode int   `json:"exit_code"`
-	Started  int64 `json:"started,omitempty"`
-	Stopped  int64 `json:"stopped,omitempty"`
+	ExitCode int64     `json:"exit_code"`
+	Started  time.Time `json:"started,omitempty"`
+	Stopped  time.Time `json:"stopped,omitempty"`
 
 	Logs []byte `json:"logs"`
 }
