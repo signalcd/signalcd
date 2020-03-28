@@ -2,19 +2,21 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -89,103 +91,112 @@ func action(c *cli.Context) error {
 
 	apiURLFlag := c.String(flagAPIURL)
 	if apiURLFlag == "" {
-		return xerrors.New("no API URL provided")
+		return fmt.Errorf("no API URL provided")
 	}
 
-	err = createPipeline(apiURLFlag, config)
+	client := &http.Client{
+		Timeout: time.Minute,
+	}
+
+	certPath := c.String(flagTLSCert)
+	if certPath != "" {
+		caCert, err := ioutil.ReadFile(certPath)
+		if err != nil {
+			return fmt.Errorf("failed to read TLS cert from %s: %w", path, err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: caCertPool,
+			},
+		}
+	}
+
+	pipelineID, err := createPipeline(client, apiURLFlag, config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create pipeline: %w", err)
 	}
 
-	//setCurrentD
+	deploymentNumber, err := setCurrentDeployment(client, apiURLFlag, pipelineID)
+	if err != nil {
+		return fmt.Errorf("failed to set current deployment pipeline: %w", err)
+	}
 
-	//var client signalcdproto.UIServiceClient
-	//{
-	//	var opts []grpc.DialOption
-	//
-	//	tlsCert := c.String(flagTLSCert)
-	//	if tlsCert != "" {
-	//		creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
-	//		if err != nil {
-	//			return fmt.Errorf("failed to load credentials: %w", err)
-	//		}
-	//
-	//		opts = append(opts, grpc.WithTransportCredentials(creds))
-	//
-	//		stdlog.Println("Making requests with TLS")
-	//	} else {
-	//		stdlog.Println("Making requests unencrypted")
-	//		opts = append(opts, grpc.WithInsecure())
-	//	}
-	//
-	//	dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	//	defer cancel()
-	//	conn, err := grpc.DialContext(dialCtx, apiURLFlag, opts...)
-	//	if err != nil {
-	//		return fmt.Errorf("failed to connect to the api: %w", err)
-	//	}
-	//	defer conn.Close()
-	//
-	//	client = signalcdproto.NewUIServiceClient(conn)
-	//}
-	//
-	//var pipelineResp *signalcdproto.CreatePipelineResponse
-	//{
-	//	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	//	defer cancel()
-	//
-	//	pipelineResp, err = client.CreatePipeline(ctx, &signalcdproto.CreatePipelineRequest{
-	//		Pipeline: configToPipeline(config),
-	//	})
-	//	if err != nil {
-	//		return fmt.Errorf("failed to create pipeline: %w", err)
-	//	}
-	//}
-	//
-	//var deploymentResp *signalcdproto.SetCurrentDeploymentResponse
-	//{
-	//	deploymentResp, err = client.SetCurrentDeployment(context.Background(), &signalcdproto.SetCurrentDeploymentRequest{
-	//		Id: pipelineResp.GetPipeline().GetId(),
-	//	})
-	//	if err != nil {
-	//		return fmt.Errorf("failed to set pipeline as current deployment: %w", err)
-	//	}
-	//}
-
-	//fmt.Printf("Crated and applied pipeline %s as deployment %d\n", pipelineResp.GetPipeline().GetId(), deploymentResp.Deployment.Number)
+	fmt.Printf("Crated and applied pipeline %s as deployment %s\n", pipelineID, deploymentNumber)
 
 	return nil
 }
 
-func createPipeline(api string, config signalcd.Config) error {
+func createPipeline(client *http.Client, api string, config signalcd.Config) (string, error) {
 	payload := &signalcdproto.CreatePipelineRequest{
 		Pipeline: configToPipeline(config),
 	}
 
 	payloadBytes, err := json.Marshal(payload.GetPipeline())
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, api+"/api/v1/pipelines", bytes.NewBuffer(payloadBytes))
+	url := api + "/api/v1/pipelines"
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+	// TODO: Most likely it's better to generate swagger based Go client, but seems overkill for 2 call right now...
+	var respPayload struct {
+		Pipeline struct {
+			ID string `json:"id"`
+		} `json:"pipeline"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&respPayload); err != nil {
+		return "", err
 	}
 
-	fmt.Println(string(body))
+	return respPayload.Pipeline.ID, nil
+}
 
-	return nil
+func setCurrentDeployment(client *http.Client, api string, pipelineID string) (string, error) {
+	payload := &signalcdproto.SetCurrentDeploymentRequest{Id: pipelineID}
+
+	payloadBytes, err := json.Marshal(payload.Id)
+	if err != nil {
+		return "", err
+	}
+
+	url := api + "/api/v1/deployments/current"
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// TODO: Most likely it's better to generate swagger based Go client, but seems overkill for 2 call right now...
+	var respPayload struct {
+		Deployment struct {
+			Number string `json:"number"`
+		} `json:"deployment"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respPayload); err != nil {
+		return "", err
+	}
+
+	return respPayload.Deployment.Number, nil
 }
 
 func configToPipeline(config signalcd.Config) *signalcdproto.Pipeline {
