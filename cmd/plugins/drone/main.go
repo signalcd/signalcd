@@ -1,12 +1,13 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
+	"net/http"
 	"os"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/golang/protobuf/ptypes"
@@ -14,17 +15,19 @@ import (
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
-	flagTLSCert = "tls.cert"
+	flagFile         = "signalcd.file"
+	flagAPIURL       = "api.url"
+	flagAuthPassword = "basicauth.password"
+	flagAuthUsername = "basicauth.username"
+	flagTLSCert      = "tls.cert"
 )
 
 func main() {
 	fileFlag := cli.StringFlag{
-		Name:   "signalcd.file,f",
+		Name:   flagFile + ",f",
 		Usage:  "The path to the SignalCD file to use",
 		EnvVar: "PLUGIN_SIGNALCD_FILE",
 		Value:  ".signalcd.yaml",
@@ -36,17 +39,17 @@ func main() {
 	app.Flags = []cli.Flag{
 		fileFlag,
 		cli.StringFlag{
-			Name:   "api.url",
+			Name:   flagAPIURL,
 			Usage:  "The URL to talk to the SignalCD API at",
 			EnvVar: "PLUGIN_API_URL",
 		},
 		cli.StringFlag{
-			Name:   "basicauth.username",
+			Name:   flagAuthUsername,
 			Usage:  "The username to authenticate with",
 			EnvVar: "PLUGIN_BASICAUTH_USERNAME",
 		},
 		cli.StringFlag{
-			Name:   "basicauth.password",
+			Name:   flagAuthPassword,
 			Usage:  "The user's password to authenticate with",
 			EnvVar: "PLUGIN_BASICAUTH_PASSWORD",
 		},
@@ -73,7 +76,7 @@ func main() {
 }
 
 func action(c *cli.Context) error {
-	path := c.String("signalcd.file")
+	path := c.String(flagFile)
 	fileContent, err := ioutil.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read SignalCD file from: %s", path)
@@ -84,65 +87,103 @@ func action(c *cli.Context) error {
 		return fmt.Errorf("failed to parse SignalCD config: %w", err)
 	}
 
-	apiURLFlag := c.String("api.url")
+	apiURLFlag := c.String(flagAPIURL)
 	if apiURLFlag == "" {
 		return xerrors.New("no API URL provided")
 	}
 
-	var client signalcdproto.UIServiceClient
-	{
-		var opts []grpc.DialOption
-
-		tlsCert := c.String(flagTLSCert)
-		if tlsCert != "" {
-			creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
-			if err != nil {
-				return fmt.Errorf("failed to load credentials: %w", err)
-			}
-
-			opts = append(opts, grpc.WithTransportCredentials(creds))
-
-			stdlog.Println("Making requests with TLS")
-		} else {
-			stdlog.Println("Making requests unencrypted")
-			opts = append(opts, grpc.WithInsecure())
-		}
-
-		dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		conn, err := grpc.DialContext(dialCtx, apiURLFlag, opts...)
-		if err != nil {
-			return fmt.Errorf("failed to connect to the api: %w", err)
-		}
-		defer conn.Close()
-
-		client = signalcdproto.NewUIServiceClient(conn)
+	err = createPipeline(apiURLFlag, config)
+	if err != nil {
+		return err
 	}
 
-	var pipelineResp *signalcdproto.CreatePipelineResponse
-	{
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
+	//setCurrentD
 
-		pipelineResp, err = client.CreatePipeline(ctx, &signalcdproto.CreatePipelineRequest{
-			Pipeline: configToPipeline(config),
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create pipeline: %w", err)
-		}
+	//var client signalcdproto.UIServiceClient
+	//{
+	//	var opts []grpc.DialOption
+	//
+	//	tlsCert := c.String(flagTLSCert)
+	//	if tlsCert != "" {
+	//		creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
+	//		if err != nil {
+	//			return fmt.Errorf("failed to load credentials: %w", err)
+	//		}
+	//
+	//		opts = append(opts, grpc.WithTransportCredentials(creds))
+	//
+	//		stdlog.Println("Making requests with TLS")
+	//	} else {
+	//		stdlog.Println("Making requests unencrypted")
+	//		opts = append(opts, grpc.WithInsecure())
+	//	}
+	//
+	//	dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	//	defer cancel()
+	//	conn, err := grpc.DialContext(dialCtx, apiURLFlag, opts...)
+	//	if err != nil {
+	//		return fmt.Errorf("failed to connect to the api: %w", err)
+	//	}
+	//	defer conn.Close()
+	//
+	//	client = signalcdproto.NewUIServiceClient(conn)
+	//}
+	//
+	//var pipelineResp *signalcdproto.CreatePipelineResponse
+	//{
+	//	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	//	defer cancel()
+	//
+	//	pipelineResp, err = client.CreatePipeline(ctx, &signalcdproto.CreatePipelineRequest{
+	//		Pipeline: configToPipeline(config),
+	//	})
+	//	if err != nil {
+	//		return fmt.Errorf("failed to create pipeline: %w", err)
+	//	}
+	//}
+	//
+	//var deploymentResp *signalcdproto.SetCurrentDeploymentResponse
+	//{
+	//	deploymentResp, err = client.SetCurrentDeployment(context.Background(), &signalcdproto.SetCurrentDeploymentRequest{
+	//		Id: pipelineResp.GetPipeline().GetId(),
+	//	})
+	//	if err != nil {
+	//		return fmt.Errorf("failed to set pipeline as current deployment: %w", err)
+	//	}
+	//}
+
+	//fmt.Printf("Crated and applied pipeline %s as deployment %d\n", pipelineResp.GetPipeline().GetId(), deploymentResp.Deployment.Number)
+
+	return nil
+}
+
+func createPipeline(api string, config signalcd.Config) error {
+	payload := &signalcdproto.CreatePipelineRequest{
+		Pipeline: configToPipeline(config),
 	}
 
-	var deploymentResp *signalcdproto.SetCurrentDeploymentResponse
-	{
-		deploymentResp, err = client.SetCurrentDeployment(context.Background(), &signalcdproto.SetCurrentDeploymentRequest{
-			Id: pipelineResp.GetPipeline().GetId(),
-		})
-		if err != nil {
-			return fmt.Errorf("failed to set pipeline as current deployment: %w", err)
-		}
+	payloadBytes, err := json.Marshal(payload.GetPipeline())
+	if err != nil {
+		return err
 	}
 
-	fmt.Printf("Crated and applied pipeline %s as deployment %d\n", pipelineResp.GetPipeline().GetId(), deploymentResp.Deployment.Number)
+	req, err := http.NewRequest(http.MethodPost, api+"/api/v1/pipelines", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(body))
 
 	return nil
 }
@@ -174,7 +215,7 @@ func configToPipeline(config signalcd.Config) *signalcdproto.Pipeline {
 }
 
 func evalAction(c *cli.Context) error {
-	path := c.String("signalcd.file")
+	path := c.String(flagFile)
 	fileContent, err := ioutil.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read SignalCD file from: %s", path)
