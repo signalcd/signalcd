@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -239,6 +238,8 @@ func (s *UIServer) GetPipeline(ctx context.Context, req *signalcdproto.GetPipeli
 }
 
 func deploymentEventsHandler(logger log.Logger, events Events) func(w http.ResponseWriter, r *http.Request) {
+	marshaler := &runtime.JSONPb{}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -275,7 +276,8 @@ func deploymentEventsHandler(logger log.Logger, events Events) func(w http.Respo
 					level.Warn(logger).Log("msg", "failed to convert deployment to proto", "err", err)
 					return // TODO
 				}
-				j, err := json.Marshal(model)
+
+				j, err := marshaler.Marshal(model)
 				if err != nil {
 					return // TODO
 				}
