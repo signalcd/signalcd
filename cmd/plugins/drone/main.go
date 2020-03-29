@@ -115,12 +115,15 @@ func action(c *cli.Context) error {
 		}
 	}
 
-	pipelineID, err := createPipeline(client, apiURLFlag, config)
+	username := c.String(flagAuthUsername)
+	password := c.String(flagAuthPassword)
+
+	pipelineID, err := createPipeline(client, apiURLFlag, username, password, config)
 	if err != nil {
 		return fmt.Errorf("failed to create pipeline: %w", err)
 	}
 
-	deploymentNumber, err := setCurrentDeployment(client, apiURLFlag, pipelineID)
+	deploymentNumber, err := setCurrentDeployment(client, apiURLFlag, username, password, pipelineID)
 	if err != nil {
 		return fmt.Errorf("failed to set current deployment pipeline: %w", err)
 	}
@@ -130,7 +133,7 @@ func action(c *cli.Context) error {
 	return nil
 }
 
-func createPipeline(client *http.Client, api string, config signalcd.Config) (string, error) {
+func createPipeline(client *http.Client, api string, username string, password string, config signalcd.Config) (string, error) {
 	payload := &signalcdproto.CreatePipelineRequest{
 		Pipeline: configToPipeline(config),
 	}
@@ -145,12 +148,17 @@ func createPipeline(client *http.Client, api string, config signalcd.Config) (st
 	if err != nil {
 		return "", err
 	}
+	req.SetBasicAuth(username, password)
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("unexpected error: %s", resp.Status)
+	}
 
 	// TODO: Most likely it's better to generate swagger based Go client, but seems overkill for 2 call right now...
 	var respPayload struct {
@@ -165,7 +173,7 @@ func createPipeline(client *http.Client, api string, config signalcd.Config) (st
 	return respPayload.Pipeline.ID, nil
 }
 
-func setCurrentDeployment(client *http.Client, api string, pipelineID string) (string, error) {
+func setCurrentDeployment(client *http.Client, api string, username string, password string, pipelineID string) (string, error) {
 	payload := &signalcdproto.SetCurrentDeploymentRequest{Id: pipelineID}
 
 	payloadBytes, err := json.Marshal(payload.Id)
@@ -178,12 +186,17 @@ func setCurrentDeployment(client *http.Client, api string, pipelineID string) (s
 	if err != nil {
 		return "", err
 	}
+	req.SetBasicAuth(username, password)
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("unexpected error: %s", resp.Status)
+	}
 
 	// TODO: Most likely it's better to generate swagger based Go client, but seems overkill for 2 call right now...
 	var respPayload struct {
