@@ -437,6 +437,8 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 			level.Warn(podLogger).Log("msg", "failed to get pod logs", "err", err)
 		}
 
+		level.Debug(podLogger).Log("msg", "step logs", "logs", string(logs))
+
 		_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
 			Number: deploymentNumber,
 			Step:   stepNumber,
