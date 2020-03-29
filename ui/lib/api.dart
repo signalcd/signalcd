@@ -4,7 +4,7 @@ class API {
   UIServiceApi ui;
 
   API() {
-    ApiClient client = ApiClient(basePath: "https://localhost:6060");
+    ApiClient client = ApiClient(basePath: "/");
     this.ui = UIServiceApi(client);
   }
 }
