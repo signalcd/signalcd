@@ -35,7 +35,7 @@ class PipelinesComponent implements OnInit {
     _deploymentsService
         .deploy(pipeline.id)
         .then((SignalcdDeployment deployment) =>
-            print('pipeline ${deployment.number} deployed!'))
-        .catchError(() => print('error deploying pipeline'));
+            print('Deployment ${deployment.number} deployed!'))
+        .catchError((e) => print('error deploying pipeline'));
   }
 }
