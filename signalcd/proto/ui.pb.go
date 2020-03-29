@@ -484,7 +484,9 @@ func init() {
 	proto.RegisterType((*GetPipelineResponse)(nil), "signalcd.GetPipelineResponse")
 }
 
-func init() { proto.RegisterFile("signalcd/proto/ui.proto", fileDescriptor_df79a9f155088a03) }
+func init() {
+	proto.RegisterFile("signalcd/proto/ui.proto", fileDescriptor_df79a9f155088a03)
+}
 
 var fileDescriptor_df79a9f155088a03 = []byte{
 	// 505 bytes of a gzipped FileDescriptorProto

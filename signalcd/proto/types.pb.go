@@ -386,7 +386,9 @@ func init() {
 	proto.RegisterType((*Check)(nil), "signalcd.Check")
 }
 
-func init() { proto.RegisterFile("signalcd/proto/types.proto", fileDescriptor_7c4df36a331e75e3) }
+func init() {
+	proto.RegisterFile("signalcd/proto/types.proto", fileDescriptor_7c4df36a331e75e3)
+}
 
 var fileDescriptor_7c4df36a331e75e3 = []byte{
 	// 521 bytes of a gzipped FileDescriptorProto

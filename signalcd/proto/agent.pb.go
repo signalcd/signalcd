@@ -267,7 +267,9 @@ func init() {
 	proto.RegisterType((*StepLogsResponse)(nil), "signalcd.StepLogsResponse")
 }
 
-func init() { proto.RegisterFile("signalcd/proto/agent.proto", fileDescriptor_e7aa30ce6e358323) }
+func init() {
+	proto.RegisterFile("signalcd/proto/agent.proto", fileDescriptor_e7aa30ce6e358323)
+}
 
 var fileDescriptor_e7aa30ce6e358323 = []byte{
 	// 309 bytes of a gzipped FileDescriptorProto

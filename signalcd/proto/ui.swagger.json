@@ -20,6 +20,12 @@
             "schema": {
               "$ref": "#/definitions/signalcdListDeploymentResponse"
             }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
           }
         },
         "tags": [
@@ -36,6 +42,12 @@
             "schema": {
               "$ref": "#/definitions/signalcdGetCurrentDeploymentResponse"
             }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
           }
         },
         "tags": [
@@ -49,6 +61,12 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/signalcdSetCurrentDeploymentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -76,6 +94,12 @@
             "schema": {
               "$ref": "#/definitions/signalcdListPipelinesResponse"
             }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
+            }
           }
         },
         "tags": [
@@ -89,6 +113,12 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/signalcdCreatePipelineResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -115,6 +145,12 @@
             "description": "A successful response.",
             "schema": {
               "$ref": "#/definitions/signalcdGetPipelineResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response",
+            "schema": {
+              "$ref": "#/definitions/runtimeError"
             }
           }
         },
@@ -145,6 +181,39 @@
         "KILLED"
       ],
       "default": "DONTUSETHISVALUE"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "runtimeError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
     },
     "signalcdCheck": {
       "type": "object",

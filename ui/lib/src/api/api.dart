@@ -15,6 +15,8 @@ part 'auth/http_basic_auth.dart';
 part 'api/ui_service_api.dart';
 
 part 'model/deployment_status_phase.dart';
+part 'model/protobuf_any.dart';
+part 'model/runtime_error.dart';
 part 'model/signalcd_check.dart';
 part 'model/signalcd_create_pipeline_response.dart';
 part 'model/signalcd_deployment.dart';

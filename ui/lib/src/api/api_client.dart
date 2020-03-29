@@ -39,6 +39,10 @@ class ApiClient {
           return value is double ? value : double.parse('$value');
         case 'DeploymentStatusPhase':
           return new DeploymentStatusPhaseTypeTransformer().decode(value);
+        case 'ProtobufAny':
+          return ProtobufAny.fromJson(value);
+        case 'RuntimeError':
+          return RuntimeError.fromJson(value);
         case 'SignalcdCheck':
           return SignalcdCheck.fromJson(value);
         case 'SignalcdCreatePipelineResponse':
