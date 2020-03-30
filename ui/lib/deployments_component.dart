@@ -50,6 +50,10 @@ class DeploymentsComponent implements OnInit, OnDestroy {
 
   void getDeployments() {
     _deploymentsService.deployments().then((List<SignalcdDeployment> deployments) {
+      if (deployments == null) {
+        return;
+      }
+
       // Only update if number of deployments changed
       if (this.deployments.length != deployments.length) {
         this.deployments = deployments;
