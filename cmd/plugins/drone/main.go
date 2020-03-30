@@ -1,10 +1,15 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
+	"net/http"
 	"os"
 	"time"
 
@@ -13,18 +18,19 @@ import (
 	"github.com/signalcd/signalcd/signalcd"
 	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
-	flagTLSCert = "tls.cert"
+	flagFile         = "signalcd.file"
+	flagAPIURL       = "api.url"
+	flagAuthPassword = "basicauth.password"
+	flagAuthUsername = "basicauth.username"
+	flagTLSCert      = "tls.cert"
 )
 
 func main() {
 	fileFlag := cli.StringFlag{
-		Name:   "signalcd.file,f",
+		Name:   flagFile + ",f",
 		Usage:  "The path to the SignalCD file to use",
 		EnvVar: "PLUGIN_SIGNALCD_FILE",
 		Value:  ".signalcd.yaml",
@@ -36,17 +42,17 @@ func main() {
 	app.Flags = []cli.Flag{
 		fileFlag,
 		cli.StringFlag{
-			Name:   "api.url",
+			Name:   flagAPIURL,
 			Usage:  "The URL to talk to the SignalCD API at",
 			EnvVar: "PLUGIN_API_URL",
 		},
 		cli.StringFlag{
-			Name:   "basicauth.username",
+			Name:   flagAuthUsername,
 			Usage:  "The username to authenticate with",
 			EnvVar: "PLUGIN_BASICAUTH_USERNAME",
 		},
 		cli.StringFlag{
-			Name:   "basicauth.password",
+			Name:   flagAuthPassword,
 			Usage:  "The user's password to authenticate with",
 			EnvVar: "PLUGIN_BASICAUTH_PASSWORD",
 		},
@@ -73,7 +79,7 @@ func main() {
 }
 
 func action(c *cli.Context) error {
-	path := c.String("signalcd.file")
+	path := c.String(flagFile)
 	fileContent, err := ioutil.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read SignalCD file from: %s", path)
@@ -84,67 +90,127 @@ func action(c *cli.Context) error {
 		return fmt.Errorf("failed to parse SignalCD config: %w", err)
 	}
 
-	apiURLFlag := c.String("api.url")
+	apiURLFlag := c.String(flagAPIURL)
 	if apiURLFlag == "" {
-		return xerrors.New("no API URL provided")
+		return errors.New("no API URL provided")
 	}
 
-	var client signalcdproto.UIServiceClient
-	{
-		var opts []grpc.DialOption
+	client := &http.Client{
+		Timeout: time.Minute,
+	}
 
-		tlsCert := c.String(flagTLSCert)
-		if tlsCert != "" {
-			creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
-			if err != nil {
-				return fmt.Errorf("failed to load credentials: %w", err)
-			}
-
-			opts = append(opts, grpc.WithTransportCredentials(creds))
-
-			stdlog.Println("Making requests with TLS")
-		} else {
-			stdlog.Println("Making requests unencrypted")
-			opts = append(opts, grpc.WithInsecure())
-		}
-
-		dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		defer cancel()
-		conn, err := grpc.DialContext(dialCtx, apiURLFlag, opts...)
+	certPath := c.String(flagTLSCert)
+	if certPath != "" {
+		caCert, err := ioutil.ReadFile(certPath)
 		if err != nil {
-			return fmt.Errorf("failed to connect to the api: %w", err)
+			return fmt.Errorf("failed to read TLS cert from %s: %w", path, err)
 		}
-		defer conn.Close()
 
-		client = signalcdproto.NewUIServiceClient(conn)
-	}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
 
-	var pipelineResp *signalcdproto.CreatePipelineResponse
-	{
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		pipelineResp, err = client.CreatePipeline(ctx, &signalcdproto.CreatePipelineRequest{
-			Pipeline: configToPipeline(config),
-		})
-		if err != nil {
-			return fmt.Errorf("failed to create pipeline: %w", err)
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: caCertPool,
+			},
 		}
 	}
 
-	var deploymentResp *signalcdproto.SetCurrentDeploymentResponse
-	{
-		deploymentResp, err = client.SetCurrentDeployment(context.Background(), &signalcdproto.SetCurrentDeploymentRequest{
-			Id: pipelineResp.GetPipeline().GetId(),
-		})
-		if err != nil {
-			return fmt.Errorf("failed to set pipeline as current deployment: %w", err)
-		}
+	username := c.String(flagAuthUsername)
+	password := c.String(flagAuthPassword)
+
+	pipelineID, err := createPipeline(client, apiURLFlag, username, password, config)
+	if err != nil {
+		return fmt.Errorf("failed to create pipeline: %w", err)
 	}
 
-	fmt.Printf("Crated and applied pipeline %s as deployment %d\n", pipelineResp.GetPipeline().GetId(), deploymentResp.Deployment.Number)
+	deploymentNumber, err := setCurrentDeployment(client, apiURLFlag, username, password, pipelineID)
+	if err != nil {
+		return fmt.Errorf("failed to set current deployment pipeline: %w", err)
+	}
+
+	fmt.Printf("Crated and applied pipeline %s as deployment %s\n", pipelineID, deploymentNumber)
 
 	return nil
+}
+
+func createPipeline(client *http.Client, api string, username string, password string, config signalcd.Config) (string, error) {
+	payload := &signalcdproto.CreatePipelineRequest{
+		Pipeline: configToPipeline(config),
+	}
+
+	payloadBytes, err := json.Marshal(payload.GetPipeline())
+	if err != nil {
+		return "", err
+	}
+
+	url := api + "/api/v1/pipelines"
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth(username, password)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("unexpected error: %s", resp.Status)
+	}
+
+	// TODO: Most likely it's better to generate swagger based Go client, but seems overkill for 2 call right now...
+	var respPayload struct {
+		Pipeline struct {
+			ID string `json:"id"`
+		} `json:"pipeline"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&respPayload); err != nil {
+		return "", err
+	}
+
+	return respPayload.Pipeline.ID, nil
+}
+
+func setCurrentDeployment(client *http.Client, api string, username string, password string, pipelineID string) (string, error) {
+	payload := &signalcdproto.SetCurrentDeploymentRequest{Id: pipelineID}
+
+	payloadBytes, err := json.Marshal(payload.Id)
+	if err != nil {
+		return "", err
+	}
+
+	url := api + "/api/v1/deployments/current"
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth(username, password)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("unexpected error: %s", resp.Status)
+	}
+
+	// TODO: Most likely it's better to generate swagger based Go client, but seems overkill for 2 call right now...
+	var respPayload struct {
+		Deployment struct {
+			Number string `json:"number"`
+		} `json:"deployment"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&respPayload); err != nil {
+		return "", err
+	}
+
+	return respPayload.Deployment.Number, nil
 }
 
 func configToPipeline(config signalcd.Config) *signalcdproto.Pipeline {
@@ -174,7 +240,7 @@ func configToPipeline(config signalcd.Config) *signalcdproto.Pipeline {
 }
 
 func evalAction(c *cli.Context) error {
-	path := c.String("signalcd.file")
+	path := c.String(flagFile)
 	fileContent, err := ioutil.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read SignalCD file from: %s", path)
