@@ -1,6 +1,6 @@
 module github.com/signalcd/signalcd
 
-go 1.12
+go 1.14
 
 require (
 	github.com/drone/envsubst v1.0.2

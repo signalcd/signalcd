@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
@@ -91,7 +92,7 @@ func action(c *cli.Context) error {
 
 	apiURLFlag := c.String(flagAPIURL)
 	if apiURLFlag == "" {
-		return fmt.Errorf("no API URL provided")
+		return errors.New("no API URL provided")
 	}
 
 	client := &http.Client{
