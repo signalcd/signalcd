@@ -15,7 +15,7 @@ import (
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
-	"github.com/antihax/optional"
+	"strings"
 )
 
 // Linger please
@@ -23,26 +23,29 @@ var (
 	_ _context.Context
 )
 
-// DeploymentApiService DeploymentApi service
-type DeploymentApiService service
+// PipelineApiService PipelineApi service
+type PipelineApiService service
 
 /*
-GetCurrentDeployment Get the current Deployment
+GetPipeline Get Pipeline by its ID
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-@return Deployment
+ * @param id Pipeline ID (UUID)
+@return Pipeline
 */
-func (a *DeploymentApiService) GetCurrentDeployment(ctx _context.Context) (Deployment, *_nethttp.Response, error) {
+func (a *PipelineApiService) GetPipeline(ctx _context.Context, id string) (Pipeline, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  Deployment
+		localVarReturnValue  Pipeline
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/deployments/current"
+	localVarPath := a.client.cfg.BasePath + "/pipelines/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
+
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -101,22 +104,22 @@ func (a *DeploymentApiService) GetCurrentDeployment(ctx _context.Context) (Deplo
 }
 
 /*
-ListDeployments List Deployments
+ListPipelines List of Pipelines.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-@return []Deployment
+@return []Pipeline
 */
-func (a *DeploymentApiService) ListDeployments(ctx _context.Context) ([]Deployment, *_nethttp.Response, error) {
+func (a *PipelineApiService) ListPipelines(ctx _context.Context) ([]Pipeline, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  []Deployment
+		localVarReturnValue  []Pipeline
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/deployments"
+	localVarPath := a.client.cfg.BasePath + "/pipelines"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -138,96 +141,6 @@ func (a *DeploymentApiService) ListDeployments(ctx _context.Context) ([]Deployme
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(r)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// SetCurrentDeploymentOpts Optional parameters for the method 'SetCurrentDeployment'
-type SetCurrentDeploymentOpts struct {
-    InlineObject optional.Interface
-}
-
-/*
-SetCurrentDeployment Set the current Deployment
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *SetCurrentDeploymentOpts - Optional Parameters:
- * @param "InlineObject" (optional.Interface of InlineObject) - 
-@return Deployment
-*/
-func (a *DeploymentApiService) SetCurrentDeployment(ctx _context.Context, localVarOptionals *SetCurrentDeploymentOpts) (Deployment, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-		localVarReturnValue  Deployment
-	)
-
-	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/deployments/current"
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	if localVarOptionals != nil && localVarOptionals.InlineObject.IsSet() {
-		localVarOptionalInlineObject, localVarOptionalInlineObjectok := localVarOptionals.InlineObject.Value().(InlineObject)
-		if !localVarOptionalInlineObjectok {
-			return localVarReturnValue, nil, reportError("inlineObject should be InlineObject")
-		}
-		localVarPostBody = &localVarOptionalInlineObject
-	}
-
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err

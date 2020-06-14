@@ -50,6 +50,8 @@ type APIClient struct {
 	// API Services
 
 	DeploymentApi *DeploymentApiService
+
+	PipelineApi *PipelineApiService
 }
 
 type service struct {
@@ -69,6 +71,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.DeploymentApi = (*DeploymentApiService)(&c.common)
+	c.PipelineApi = (*PipelineApiService)(&c.common)
 
 	return c
 }

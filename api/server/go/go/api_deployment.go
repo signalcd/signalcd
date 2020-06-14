@@ -13,8 +13,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-
-	"github.com/gorilla/mux"
 )
 
 // A DeploymentApiController binds http requests to an api service and writes the service results to the http response
@@ -24,12 +22,12 @@ type DeploymentApiController struct {
 
 // NewDeploymentApiController creates a default api controller
 func NewDeploymentApiController(s DeploymentApiServicer) Router {
-	return &DeploymentApiController{ service: s }
+	return &DeploymentApiController{service: s}
 }
 
 // Routes returns all of the api route for the DeploymentApiController
 func (c *DeploymentApiController) Routes() Routes {
-	return Routes{ 
+	return Routes{
 		{
 			"GetCurrentDeployment",
 			strings.ToUpper("Get"),
@@ -42,27 +40,50 @@ func (c *DeploymentApiController) Routes() Routes {
 			"/api/v1/deployments",
 			c.ListDeployments,
 		},
+		{
+			"SetCurrentDeployment",
+			strings.ToUpper("Post"),
+			"/api/v1/deployments/current",
+			c.SetCurrentDeployment,
+		},
 	}
 }
 
 // GetCurrentDeployment - Get the current Deployment
-func (c *DeploymentApiController) GetCurrentDeployment(w http.ResponseWriter, r *http.Request) { 
+func (c *DeploymentApiController) GetCurrentDeployment(w http.ResponseWriter, r *http.Request) {
 	result, err := c.service.GetCurrentDeployment()
 	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
-	
+
 	EncodeJSONResponse(result, nil, w)
 }
 
 // ListDeployments - List Deployments
-func (c *DeploymentApiController) ListDeployments(w http.ResponseWriter, r *http.Request) { 
+func (c *DeploymentApiController) ListDeployments(w http.ResponseWriter, r *http.Request) {
 	result, err := c.service.ListDeployments()
 	if err != nil {
 		w.WriteHeader(500)
 		return
 	}
-	
+
+	EncodeJSONResponse(result, nil, w)
+}
+
+// SetCurrentDeployment - Set the current Deployment
+func (c *DeploymentApiController) SetCurrentDeployment(w http.ResponseWriter, r *http.Request) {
+	inlineObject := &InlineObject{}
+	if err := json.NewDecoder(r.Body).Decode(&inlineObject); err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	result, err := c.service.SetCurrentDeployment(*inlineObject)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
 	EncodeJSONResponse(result, nil, w)
 }

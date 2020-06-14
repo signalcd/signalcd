@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.DeploymentApi();
+    instance = new SignalCd.InlineObject();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,37 +47,19 @@
       object[property] = value;
   }
 
-  describe('DeploymentApi', function() {
-    describe('getCurrentDeployment', function() {
-      it('should call getCurrentDeployment successfully', function(done) {
-        //uncomment below and update the code to test getCurrentDeployment
-        //instance.getCurrentDeployment(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
+  describe('InlineObject', function() {
+    it('should create an instance of InlineObject', function() {
+      // uncomment below and update the code to test InlineObject
+      //var instane = new SignalCd.InlineObject();
+      //expect(instance).to.be.a(SignalCd.InlineObject);
     });
-    describe('listDeployments', function() {
-      it('should call listDeployments successfully', function(done) {
-        //uncomment below and update the code to test listDeployments
-        //instance.listDeployments(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
+
+    it('should have the property pipelineID (base name: "pipelineID")', function() {
+      // uncomment below and update the code to test the property pipelineID
+      //var instane = new SignalCd.InlineObject();
+      //expect(instance).to.be();
     });
-    describe('setCurrentDeployment', function() {
-      it('should call setCurrentDeployment successfully', function(done) {
-        //uncomment below and update the code to test setCurrentDeployment
-        //instance.setCurrentDeployment(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
-    });
+
   });
 
 }));

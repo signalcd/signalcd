@@ -13,13 +13,11 @@ import (
 	"time"
 )
 
-type Deployment struct {
+type Pipeline struct {
 
-	Number int64 `json:"number"`
+	Id string `json:"id"`
+
+	Name string `json:"name,omitempty"`
 
 	Created time.Time `json:"created,omitempty"`
-
-	Started time.Time `json:"started,omitempty"`
-
-	Finished time.Time `json:"finished,omitempty"`
 }

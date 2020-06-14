@@ -12,10 +12,9 @@ package openapi
 import (
 	"time"
 )
-// Deployment struct for Deployment
-type Deployment struct {
-	Number int64 `json:"number"`
+// Pipeline struct for Pipeline
+type Pipeline struct {
+	Id string `json:"id"`
+	Name string `json:"name,omitempty"`
 	Created time.Time `json:"created,omitempty"`
-	Started time.Time `json:"started,omitempty"`
-	Finished time.Time `json:"finished,omitempty"`
 }

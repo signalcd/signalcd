@@ -34,11 +34,16 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DeploymentApi* | [**GetCurrentDeployment**](docs/DeploymentApi.md#getcurrentdeployment) | **Get** /deployments/current | Get the current Deployment
 *DeploymentApi* | [**ListDeployments**](docs/DeploymentApi.md#listdeployments) | **Get** /deployments | List Deployments
+*DeploymentApi* | [**SetCurrentDeployment**](docs/DeploymentApi.md#setcurrentdeployment) | **Post** /deployments/current | Set the current Deployment
+*PipelineApi* | [**GetPipeline**](docs/PipelineApi.md#getpipeline) | **Get** /pipelines/{id} | Get Pipeline by its ID
+*PipelineApi* | [**ListPipelines**](docs/PipelineApi.md#listpipelines) | **Get** /pipelines | List of Pipelines.
 
 
 ## Documentation For Models
 
  - [Deployment](docs/Deployment.md)
+ - [InlineObject](docs/InlineObject.md)
+ - [Pipeline](docs/Pipeline.md)
 
 
 ## Documentation For Authorization

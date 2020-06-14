@@ -119,11 +119,16 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *SignalCd.DeploymentApi* | [**getCurrentDeployment**](docs/DeploymentApi.md#getCurrentDeployment) | **GET** /deployments/current | Get the current Deployment
 *SignalCd.DeploymentApi* | [**listDeployments**](docs/DeploymentApi.md#listDeployments) | **GET** /deployments | List Deployments
+*SignalCd.DeploymentApi* | [**setCurrentDeployment**](docs/DeploymentApi.md#setCurrentDeployment) | **POST** /deployments/current | Set the current Deployment
+*SignalCd.PipelineApi* | [**getPipeline**](docs/PipelineApi.md#getPipeline) | **GET** /pipelines/{id} | Get Pipeline by its ID
+*SignalCd.PipelineApi* | [**listPipelines**](docs/PipelineApi.md#listPipelines) | **GET** /pipelines | List of Pipelines.
 
 
 ## Documentation for Models
 
  - [SignalCd.Deployment](docs/Deployment.md)
+ - [SignalCd.InlineObject](docs/InlineObject.md)
+ - [SignalCd.Pipeline](docs/Pipeline.md)
 
 
 ## Documentation for Authorization

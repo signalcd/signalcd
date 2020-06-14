@@ -14,6 +14,7 @@
 
 import ApiClient from "../ApiClient";
 import Deployment from '../model/Deployment';
+import InlineObject from '../model/InlineObject';
 
 /**
 * Deployment service.
@@ -107,6 +108,50 @@ export default class DeploymentApi {
      */
     listDeployments() {
       return this.listDeploymentsWithHttpInfo()
+        .then(function(response_and_data) {
+          return response_and_data.data;
+        });
+    }
+
+
+    /**
+     * Set the current Deployment
+     * @param {Object} opts Optional parameters
+     * @param {module:model/InlineObject} opts.inlineObject 
+     * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with an object containing data of type {@link module:model/Deployment} and HTTP response
+     */
+    setCurrentDeploymentWithHttpInfo(opts) {
+      opts = opts || {};
+      let postBody = opts['inlineObject'];
+
+      let pathParams = {
+      };
+      let queryParams = {
+      };
+      let headerParams = {
+      };
+      let formParams = {
+      };
+
+      let authNames = [];
+      let contentTypes = ['application/json'];
+      let accepts = ['application/json'];
+      let returnType = Deployment;
+      return this.apiClient.callApi(
+        '/deployments/current', 'POST',
+        pathParams, queryParams, headerParams, formParams, postBody,
+        authNames, contentTypes, accepts, returnType, null
+      );
+    }
+
+    /**
+     * Set the current Deployment
+     * @param {Object} opts Optional parameters
+     * @param {module:model/InlineObject} opts.inlineObject 
+     * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with data of type {@link module:model/Deployment}
+     */
+    setCurrentDeployment(opts) {
+      return this.setCurrentDeploymentWithHttpInfo(opts)
         .then(function(response_and_data) {
           return response_and_data.data;
         });

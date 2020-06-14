@@ -1,12 +1,11 @@
-# SignalCd.Deployment
+# SignalCd.Pipeline
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**_number** | **Number** |  | 
+**id** | **String** |  | 
+**name** | **String** |  | [optional] 
 **created** | **Date** |  | [optional] 
-**started** | **Date** |  | [optional] 
-**finished** | **Date** |  | [optional] 
 
 

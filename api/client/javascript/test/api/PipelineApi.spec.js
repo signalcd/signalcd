@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.DeploymentApi();
+    instance = new SignalCd.PipelineApi();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,31 +47,21 @@
       object[property] = value;
   }
 
-  describe('DeploymentApi', function() {
-    describe('getCurrentDeployment', function() {
-      it('should call getCurrentDeployment successfully', function(done) {
-        //uncomment below and update the code to test getCurrentDeployment
-        //instance.getCurrentDeployment(function(error) {
+  describe('PipelineApi', function() {
+    describe('getPipeline', function() {
+      it('should call getPipeline successfully', function(done) {
+        //uncomment below and update the code to test getPipeline
+        //instance.getPipeline(function(error) {
         //  if (error) throw error;
         //expect().to.be();
         //});
         done();
       });
     });
-    describe('listDeployments', function() {
-      it('should call listDeployments successfully', function(done) {
-        //uncomment below and update the code to test listDeployments
-        //instance.listDeployments(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
-    });
-    describe('setCurrentDeployment', function() {
-      it('should call setCurrentDeployment successfully', function(done) {
-        //uncomment below and update the code to test setCurrentDeployment
-        //instance.setCurrentDeployment(function(error) {
+    describe('listPipelines', function() {
+      it('should call listPipelines successfully', function(done) {
+        //uncomment below and update the code to test listPipelines
+        //instance.listPipelines(function(error) {
         //  if (error) throw error;
         //expect().to.be();
         //});

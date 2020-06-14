@@ -3,14 +3,14 @@ info:
   title: SignalCD
   version: 0.0.0
 servers:
-- url: /api/v1
+  - url: /api/v1
 paths:
   /deployments:
     get:
       summary: List Deployments
-      operationId: listDeployments
+      operationId: ListDeployments
       tags:
-      - deployment
+        - deployment
       responses:
         '200':
           description: List of Deployments
@@ -23,7 +23,7 @@ paths:
       summary: Get the current Deployment
       operationId: GetCurrentDeployment
       tags:
-      - deployment
+        - deployment
       responses:
         '200':
           description: Get the current Deployment
@@ -31,24 +31,98 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Deployment"
+    post:
+      summary: Set the current Deployment
+      operationId: SetCurrentDeployment
+      tags:
+        - deployment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pipelineID:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Current deployment was successfully set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
+  /pipelines:
+    get:
+      summary: List of Pipelines.
+      operationId: ListPipelines
+      tags:
+      - pipeline
+      responses:
+        '200':
+          description: List of Pipelines.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipelines'
+  /pipelines/{id}:
+    get:
+      summary: Get Pipeline by its ID
+      operationId: GetPipeline
+      tags:
+      - pipeline
+      parameters:
+        - name: id
+          in: path
+          description: Pipeline ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A Pipeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
 components:
   schemas:
     Deployment:
       type: object
+      required:
+        - number
       properties:
         number:
           type: integer
           format: int64
         created:
           type: string
-          format: date-time
+          format: 'date-time'
         started:
           type: string
-          format: date-time
+          format: 'date-time'
         finished:
           type: string
-          format: date-time
+          format: 'date-time'
     Deployments:
       type: array
       items:
         $ref: "#/components/schemas/Deployment"
+    Pipeline:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created:
+          type: string
+          format: 'date-time'
+    Pipelines:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pipeline'

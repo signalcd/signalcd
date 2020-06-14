@@ -24,6 +24,7 @@ api/client/javascript: api/api.yaml
 api/server/go: api/api.yaml
 	-rm -rf $@
 	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go-server -o $(shell pwd)/api/server/go
+	-rm -rf $@/{go.mod,main.go}
 	touch $@
 
 .PHONY: build

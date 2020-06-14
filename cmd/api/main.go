@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,19 +13,13 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_gokit "github.com/grpc-ecosystem/go-grpc-middleware/logging/kit"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/signalcd/signalcd/api"
 	"github.com/signalcd/signalcd/database/boltdb"
 	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -89,15 +82,15 @@ func main() {
 
 func apiAction(logger log.Logger) cli.ActionFunc {
 	return func(c *cli.Context) error {
-		events := signalcd.NewEvents()
-
 		registry := prometheus.NewRegistry()
 		registry.MustRegister(
 			prometheus.NewGoCollector(),
 			prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
 		)
 
-		var db api.SignalDB
+		events := signalcd.NewEvents()
+
+		var db Database
 		{
 			bolt, dbClose, err := boltdb.New(c.String(flagBoltPath))
 			if err != nil {
@@ -112,14 +105,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var gr run.Group
 		{
-			apiV1, err := api.NewV1(
-				log.WithPrefix(logger, "component", "api"),
-				db,
-				events,
-				c.String(flagAddr),
-				c.String(flagTLSCert),
-				c.String(flagTLSKey),
-			)
+			apiV1, err := NewV1(registry, db, events)
 			if err != nil {
 				return fmt.Errorf("failed to initialize api: %w", err)
 			}
@@ -164,55 +150,6 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 				}
 			}, func(err error) {
 				_ = s.Shutdown(context.TODO())
-			})
-		}
-		{
-			addr := c.String(flagAddrAgent)
-			l, err := net.Listen("tcp", addr)
-			if err != nil {
-				return xerrors.Errorf("failed to listen on %s: %w", addr, err)
-			}
-
-			var server *grpc.Server
-			{
-				var opts []grpc.ServerOption
-
-				tlsCert, tlsKey := c.String(flagTLSCert), c.String(flagTLSKey)
-				if tlsCert != "" && tlsKey != "" {
-					creds, err := credentials.NewServerTLSFromFile(tlsCert, tlsKey)
-					if err != nil {
-						return fmt.Errorf("failed to create credentials: %w", err)
-					}
-					opts = append(opts, grpc.Creds(creds))
-
-					level.Debug(logger).Log("msg", "serving requests with TLS", "cert", tlsCert, "key", tlsKey)
-				}
-
-				opts = append(opts, grpc_middleware.WithUnaryServerChain(
-					// TODO: we can still improve the key-value pairs logged to reduce noise
-					grpc_gokit.UnaryServerInterceptor(logger,
-						grpc_gokit.WithLevels(api.LoggerGRPC()),
-					),
-				))
-
-				server = grpc.NewServer(opts...)
-			}
-
-			signalcdproto.RegisterAgentServiceServer(server,
-				api.NewRPC(db, log.WithPrefix(logger, "component", "api")),
-			)
-
-			gr.Add(func() error {
-				level.Info(logger).Log(
-					"msg", "running agent gRPC API server",
-					"addr", l.Addr().String(),
-				)
-				if err := server.Serve(l); err != nil {
-					return xerrors.Errorf("failed to serve: %w", err)
-				}
-				return nil
-			}, func(err error) {
-				_ = l.Close()
 			})
 		}
 		{

@@ -22,10 +22,11 @@ class Deployment {
     /**
      * Constructs a new <code>Deployment</code>.
      * @alias module:model/Deployment
+     * @param _number {Number} 
      */
-    constructor() { 
+    constructor(_number) { 
         
-        Deployment.initialize(this);
+        Deployment.initialize(this, _number);
     }
 
     /**
@@ -33,7 +34,8 @@ class Deployment {
      * This method is used by the constructors of any subclasses, in order to implement multiple inheritance (mix-ins).
      * Only for internal use.
      */
-    static initialize(obj) { 
+    static initialize(obj, _number) { 
+        obj['number'] = _number;
     }
 
     /**

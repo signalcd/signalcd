@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.DeploymentApi();
+    instance = new SignalCd.Pipeline();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,37 +47,31 @@
       object[property] = value;
   }
 
-  describe('DeploymentApi', function() {
-    describe('getCurrentDeployment', function() {
-      it('should call getCurrentDeployment successfully', function(done) {
-        //uncomment below and update the code to test getCurrentDeployment
-        //instance.getCurrentDeployment(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
+  describe('Pipeline', function() {
+    it('should create an instance of Pipeline', function() {
+      // uncomment below and update the code to test Pipeline
+      //var instane = new SignalCd.Pipeline();
+      //expect(instance).to.be.a(SignalCd.Pipeline);
     });
-    describe('listDeployments', function() {
-      it('should call listDeployments successfully', function(done) {
-        //uncomment below and update the code to test listDeployments
-        //instance.listDeployments(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
+
+    it('should have the property id (base name: "id")', function() {
+      // uncomment below and update the code to test the property id
+      //var instane = new SignalCd.Pipeline();
+      //expect(instance).to.be();
     });
-    describe('setCurrentDeployment', function() {
-      it('should call setCurrentDeployment successfully', function(done) {
-        //uncomment below and update the code to test setCurrentDeployment
-        //instance.setCurrentDeployment(function(error) {
-        //  if (error) throw error;
-        //expect().to.be();
-        //});
-        done();
-      });
+
+    it('should have the property name (base name: "name")', function() {
+      // uncomment below and update the code to test the property name
+      //var instane = new SignalCd.Pipeline();
+      //expect(instance).to.be();
     });
+
+    it('should have the property created (base name: "created")', function() {
+      // uncomment below and update the code to test the property created
+      //var instane = new SignalCd.Pipeline();
+      //expect(instance).to.be();
+    });
+
   });
 
 }));
