@@ -10,6 +10,16 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+/api/**/.travis.yml
+/api/**/api/openapi.yaml
+/api/**/git_push.sh
+/api/**/go.mod
+/api/**/go.sum
+/api/client/javascript/.babelrc
+/api/client/javascript/mocha.opts
+/api/server/go/Dockerfile
+/api/server/go/main.go
 /cmd/agent/agent
 /cmd/api/api
 /cmd/api/assets/*
@@ -20,3 +30,4 @@
 /development/caddy
 /development/data
 /vendor/
+/api/client/javascript/package.json

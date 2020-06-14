@@ -104,7 +104,7 @@ steps:
     GOPROXY: https://proxy.golang.org
 
 - name: dart-swagger
-  image: openapitools/openapi-generator-cli:v4.2.3
+  image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
   - make ui/lib/src/api --always-make

@@ -4,6 +4,28 @@ all: build
 
 generate: signalcd/proto ui/lib/src/api
 
+api: api/client/go api/client/javascript api/server/go
+
+OPENAPI ?= docker run --rm \
+		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
+		-v $(shell pwd):$(shell pwd) \
+		openapitools/openapi-generator-cli:v4.3.1
+
+api/client/go: api/api.yaml
+	-rm -rf $@
+	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go -o $(shell pwd)/api/client/go --additional-properties=withGoCodegenComment=true
+	touch $@
+
+api/client/javascript: api/api.yaml
+	-rm -rf $@
+	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g javascript -o $(shell pwd)/api/client/javascript --additional-properties=usePromises=true
+	touch $@
+
+api/server/go: api/api.yaml
+	-rm -rf $@
+	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go-server -o $(shell pwd)/api/server/go
+	touch $@
+
 .PHONY: build
 build: \
 	cmd/agent/agent \

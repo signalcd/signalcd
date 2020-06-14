@@ -1,0 +1,54 @@
+openapi: 3.0.1
+info:
+  title: SignalCD
+  version: 0.0.0
+servers:
+- url: /api/v1
+paths:
+  /deployments:
+    get:
+      summary: List Deployments
+      operationId: listDeployments
+      tags:
+      - deployment
+      responses:
+        '200':
+          description: List of Deployments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployments"
+  /deployments/current:
+    get:
+      summary: Get the current Deployment
+      operationId: GetCurrentDeployment
+      tags:
+      - deployment
+      responses:
+        '200':
+          description: Get the current Deployment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
+components:
+  schemas:
+    Deployment:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: int64
+        created:
+          type: string
+          format: date-time
+        started:
+          type: string
+          format: date-time
+        finished:
+          type: string
+          format: date-time
+    Deployments:
+      type: array
+      items:
+        $ref: "#/components/schemas/Deployment"

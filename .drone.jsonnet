@@ -114,7 +114,7 @@ local docker = {
       },
       {
         name: 'dart-swagger',
-        image: 'openapitools/openapi-generator-cli:v4.2.3',
+        image: 'openapitools/openapi-generator-cli:v4.3.1',
         environment: {
           SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
         },
