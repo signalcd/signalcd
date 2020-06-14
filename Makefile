@@ -4,32 +4,6 @@ all: build
 
 generate: signalcd/proto ui/lib/src/api
 
-SWAGGER ?= docker run --rm \
-		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
-		-v $(shell pwd):$(shell pwd) \
-		openapitools/openapi-generator-cli:v4.2.3
-
-ui/lib/src/api: signalcd/proto/ui.swagger.json
-	-rm -rf ui/lib/src/api
-	$(SWAGGER) generate -i $(shell pwd)/signalcd/proto/ui.swagger.json -g dart -o $(shell pwd)/tmp/dart
-	mv tmp/dart/lib ui/lib/src/api
-	-rm -rf tmp/
-
-signalcd/proto: signalcd/proto/agent.pb.go signalcd/proto/types.pb.go signalcd/proto/ui.pb.go
-
-signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
-	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:. -I=. -I=signalcd/proto/vendor
-
-signalcd/proto/types.pb.go: signalcd/proto/types.proto
-	protoc signalcd/proto/types.proto --go_out=plugins=grpc:. -I=. -I=signalcd/proto/vendor
-
-signalcd/proto/ui.pb.go: signalcd/proto/ui.proto
-	protoc signalcd/proto/ui.proto \
-		--go_out=plugins=grpc:. \
-		--swagger_out=logtostderr=true:. \
-		--grpc-gateway_out=logtostderr=true:. \
-		-I=. -I=signalcd/proto/vendor -I=$(GOPATH)/src
-
 .PHONY: build
 build: \
 	cmd/agent/agent \
