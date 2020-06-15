@@ -14,6 +14,9 @@ OPENAPI ?= docker run --rm \
 api/client/go: api/api.yaml
 	-rm -rf $@
 	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go -o $(shell pwd)/api/client/go --additional-properties=withGoCodegenComment=true
+	-rm -rf $@/go.mod
+	-rm -rf $@/go.sum
+	goimports -w $(shell find ./api/client/go/ -name '*.go')
 	touch $@
 
 api/client/javascript: api/api.yaml
@@ -25,6 +28,7 @@ api/server/go: api/api.yaml
 	-rm -rf $@
 	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go-server -o $(shell pwd)/api/server/go
 	-rm -rf $@/{go.mod,main.go}
+	goimports -w $(shell find ./api/server/go/ -name '*.go')
 	touch $@
 
 .PHONY: build

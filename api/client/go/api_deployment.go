@@ -15,6 +15,7 @@ import (
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
+
 	"github.com/antihax/optional"
 )
 
@@ -176,14 +177,14 @@ func (a *DeploymentApiService) ListDeployments(ctx _context.Context) ([]Deployme
 
 // SetCurrentDeploymentOpts Optional parameters for the method 'SetCurrentDeployment'
 type SetCurrentDeploymentOpts struct {
-    InlineObject optional.Interface
+	InlineObject optional.Interface
 }
 
 /*
 SetCurrentDeployment Set the current Deployment
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param optional nil or *SetCurrentDeploymentOpts - Optional Parameters:
- * @param "InlineObject" (optional.Interface of InlineObject) - 
+ * @param "InlineObject" (optional.Interface of InlineObject) -
 @return Deployment
 */
 func (a *DeploymentApiService) SetCurrentDeployment(ctx _context.Context, localVarOptionals *SetCurrentDeploymentOpts) (Deployment, *_nethttp.Response, error) {

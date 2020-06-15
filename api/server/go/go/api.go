@@ -13,40 +13,38 @@ import (
 	"net/http"
 )
 
-
 // DeploymentApiRouter defines the required methods for binding the api requests to a responses for the DeploymentApi
-// The DeploymentApiRouter implementation should parse necessary information from the http request, 
+// The DeploymentApiRouter implementation should parse necessary information from the http request,
 // pass the data to a DeploymentApiServicer to perform the required actions, then write the service results to the http response.
-type DeploymentApiRouter interface { 
+type DeploymentApiRouter interface {
 	GetCurrentDeployment(http.ResponseWriter, *http.Request)
 	ListDeployments(http.ResponseWriter, *http.Request)
 	SetCurrentDeployment(http.ResponseWriter, *http.Request)
 }
+
 // PipelineApiRouter defines the required methods for binding the api requests to a responses for the PipelineApi
-// The PipelineApiRouter implementation should parse necessary information from the http request, 
+// The PipelineApiRouter implementation should parse necessary information from the http request,
 // pass the data to a PipelineApiServicer to perform the required actions, then write the service results to the http response.
-type PipelineApiRouter interface { 
+type PipelineApiRouter interface {
 	GetPipeline(http.ResponseWriter, *http.Request)
 	ListPipelines(http.ResponseWriter, *http.Request)
 }
 
-
 // DeploymentApiServicer defines the api actions for the DeploymentApi service
-// This interface intended to stay up to date with the openapi yaml used to generate it, 
-// while the service implementation can ignored with the .openapi-generator-ignore file 
+// This interface intended to stay up to date with the openapi yaml used to generate it,
+// while the service implementation can ignored with the .openapi-generator-ignore file
 // and updated with the logic required for the API.
-type DeploymentApiServicer interface { 
+type DeploymentApiServicer interface {
 	GetCurrentDeployment() (interface{}, error)
 	ListDeployments() (interface{}, error)
 	SetCurrentDeployment(InlineObject) (interface{}, error)
 }
 
-
 // PipelineApiServicer defines the api actions for the PipelineApi service
-// This interface intended to stay up to date with the openapi yaml used to generate it, 
-// while the service implementation can ignored with the .openapi-generator-ignore file 
+// This interface intended to stay up to date with the openapi yaml used to generate it,
+// while the service implementation can ignored with the .openapi-generator-ignore file
 // and updated with the logic required for the API.
-type PipelineApiServicer interface { 
+type PipelineApiServicer interface {
 	GetPipeline(string) (interface{}, error)
 	ListPipelines() (interface{}, error)
 }

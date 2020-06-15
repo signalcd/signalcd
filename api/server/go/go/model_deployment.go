@@ -14,7 +14,6 @@ import (
 )
 
 type Deployment struct {
-
 	Number int64 `json:"number"`
 
 	Created time.Time `json:"created,omitempty"`

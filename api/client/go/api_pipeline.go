@@ -44,7 +44,7 @@ func (a *PipelineApiService) GetPipeline(ctx _context.Context, id string) (Pipel
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/pipelines/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}

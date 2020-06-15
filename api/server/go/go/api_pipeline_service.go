@@ -14,7 +14,7 @@ import (
 )
 
 // PipelineApiService is a service that implents the logic for the PipelineApiServicer
-// This service should implement the business logic for every endpoint for the PipelineApi API. 
+// This service should implement the business logic for every endpoint for the PipelineApi API.
 // Include any external packages or services that will be required by this service.
 type PipelineApiService struct {
 }

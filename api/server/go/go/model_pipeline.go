@@ -14,7 +14,6 @@ import (
 )
 
 type Pipeline struct {
-
 	Id string `json:"id"`
 
 	Name string `json:"name,omitempty"`

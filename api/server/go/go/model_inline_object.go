@@ -10,6 +10,5 @@
 package openapi
 
 type InlineObject struct {
-
 	PipelineID string `json:"pipelineID,omitempty"`
 }
