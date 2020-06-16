@@ -85,21 +85,6 @@ local docker = {
     name: 'code-generation',
     steps+: [
       {
-        name: 'grpc',
-        image: 'golang:1.13-alpine',
-        environment: {
-          GOPROXY: 'https://proxy.golang.org',
-        },
-        commands: [
-          'apk add -U git make protobuf protoc',
-          'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway',
-          'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger',
-          'go get -u github.com/golang/protobuf/protoc-gen-go',
-          'make signalcd/proto --always-make',
-          'git diff --exit-code signalcd/proto',
-        ],
-      },
-      {
         name: 'dart-swagger',
         image: 'openapitools/openapi-generator-cli:v4.3.1',
         environment: {

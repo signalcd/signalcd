@@ -80,18 +80,6 @@ platform:
   arch: amd64
 
 steps:
-- name: grpc
-  image: golang:1.13-alpine
-  commands:
-  - apk add -U git make protobuf protoc
-  - go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-  - go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-  - go get -u github.com/golang/protobuf/protoc-gen-go
-  - make signalcd/proto --always-make
-  - git diff --exit-code signalcd/proto
-  environment:
-    GOPROXY: https://proxy.golang.org
-
 - name: dart-swagger
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
