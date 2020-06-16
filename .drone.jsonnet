@@ -88,14 +88,15 @@ local docker = {
         name: 'dart-swagger',
         image: 'openapitools/openapi-generator-cli:v4.3.1',
         environment: {
-          SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
+          OPENAPI: '/usr/local/bin/docker-entrypoint.sh',
         },
         commands: [
           'apk add -U git make',
-          'make ui/lib/src/api --always-make',
-          'git diff --exit-code ui/lib/src/api',
+          'make %s --always-make' % target,
+          'git diff --exit-code %s' % target,
         ],
-      },
+      }
+      for target in ['api/client/go', 'api/client/javascript', 'api/server/go']
     ],
   },
 

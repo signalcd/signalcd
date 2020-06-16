@@ -84,10 +84,28 @@ steps:
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make ui/lib/src/api --always-make
-  - git diff --exit-code ui/lib/src/api
+  - make api/client/go --always-make
+  - git diff --exit-code api/client/go
   environment:
-    SWAGGER: /usr/local/bin/docker-entrypoint.sh
+    OPENAPI: /usr/local/bin/docker-entrypoint.sh
+
+- name: dart-swagger
+  image: openapitools/openapi-generator-cli:v4.3.1
+  commands:
+  - apk add -U git make
+  - make api/client/javascript --always-make
+  - git diff --exit-code api/client/javascript
+  environment:
+    OPENAPI: /usr/local/bin/docker-entrypoint.sh
+
+- name: dart-swagger
+  image: openapitools/openapi-generator-cli:v4.3.1
+  commands:
+  - apk add -U git make
+  - make api/server/go --always-make
+  - git diff --exit-code api/server/go
+  environment:
+    OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 ---
 kind: pipeline
