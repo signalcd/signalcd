@@ -84,11 +84,20 @@ local docker = {
   pipeline {
     name: 'code-generation',
     steps+: [
+      golang {
+        name: 'goimports',
+        commands: [
+          'go get golang.org/x/tools/cmd/goimports',
+          'cp $(which goimports) ./goimports',
+        ],
+      },
+    ] + [
       {
         name: '%s' % target,
         image: 'openapitools/openapi-generator-cli:v4.3.1',
         environment: {
           OPENAPI: '/usr/local/bin/docker-entrypoint.sh',
+          GOIMPORTS: './goimports',
         },
         commands: [
           'apk add -U git make',

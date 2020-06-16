@@ -80,6 +80,17 @@ platform:
   arch: amd64
 
 steps:
+- name: goimports
+  pull: always
+  image: golang:1.13
+  commands:
+  - go get golang.org/x/tools/cmd/goimports
+  - cp $(which goimports) ./goimports
+  environment:
+    CGO_ENABLED: 0
+    GO111MODULE: on
+    GOPROXY: https://proxy.golang.org
+
 - name: api/client/go
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
@@ -87,6 +98,7 @@ steps:
   - make api/client/go --always-make
   - git diff --exit-code api/client/go
   environment:
+    GOIMPORTS: ./goimports
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 - name: api/client/javascript
@@ -96,6 +108,7 @@ steps:
   - make api/client/javascript --always-make
   - git diff --exit-code api/client/javascript
   environment:
+    GOIMPORTS: ./goimports
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 - name: api/server/go
@@ -105,6 +118,7 @@ steps:
   - make api/server/go --always-make
   - git diff --exit-code api/server/go
   environment:
+    GOIMPORTS: ./goimports
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 ---
