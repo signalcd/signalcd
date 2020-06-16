@@ -3,6 +3,7 @@ module github.com/signalcd/signalcd
 go 1.14
 
 require (
+	github.com/antihax/optional v0.0.0-20180407024304-ca021399b1a6
 	github.com/drone/envsubst v1.0.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -31,7 +32,7 @@ require (
 	go.etcd.io/bbolt v1.3.2
 	golang.org/x/crypto v0.0.0-20190426145343-a29dc8fdc734 // indirect
 	golang.org/x/net v0.0.0-20191002035440-2ec189313ef0 // indirect
-	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a // indirect
+	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 	google.golang.org/genproto v0.0.0-20200326112834-f447254575fd // indirect

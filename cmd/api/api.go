@@ -83,7 +83,7 @@ func (d *Deployments) ListDeployments() (interface{}, error) {
 		return nil, err
 	}
 
-	var deploys []openapi.Deployment
+	deploys := []openapi.Deployment{}
 	for _, d := range deployments {
 		deploys = append(deploys, deploymentOpenAPI(d))
 	}
