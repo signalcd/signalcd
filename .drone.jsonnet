@@ -85,7 +85,7 @@ local docker = {
     name: 'code-generation',
     steps+: [
       {
-        name: 'dart-swagger',
+        name: '%s' % target,
         image: 'openapitools/openapi-generator-cli:v4.3.1',
         environment: {
           OPENAPI: '/usr/local/bin/docker-entrypoint.sh',

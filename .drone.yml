@@ -80,7 +80,7 @@ platform:
   arch: amd64
 
 steps:
-- name: dart-swagger
+- name: api/client/go
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
@@ -89,7 +89,7 @@ steps:
   environment:
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
-- name: dart-swagger
+- name: api/client/javascript
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
@@ -98,7 +98,7 @@ steps:
   environment:
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
-- name: dart-swagger
+- name: api/server/go
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
