@@ -20,6 +20,7 @@
 /api/client/javascript/mocha.opts
 /api/server/go/Dockerfile
 /api/server/go/main.go
+/api/server/go/README.md
 /cmd/agent/agent
 /cmd/api/api
 /cmd/api/assets/*
