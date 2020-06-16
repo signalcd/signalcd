@@ -11,7 +11,7 @@ OPENAPI ?= docker run --rm \
 		-v $(shell pwd):$(shell pwd) \
 		openapitools/openapi-generator-cli:v4.3.1
 
-$(GOIMPORTS) ?= goimports
+GOIMPORTS ?= goimports
 
 api/client/go: api/api.yaml
 	-rm -rf $@
