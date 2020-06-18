@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-kit/kit/log"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	openapi "github.com/signalcd/signalcd/api/server/go/go"
@@ -15,24 +16,33 @@ import (
 type Database interface {
 	DeploymentLister
 	CurrentDeploymentGetter
+	CurrentDeploymentSetter
 	PipelineLister
 	PipelineGetter
+	PipelineCreater
 }
 
-func NewV1(registry *prometheus.Registry, database Database, events *signalcd.Events) (http.Handler, error) {
+func NewV1(logger log.Logger, registry *prometheus.Registry, database Database, events Events) (http.Handler, error) {
 	instrument := instrument(registry)
 
 	routes := []openapi.Router{
-		openapi.NewDeploymentApiController(&Deployments{lister: database, currentGetter: database}),
-		openapi.NewPipelineApiController(&Pipelines{lister: database, getter: database}),
+		openapi.NewDeploymentApiController(&Deployments{
+			lister:        database,
+			currentGetter: database,
+			currentSetter: database,
+		}),
+		openapi.NewPipelineApiController(&Pipelines{
+			lister:  database,
+			getter:  database,
+			creator: database,
+		}),
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
 
 	for _, api := range routes {
 		for _, route := range api.Routes() {
-			router.
-				Methods(route.Method).
+			router.Methods(route.Method).
 				Path(route.Pattern).
 				Name(route.Name).
 				Handler(instrument(
@@ -41,6 +51,10 @@ func NewV1(registry *prometheus.Registry, database Database, events *signalcd.Ev
 				))
 		}
 	}
+
+	router.Methods(http.MethodGet).
+		Path("/api/v1/deployments/events").
+		HandlerFunc(deploymentEventsHandler(logger, registry, events))
 
 	return router, nil
 }
@@ -71,6 +85,7 @@ func instrument(r *prometheus.Registry) func(next http.Handler, name string) htt
 type Deployments struct {
 	lister        DeploymentLister
 	currentGetter CurrentDeploymentGetter
+	currentSetter CurrentDeploymentSetter
 }
 
 type DeploymentLister interface {
@@ -103,23 +118,37 @@ func (d *Deployments) GetCurrentDeployment() (interface{}, error) {
 	return deploymentOpenAPI(deployment), nil
 }
 
+// CurrentDeploymentSetter gets a Pipeline and then creates a new Deployments
+type CurrentDeploymentSetter interface {
+	PipelineGetter
+	CreateDeployment(signalcd.Pipeline) (signalcd.Deployment, error)
+}
+
+func (d *Deployments) SetCurrentDeployment(params openapi.SetCurrentDeployment) (interface{}, error) {
+	pipeline, err := d.currentSetter.GetPipeline(params.PipelineID)
+	if err != nil {
+		return nil, err
+	}
+
+	deployment, err := d.currentSetter.CreateDeployment(pipeline)
+	if err != nil {
+		return nil, err
+	}
+
+	return deployment, nil
+}
+
 func deploymentOpenAPI(d signalcd.Deployment) openapi.Deployment {
 	return openapi.Deployment{
-		Number:   d.Number,
-		Created:  d.Created,
-		Started:  d.Started,
-		Finished: d.Finished,
+		Number:  d.Number,
+		Created: d.Created,
 	}
 }
 
-func (d *Deployments) SetCurrentDeployment(params openapi.InlineObject) (interface{}, error) {
-	fmt.Println(params.PipelineID)
-	return nil, nil
-}
-
 type Pipelines struct {
-	lister PipelineLister
-	getter PipelineGetter
+	lister  PipelineLister
+	getter  PipelineGetter
+	creator PipelineCreater
 }
 
 type PipelineLister interface {
@@ -149,9 +178,31 @@ func (p *Pipelines) GetPipeline(id string) (interface{}, error) {
 	return pipelineOpenAPI(pipeline), err
 }
 
+type PipelineCreater interface {
+	CreatePipeline(signalcd.Pipeline) (signalcd.Pipeline, error)
+}
+
+func (p *Pipelines) CreatePipeline(newPipeline openapi.Pipeline) (interface{}, error) {
+	// TODO: Validate pipeline input
+	pipeline, err := p.creator.CreatePipeline(pipelineSignalCD(newPipeline))
+	if err != nil {
+		return nil, err
+	}
+
+	return pipelineOpenAPI(pipeline), nil
+}
+
 func pipelineOpenAPI(p signalcd.Pipeline) openapi.Pipeline {
 	return openapi.Pipeline{
 		Id:      p.ID,
+		Name:    p.Name,
+		Created: p.Created,
+	}
+}
+
+func pipelineSignalCD(p openapi.Pipeline) signalcd.Pipeline {
+	return signalcd.Pipeline{
+		ID:      p.Id,
 		Name:    p.Name,
 		Created: p.Created,
 	}

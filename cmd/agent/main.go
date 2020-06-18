@@ -94,35 +94,6 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 
 		client := apiclient.NewAPIClient(clientCfg)
 
-		//var client signalcdproto.AgentServiceClient
-		//{
-		//	var opts []grpc.DialOption
-		//
-		//	tlsCert, tlsKey := c.String(flagTLSCert), c.String(flagTLSKey)
-		//	if tlsCert != "" && tlsKey != "" {
-		//		creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
-		//		if err != nil {
-		//			return fmt.Errorf("failed to load credentials: %w", err)
-		//		}
-		//
-		//		opts = append(opts, grpc.WithTransportCredentials(creds))
-		//		level.Debug(logger).Log("msg", "making requests with TLS", "cert", tlsCert, "key", tlsKey)
-		//	} else {
-		//		opts = append(opts, grpc.WithInsecure())
-		//		level.Debug(logger).Log("msg", "making requests unencrypted")
-		//	}
-		//
-		//	dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-		//	defer cancel()
-		//	conn, err := grpc.DialContext(dialCtx, c.String("api.url"), opts...)
-		//	if err != nil {
-		//		return fmt.Errorf("failed to connect to the api: %w", err)
-		//	}
-		//	defer conn.Close()
-		//
-		//	client = signalcdproto.NewAgentServiceClient(conn)
-		//}
-
 		konfig, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
 		if err != nil {
 			level.Error(logger).Log(
@@ -245,10 +216,8 @@ func (u *updater) poll(ctx context.Context) error {
 	}
 
 	deployment := signalcd.Deployment{
-		Number:   deploymentResp.Number,
-		Created:  deploymentResp.Created,
-		Started:  deploymentResp.Started,
-		Finished: deploymentResp.Finished,
+		Number:  deploymentResp.Number,
+		Created: deploymentResp.Created,
 	}
 
 	if u.currentDeployment.get() == nil {

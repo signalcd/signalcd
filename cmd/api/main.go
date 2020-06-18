@@ -105,7 +105,7 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 
 		var gr run.Group
 		{
-			apiV1, err := NewV1(registry, db, events)
+			apiV1, err := NewV1(logger, registry, db, events)
 			if err != nil {
 				return fmt.Errorf("failed to initialize api: %w", err)
 			}
