@@ -9,7 +9,7 @@ platform:
 steps:
 - name: build
   pull: always
-  image: golang:1.13
+  image: golang:1.14
   commands:
   - make cmd/agent/agent
   - make cmd/api/api
@@ -63,7 +63,7 @@ platform:
 steps:
 - name: test-unit
   pull: always
-  image: golang:1.13
+  image: golang:1.14
   commands:
   - make test-unit
   environment:
@@ -82,7 +82,7 @@ platform:
 steps:
 - name: goimports
   pull: always
-  image: golang:1.13
+  image: golang:1.14
   commands:
   - go get golang.org/x/tools/cmd/goimports
   - cp $(which goimports) ./goimports
@@ -132,7 +132,7 @@ platform:
 steps:
 - name: build-kubernetes-status
   pull: always
-  image: golang:1.13
+  image: golang:1.14
   commands:
   - make cmd/checks/kubernetes-status/kubernetes-status
   environment:
@@ -159,7 +159,7 @@ steps:
 
 - name: build-http
   pull: always
-  image: golang:1.13
+  image: golang:1.14
   commands:
   - make cmd/checks/http/http
   environment:
@@ -195,7 +195,7 @@ platform:
 steps:
 - name: build-drone
   pull: always
-  image: golang:1.13
+  image: golang:1.14
   commands:
   - make cmd/plugins/drone/drone
   environment:

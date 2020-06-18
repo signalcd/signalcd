@@ -10,7 +10,7 @@ local pipeline = {
 
 local golang = {
   name: 'golang',
-  image: 'golang:1.13',
+  image: 'golang:1.14',
   pull: 'always',
   environment: {
     CGO_ENABLED: '0',
