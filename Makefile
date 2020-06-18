@@ -4,31 +4,34 @@ all: build
 
 generate: signalcd/proto ui/lib/src/api
 
-SWAGGER ?= docker run --rm \
+api: api/client/go api/client/javascript api/server/go
+
+OPENAPI ?= docker run --rm \
 		--user=$(shell id -u $(USER)):$(shell id -g $(USER)) \
 		-v $(shell pwd):$(shell pwd) \
-		openapitools/openapi-generator-cli:v4.2.3
+		openapitools/openapi-generator-cli:v4.3.1
 
-ui/lib/src/api: signalcd/proto/ui.swagger.json
-	-rm -rf ui/lib/src/api
-	$(SWAGGER) generate -i $(shell pwd)/signalcd/proto/ui.swagger.json -g dart -o $(shell pwd)/tmp/dart
-	mv tmp/dart/lib ui/lib/src/api
-	-rm -rf tmp/
+GOIMPORTS ?= goimports
 
-signalcd/proto: signalcd/proto/agent.pb.go signalcd/proto/types.pb.go signalcd/proto/ui.pb.go
+api/client/go: api/api.yaml
+	-rm -rf $@
+	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go -o $(shell pwd)/api/client/go --additional-properties=withGoCodegenComment=true
+	-rm -rf $@/go.mod
+	-rm -rf $@/go.sum
+	$(GOIMPORTS) -w $(shell find ./api/client/go/ -name '*.go')
+	touch $@
 
-signalcd/proto/agent.pb.go: signalcd/proto/agent.proto
-	protoc signalcd/proto/agent.proto --go_out=plugins=grpc:. -I=. -I=signalcd/proto/vendor
+api/client/javascript: api/api.yaml
+	-rm -rf $@
+	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g javascript -o $(shell pwd)/api/client/javascript --additional-properties=usePromises=true
+	touch $@
 
-signalcd/proto/types.pb.go: signalcd/proto/types.proto
-	protoc signalcd/proto/types.proto --go_out=plugins=grpc:. -I=. -I=signalcd/proto/vendor
-
-signalcd/proto/ui.pb.go: signalcd/proto/ui.proto
-	protoc signalcd/proto/ui.proto \
-		--go_out=plugins=grpc:. \
-		--swagger_out=logtostderr=true:. \
-		--grpc-gateway_out=logtostderr=true:. \
-		-I=. -I=signalcd/proto/vendor -I=$(GOPATH)/src
+api/server/go: api/api.yaml
+	-rm -rf $@
+	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go-server -o $(shell pwd)/api/server/go
+	-rm -rf $@/{go.mod,main.go}
+	$(GOIMPORTS) -w $(shell find ./api/server/go/ -name '*.go')
+	touch $@
 
 .PHONY: build
 build: \

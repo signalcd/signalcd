@@ -10,7 +10,7 @@ local pipeline = {
 
 local golang = {
   name: 'golang',
-  image: 'golang:1.13',
+  image: 'golang:1.14',
   pull: 'always',
   environment: {
     CGO_ENABLED: '0',
@@ -52,19 +52,6 @@ local docker = {
           'make cmd/api/api',
         ],
       },
-      {
-        name: 'dart',
-        image: 'google/dart:2.3',
-        pull: 'always',
-        commands: [
-          'cd ui',
-          'pub get --no-precompile',
-          'pub global activate webdev',
-          '~/.pub-cache/bin/webdev build',
-          'rm -rf build/packages',
-          'cp -r build/ ../cmd/api/assets/',
-        ],
-      },
     ] + [
       docker {
         name: 'docker-%s' % name,
@@ -97,33 +84,28 @@ local docker = {
   pipeline {
     name: 'code-generation',
     steps+: [
-      {
-        name: 'grpc',
-        image: 'golang:1.13-alpine',
-        environment: {
-          GOPROXY: 'https://proxy.golang.org',
-        },
+      golang {
+        name: 'goimports',
         commands: [
-          'apk add -U git make protobuf protoc',
-          'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway',
-          'go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger',
-          'go get -u github.com/golang/protobuf/protoc-gen-go',
-          'make signalcd/proto --always-make',
-          'git diff --exit-code signalcd/proto',
+          'go get golang.org/x/tools/cmd/goimports',
+          'cp $(which goimports) ./goimports',
         ],
       },
+    ] + [
       {
-        name: 'dart-swagger',
-        image: 'openapitools/openapi-generator-cli:v4.2.3',
+        name: '%s' % target,
+        image: 'openapitools/openapi-generator-cli:v4.3.1',
         environment: {
-          SWAGGER: '/usr/local/bin/docker-entrypoint.sh',
+          OPENAPI: '/usr/local/bin/docker-entrypoint.sh',
+          GOIMPORTS: './goimports',
         },
         commands: [
           'apk add -U git make',
-          'make ui/lib/src/api --always-make',
-          'git diff --exit-code ui/lib/src/api',
+          'make %s --always-make' % target,
+          'git diff --exit-code %s' % target,
         ],
-      },
+      }
+      for target in ['api/client/go', 'api/client/javascript', 'api/server/go']
     ],
   },
 

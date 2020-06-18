@@ -1,0 +1,145 @@
+openapi: 3.0.1
+info:
+  title: SignalCD
+  version: 0.0.0
+servers:
+  - url: /api/v1
+paths:
+  /deployments:
+    get:
+      summary: List Deployments
+      operationId: ListDeployments
+      tags:
+        - deployment
+      responses:
+        '200':
+          description: List of Deployments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployments"
+  /deployments/current:
+    get:
+      summary: Get the current Deployment
+      operationId: GetCurrentDeployment
+      tags:
+        - deployment
+      responses:
+        '200':
+          description: Get the current Deployment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
+    post:
+      summary: Set the current Deployment
+      operationId: SetCurrentDeployment
+      tags:
+        - deployment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetCurrentDeployment'
+      responses:
+        '200':
+          description: Current deployment was successfully set.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
+  /pipelines:
+    get:
+      summary: List of Pipelines.
+      operationId: ListPipelines
+      tags:
+        - pipeline
+      responses:
+        '200':
+          description: List of Pipelines.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipelines'
+    post:
+      summary: Create a new Pipeline.
+      operationId: CreatePipeline
+      tags:
+        - pipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pipeline'
+      responses:
+        '200':
+          description: The created Pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+  /pipelines/{id}:
+    get:
+      summary: Get Pipeline by its ID
+      operationId: GetPipeline
+      tags:
+        - pipeline
+      parameters:
+        - name: id
+          in: path
+          description: Pipeline ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A Pipeline
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+components:
+  schemas:
+    Deployment:
+      type: object
+      required:
+        - number
+      properties:
+        number:
+          type: integer
+          format: int64
+        created:
+          type: string
+          format: 'date-time'
+    Deployments:
+      type: array
+      items:
+        $ref: "#/components/schemas/Deployment"
+    SetCurrentDeployment:
+      type: object
+      required:
+        - pipelineID
+      properties:
+        pipelineID:
+          type: string
+          format: uuid
+    Pipeline:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        created:
+          type: string
+          format: 'date-time'
+    Pipelines:
+      type: array
+      items:
+        $ref: '#/components/schemas/Pipeline'

@@ -15,12 +15,10 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/oklog/run"
+	apiclient "github.com/signalcd/signalcd/api/client/go"
 	"github.com/signalcd/signalcd/signalcd"
-	signalcdproto "github.com/signalcd/signalcd/signalcd/proto"
 	"github.com/urfave/cli"
 	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +33,7 @@ const (
 )
 
 func main() {
+
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 	logger = log.WithPrefix(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.WithPrefix(logger, "caller", log.DefaultCaller)
@@ -90,34 +89,10 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			return errors.New("no api.url to API gRPC endpoint given, use --api.url flag")
 		}
 
-		var client signalcdproto.AgentServiceClient
-		{
-			var opts []grpc.DialOption
+		clientCfg := apiclient.NewConfiguration()
+		clientCfg.Host = c.String("api.url")
 
-			tlsCert, tlsKey := c.String(flagTLSCert), c.String(flagTLSKey)
-			if tlsCert != "" && tlsKey != "" {
-				creds, err := credentials.NewClientTLSFromFile(tlsCert, "")
-				if err != nil {
-					return fmt.Errorf("failed to load credentials: %w", err)
-				}
-
-				opts = append(opts, grpc.WithTransportCredentials(creds))
-				level.Debug(logger).Log("msg", "making requests with TLS", "cert", tlsCert, "key", tlsKey)
-			} else {
-				opts = append(opts, grpc.WithInsecure())
-				level.Debug(logger).Log("msg", "making requests unencrypted")
-			}
-
-			dialCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-			defer cancel()
-			conn, err := grpc.DialContext(dialCtx, c.String("api.url"), opts...)
-			if err != nil {
-				return fmt.Errorf("failed to connect to the api: %w", err)
-			}
-			defer conn.Close()
-
-			client = signalcdproto.NewAgentServiceClient(conn)
-		}
+		client := apiclient.NewAPIClient(clientCfg)
 
 		konfig, err := clientcmd.BuildConfigFromFlags("", c.String("kubeconfig"))
 		if err != nil {
@@ -200,7 +175,7 @@ func (cd *currentDeployment) set(d signalcd.Deployment) {
 }
 
 type updater struct {
-	client signalcdproto.AgentServiceClient
+	client *apiclient.APIClient
 	klient *kubernetes.Clientset
 	logger log.Logger
 
@@ -235,14 +210,14 @@ func (u *updater) pollLoop(ctx context.Context) error {
 }
 
 func (u *updater) poll(ctx context.Context) error {
-	resp, err := u.client.CurrentDeployment(ctx, &signalcdproto.CurrentDeploymentRequest{})
+	deploymentResp, _, err := u.client.DeploymentApi.GetCurrentDeployment(ctx)
 	if err != nil {
-		return xerrors.Errorf("failed to get current deployment: %w", err)
+		return fmt.Errorf("failed to get current deployment: %w", err)
 	}
 
-	deployment, err := signalcdproto.DeploymentSignalCD(resp.GetCurrentDeployment())
-	if err != nil {
-		return fmt.Errorf("failed to convert deploment to signalcd: %w", err)
+	deployment := signalcd.Deployment{
+		Number:  deploymentResp.Number,
+		Created: deploymentResp.Created,
 	}
 
 	if u.currentDeployment.get() == nil {
@@ -263,15 +238,16 @@ func (u *updater) poll(ctx context.Context) error {
 
 		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
 
-		_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-			Number: deployment.Number,
-			Status: &signalcdproto.DeploymentStatus{
-				Phase: signalcdproto.DeploymentStatus_PROGRESS,
-			},
-		})
-		if err != nil {
-			return xerrors.Errorf("failed to update deployment status: %w", err)
-		}
+		// TODO: Introduce in OpenAPI again
+		//_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		//	Number: deployment.Number,
+		//	Status: &signalcdproto.DeploymentStatus{
+		//		Phase: signalcdproto.DeploymentStatus_PROGRESS,
+		//	},
+		//})
+		//if err != nil {
+		//	return xerrors.Errorf("failed to update deployment status: %w", err)
+		//}
 
 		if err := u.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
 			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to run pipeline: %w", err))
@@ -291,15 +267,16 @@ func (u *updater) poll(ctx context.Context) error {
 		u.currentDeployment.set(deployment)
 		level.Info(u.logger).Log("msg", "update deployment", "number", deployment.Number)
 
-		_, err := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-			Number: deployment.Number,
-			Status: &signalcdproto.DeploymentStatus{
-				Phase: signalcdproto.DeploymentStatus_PROGRESS,
-			},
-		})
-		if err != nil {
-			return xerrors.Errorf("failed to update deployment status: %w", err)
-		}
+		// TODO: Introduce in OpenAPI again
+		//_, err := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		//	Number: deployment.Number,
+		//	Status: &signalcdproto.DeploymentStatus{
+		//		Phase: signalcdproto.DeploymentStatus_PROGRESS,
+		//	},
+		//})
+		//if err != nil {
+		//	return xerrors.Errorf("failed to update deployment status: %w", err)
+		//}
 
 		if err := u.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
 			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to run deployment: %w", err))
@@ -318,29 +295,32 @@ func (u *updater) poll(ctx context.Context) error {
 }
 
 func (u *updater) sendStatus(ctx context.Context, number int64, err error) error {
-	if err != nil {
-		_, err2 := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-			Number: number,
-			Status: &signalcdproto.DeploymentStatus{
-				Phase: signalcdproto.DeploymentStatus_FAILURE,
-			},
-		})
-		if err2 != nil {
-			return xerrors.Errorf("failed to update deployment status: %w - original error: %w", err2, err)
-		}
-	} else {
-		_, err2 := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-			Number: number,
-			Status: &signalcdproto.DeploymentStatus{
-				Phase: signalcdproto.DeploymentStatus_SUCCESS,
-			},
-		})
-		if err2 != nil {
-			return xerrors.Errorf("failed to update deployment status: %w", err2)
-		}
-	}
-
-	return err
+	return nil
+	// TODO: Introduce in OpenAPI again
+	//	if err != nil {
+	//		_, err2 := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+	//			Number: number,
+	//			Status: &signalcdproto.DeploymentStatus{
+	//				Phase: signalcdproto.DeploymentStatus_FAILURE,
+	//			},
+	//		})
+	//		if err2 != nil {
+	//			return xerrors.Errorf("failed to update deployment status: %w - original error: %w", err2, err)
+	//		}
+	//	} else {
+	//		_, err2 := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+	//			Number: number,
+	//			Status: &signalcdproto.DeploymentStatus{
+	//				Phase: signalcdproto.DeploymentStatus_SUCCESS,
+	//			},
+	//		})
+	//		if err2 != nil {
+	//			return xerrors.Errorf("failed to update deployment status: %w", err2)
+	//		}
+	//	}
+	//
+	//	return err
+	//}
 }
 
 func (u *updater) runPipeline(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
@@ -439,14 +419,15 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 
 		level.Debug(podLogger).Log("msg", "step logs", "logs", string(logs))
 
-		_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
-			Number: deploymentNumber,
-			Step:   stepNumber,
-			Logs:   logs,
-		})
-		if err != nil {
-			level.Warn(podLogger).Log("msg", "failed to ship logs", "err", err)
-		}
+		// TODO: Introduce in OpenAPI again
+		//_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
+		//	Number: deploymentNumber,
+		//	Step:   stepNumber,
+		//	Logs:   logs,
+		//})
+		//if err != nil {
+		//	level.Warn(podLogger).Log("msg", "failed to ship logs", "err", err)
+		//}
 
 		_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
 		level.Debug(podLogger).Log("msg", "deleted pod")
