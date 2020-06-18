@@ -73,13 +73,13 @@ func (c *DeploymentApiController) ListDeployments(w http.ResponseWriter, r *http
 
 // SetCurrentDeployment - Set the current Deployment
 func (c *DeploymentApiController) SetCurrentDeployment(w http.ResponseWriter, r *http.Request) {
-	inlineObject := &InlineObject{}
-	if err := json.NewDecoder(r.Body).Decode(&inlineObject); err != nil {
+	setCurrentDeployment := &SetCurrentDeployment{}
+	if err := json.NewDecoder(r.Body).Decode(&setCurrentDeployment); err != nil {
 		w.WriteHeader(500)
 		return
 	}
 
-	result, err := c.service.SetCurrentDeployment(*inlineObject)
+	result, err := c.service.SetCurrentDeployment(*setCurrentDeployment)
 	if err != nil {
 		w.WriteHeader(500)
 		return

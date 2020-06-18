@@ -10,6 +10,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -30,6 +31,12 @@ func NewPipelineApiController(s PipelineApiServicer) Router {
 func (c *PipelineApiController) Routes() Routes {
 	return Routes{
 		{
+			"CreatePipeline",
+			strings.ToUpper("Post"),
+			"/api/v1/pipelines",
+			c.CreatePipeline,
+		},
+		{
 			"GetPipeline",
 			strings.ToUpper("Get"),
 			"/api/v1/pipelines/{id}",
@@ -42,6 +49,23 @@ func (c *PipelineApiController) Routes() Routes {
 			c.ListPipelines,
 		},
 	}
+}
+
+// CreatePipeline - Create a new Pipeline.
+func (c *PipelineApiController) CreatePipeline(w http.ResponseWriter, r *http.Request) {
+	pipeline := &Pipeline{}
+	if err := json.NewDecoder(r.Body).Decode(&pipeline); err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	result, err := c.service.CreatePipeline(*pipeline)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	EncodeJSONResponse(result, nil, w)
 }
 
 // GetPipeline - Get Pipeline by its ID

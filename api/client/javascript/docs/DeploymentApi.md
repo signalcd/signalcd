@@ -88,7 +88,7 @@ No authorization required
 
 ## setCurrentDeployment
 
-> Deployment setCurrentDeployment(opts)
+> Deployment setCurrentDeployment(setCurrentDeployment)
 
 Set the current Deployment
 
@@ -98,10 +98,8 @@ Set the current Deployment
 import SignalCd from 'signal_cd';
 
 let apiInstance = new SignalCd.DeploymentApi();
-let opts = {
-  'inlineObject': new SignalCd.InlineObject() // InlineObject | 
-};
-apiInstance.setCurrentDeployment(opts).then((data) => {
+let setCurrentDeployment = new SignalCd.SetCurrentDeployment(); // SetCurrentDeployment | 
+apiInstance.setCurrentDeployment(setCurrentDeployment).then((data) => {
   console.log('API called successfully. Returned data: ' + data);
 }, (error) => {
   console.error(error);
@@ -114,7 +112,7 @@ apiInstance.setCurrentDeployment(opts).then((data) => {
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **inlineObject** | [**InlineObject**](InlineObject.md)|  | [optional] 
+ **setCurrentDeployment** | [**SetCurrentDeployment**](SetCurrentDeployment.md)|  | 
 
 ### Return type
 

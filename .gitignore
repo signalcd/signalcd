@@ -18,6 +18,7 @@
 /api/**/go.sum
 /api/client/javascript/.babelrc
 /api/client/javascript/mocha.opts
+/api/client/javascript/package.json
 /api/server/go/Dockerfile
 /api/server/go/main.go
 /api/server/go/README.md
@@ -31,4 +32,3 @@
 /development/caddy
 /development/data
 /vendor/
-/api/client/javascript/package.json

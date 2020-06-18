@@ -48,6 +48,16 @@
   }
 
   describe('PipelineApi', function() {
+    describe('createPipeline', function() {
+      it('should call createPipeline successfully', function(done) {
+        //uncomment below and update the code to test createPipeline
+        //instance.createPipeline(function(error) {
+        //  if (error) throw error;
+        //expect().to.be();
+        //});
+        done();
+      });
+    });
     describe('getPipeline', function() {
       it('should call getPipeline successfully', function(done) {
         //uncomment below and update the code to test getPipeline

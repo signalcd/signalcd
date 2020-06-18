@@ -37,14 +37,11 @@ paths:
       tags:
         - deployment
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                pipelineID:
-                  type: string
-                  format: uuid
+              $ref: '#/components/schemas/SetCurrentDeployment'
       responses:
         '200':
           description: Current deployment was successfully set.
@@ -57,7 +54,7 @@ paths:
       summary: List of Pipelines.
       operationId: ListPipelines
       tags:
-      - pipeline
+        - pipeline
       responses:
         '200':
           description: List of Pipelines.
@@ -65,12 +62,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Pipelines'
+    post:
+      summary: Create a new Pipeline.
+      operationId: CreatePipeline
+      tags:
+        - pipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pipeline'
+      responses:
+        '200':
+          description: The created Pipeline.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
   /pipelines/{id}:
     get:
       summary: Get Pipeline by its ID
       operationId: GetPipeline
       tags:
-      - pipeline
+        - pipeline
       parameters:
         - name: id
           in: path
@@ -99,16 +114,18 @@ components:
         created:
           type: string
           format: 'date-time'
-        started:
-          type: string
-          format: 'date-time'
-        finished:
-          type: string
-          format: 'date-time'
     Deployments:
       type: array
       items:
         $ref: "#/components/schemas/Deployment"
+    SetCurrentDeployment:
+      type: object
+      required:
+        - pipelineID
+      properties:
+        pipelineID:
+          type: string
+          format: uuid
     Pipeline:
       type: object
       required:

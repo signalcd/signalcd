@@ -36,6 +36,51 @@ export default class PipelineApi {
 
 
     /**
+     * Create a new Pipeline.
+     * @param {module:model/Pipeline} pipeline 
+     * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with an object containing data of type {@link module:model/Pipeline} and HTTP response
+     */
+    createPipelineWithHttpInfo(pipeline) {
+      let postBody = pipeline;
+      // verify the required parameter 'pipeline' is set
+      if (pipeline === undefined || pipeline === null) {
+        throw new Error("Missing the required parameter 'pipeline' when calling createPipeline");
+      }
+
+      let pathParams = {
+      };
+      let queryParams = {
+      };
+      let headerParams = {
+      };
+      let formParams = {
+      };
+
+      let authNames = [];
+      let contentTypes = ['application/json'];
+      let accepts = ['application/json'];
+      let returnType = Pipeline;
+      return this.apiClient.callApi(
+        '/pipelines', 'POST',
+        pathParams, queryParams, headerParams, formParams, postBody,
+        authNames, contentTypes, accepts, returnType, null
+      );
+    }
+
+    /**
+     * Create a new Pipeline.
+     * @param {module:model/Pipeline} pipeline 
+     * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with data of type {@link module:model/Pipeline}
+     */
+    createPipeline(pipeline) {
+      return this.createPipelineWithHttpInfo(pipeline)
+        .then(function(response_and_data) {
+          return response_and_data.data;
+        });
+    }
+
+
+    /**
      * Get Pipeline by its ID
      * @param {String} id Pipeline ID (UUID)
      * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with an object containing data of type {@link module:model/Pipeline} and HTTP response

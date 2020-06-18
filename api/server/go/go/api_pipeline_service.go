@@ -24,6 +24,13 @@ func NewPipelineApiService() PipelineApiServicer {
 	return &PipelineApiService{}
 }
 
+// CreatePipeline - Create a new Pipeline.
+func (s *PipelineApiService) CreatePipeline(pipeline Pipeline) (interface{}, error) {
+	// TODO - update CreatePipeline with the required logic for this service method.
+	// Add api_pipeline_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	return nil, errors.New("service method 'CreatePipeline' not implemented")
+}
+
 // GetPipeline - Get Pipeline by its ID
 func (s *PipelineApiService) GetPipeline(id string) (interface{}, error) {
 	// TODO - update GetPipeline with the required logic for this service method.

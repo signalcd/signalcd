@@ -1,10 +1,10 @@
-# InlineObject
+# SetCurrentDeployment
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**PipelineID** | **string** |  | [optional] 
+**PipelineID** | **string** |  | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

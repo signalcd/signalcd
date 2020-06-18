@@ -16,8 +16,6 @@ import (
 
 // Deployment struct for Deployment
 type Deployment struct {
-	Number   int64     `json:"number"`
-	Created  time.Time `json:"created,omitempty"`
-	Started  time.Time `json:"started,omitempty"`
-	Finished time.Time `json:"finished,omitempty"`
+	Number  int64     `json:"number"`
+	Created time.Time `json:"created,omitempty"`
 }

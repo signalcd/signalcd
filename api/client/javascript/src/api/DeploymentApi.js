@@ -14,7 +14,7 @@
 
 import ApiClient from "../ApiClient";
 import Deployment from '../model/Deployment';
-import InlineObject from '../model/InlineObject';
+import SetCurrentDeployment from '../model/SetCurrentDeployment';
 
 /**
 * Deployment service.
@@ -116,13 +116,15 @@ export default class DeploymentApi {
 
     /**
      * Set the current Deployment
-     * @param {Object} opts Optional parameters
-     * @param {module:model/InlineObject} opts.inlineObject 
+     * @param {module:model/SetCurrentDeployment} setCurrentDeployment 
      * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with an object containing data of type {@link module:model/Deployment} and HTTP response
      */
-    setCurrentDeploymentWithHttpInfo(opts) {
-      opts = opts || {};
-      let postBody = opts['inlineObject'];
+    setCurrentDeploymentWithHttpInfo(setCurrentDeployment) {
+      let postBody = setCurrentDeployment;
+      // verify the required parameter 'setCurrentDeployment' is set
+      if (setCurrentDeployment === undefined || setCurrentDeployment === null) {
+        throw new Error("Missing the required parameter 'setCurrentDeployment' when calling setCurrentDeployment");
+      }
 
       let pathParams = {
       };
@@ -146,12 +148,11 @@ export default class DeploymentApi {
 
     /**
      * Set the current Deployment
-     * @param {Object} opts Optional parameters
-     * @param {module:model/InlineObject} opts.inlineObject 
+     * @param {module:model/SetCurrentDeployment} setCurrentDeployment 
      * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with data of type {@link module:model/Deployment}
      */
-    setCurrentDeployment(opts) {
-      return this.setCurrentDeploymentWithHttpInfo(opts)
+    setCurrentDeployment(setCurrentDeployment) {
+      return this.setCurrentDeploymentWithHttpInfo(setCurrentDeployment)
         .then(function(response_and_data) {
           return response_and_data.data;
         });

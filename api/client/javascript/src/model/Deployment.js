@@ -55,12 +55,6 @@ class Deployment {
             if (data.hasOwnProperty('created')) {
                 obj['created'] = ApiClient.convertToType(data['created'], 'Date');
             }
-            if (data.hasOwnProperty('started')) {
-                obj['started'] = ApiClient.convertToType(data['started'], 'Date');
-            }
-            if (data.hasOwnProperty('finished')) {
-                obj['finished'] = ApiClient.convertToType(data['finished'], 'Date');
-            }
         }
         return obj;
     }
@@ -77,16 +71,6 @@ Deployment.prototype['number'] = undefined;
  * @member {Date} created
  */
 Deployment.prototype['created'] = undefined;
-
-/**
- * @member {Date} started
- */
-Deployment.prototype['started'] = undefined;
-
-/**
- * @member {Date} finished
- */
-Deployment.prototype['finished'] = undefined;
 
 
 

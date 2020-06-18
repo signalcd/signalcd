@@ -14,18 +14,19 @@
 import ApiClient from '../ApiClient';
 
 /**
- * The InlineObject model module.
- * @module model/InlineObject
+ * The SetCurrentDeployment model module.
+ * @module model/SetCurrentDeployment
  * @version 0.0.0
  */
-class InlineObject {
+class SetCurrentDeployment {
     /**
-     * Constructs a new <code>InlineObject</code>.
-     * @alias module:model/InlineObject
+     * Constructs a new <code>SetCurrentDeployment</code>.
+     * @alias module:model/SetCurrentDeployment
+     * @param pipelineID {String} 
      */
-    constructor() { 
+    constructor(pipelineID) { 
         
-        InlineObject.initialize(this);
+        SetCurrentDeployment.initialize(this, pipelineID);
     }
 
     /**
@@ -33,19 +34,20 @@ class InlineObject {
      * This method is used by the constructors of any subclasses, in order to implement multiple inheritance (mix-ins).
      * Only for internal use.
      */
-    static initialize(obj) { 
+    static initialize(obj, pipelineID) { 
+        obj['pipelineID'] = pipelineID;
     }
 
     /**
-     * Constructs a <code>InlineObject</code> from a plain JavaScript object, optionally creating a new instance.
+     * Constructs a <code>SetCurrentDeployment</code> from a plain JavaScript object, optionally creating a new instance.
      * Copies all relevant properties from <code>data</code> to <code>obj</code> if supplied or a new instance if not.
      * @param {Object} data The plain JavaScript object bearing properties of interest.
-     * @param {module:model/InlineObject} obj Optional instance to populate.
-     * @return {module:model/InlineObject} The populated <code>InlineObject</code> instance.
+     * @param {module:model/SetCurrentDeployment} obj Optional instance to populate.
+     * @return {module:model/SetCurrentDeployment} The populated <code>SetCurrentDeployment</code> instance.
      */
     static constructFromObject(data, obj) {
         if (data) {
-            obj = obj || new InlineObject();
+            obj = obj || new SetCurrentDeployment();
 
             if (data.hasOwnProperty('pipelineID')) {
                 obj['pipelineID'] = ApiClient.convertToType(data['pipelineID'], 'String');
@@ -60,12 +62,12 @@ class InlineObject {
 /**
  * @member {String} pipelineID
  */
-InlineObject.prototype['pipelineID'] = undefined;
+SetCurrentDeployment.prototype['pipelineID'] = undefined;
 
 
 
 
 
 
-export default InlineObject;
+export default SetCurrentDeployment;
 

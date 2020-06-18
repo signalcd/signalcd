@@ -10,7 +10,7 @@
 
 package openapi
 
-// InlineObject struct for InlineObject
-type InlineObject struct {
-	PipelineID string `json:"pipelineID,omitempty"`
+// SetCurrentDeployment struct for SetCurrentDeployment
+type SetCurrentDeployment struct {
+	PipelineID string `json:"pipelineID"`
 }

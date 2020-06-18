@@ -35,6 +35,7 @@ Class | Method | HTTP request | Description
 *DeploymentApi* | [**GetCurrentDeployment**](docs/DeploymentApi.md#getcurrentdeployment) | **Get** /deployments/current | Get the current Deployment
 *DeploymentApi* | [**ListDeployments**](docs/DeploymentApi.md#listdeployments) | **Get** /deployments | List Deployments
 *DeploymentApi* | [**SetCurrentDeployment**](docs/DeploymentApi.md#setcurrentdeployment) | **Post** /deployments/current | Set the current Deployment
+*PipelineApi* | [**CreatePipeline**](docs/PipelineApi.md#createpipeline) | **Post** /pipelines | Create a new Pipeline.
 *PipelineApi* | [**GetPipeline**](docs/PipelineApi.md#getpipeline) | **Get** /pipelines/{id} | Get Pipeline by its ID
 *PipelineApi* | [**ListPipelines**](docs/PipelineApi.md#listpipelines) | **Get** /pipelines | List of Pipelines.
 
@@ -42,8 +43,8 @@ Class | Method | HTTP request | Description
 ## Documentation For Models
 
  - [Deployment](docs/Deployment.md)
- - [InlineObject](docs/InlineObject.md)
  - [Pipeline](docs/Pipeline.md)
+ - [SetCurrentDeployment](docs/SetCurrentDeployment.md)
 
 
 ## Documentation For Authorization

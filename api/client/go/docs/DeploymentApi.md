@@ -68,7 +68,7 @@ No authorization required
 
 ## SetCurrentDeployment
 
-> Deployment SetCurrentDeployment(ctx, optional)
+> Deployment SetCurrentDeployment(ctx, setCurrentDeployment)
 
 Set the current Deployment
 
@@ -78,16 +78,7 @@ Set the current Deployment
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
- **optional** | ***SetCurrentDeploymentOpts** | optional parameters | nil if no parameters
-
-### Optional Parameters
-
-Optional parameters are passed through a pointer to a SetCurrentDeploymentOpts struct
-
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **inlineObject** | [**optional.Interface of InlineObject**](InlineObject.md)|  | 
+**setCurrentDeployment** | [**SetCurrentDeployment**](SetCurrentDeployment.md)|  | 
 
 ### Return type
 

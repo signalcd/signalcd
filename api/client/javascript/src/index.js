@@ -14,8 +14,8 @@
 
 import ApiClient from './ApiClient';
 import Deployment from './model/Deployment';
-import InlineObject from './model/InlineObject';
 import Pipeline from './model/Pipeline';
+import SetCurrentDeployment from './model/SetCurrentDeployment';
 import DeploymentApi from './api/DeploymentApi';
 import PipelineApi from './api/PipelineApi';
 
@@ -65,16 +65,16 @@ export {
     Deployment,
 
     /**
-     * The InlineObject model constructor.
-     * @property {module:model/InlineObject}
-     */
-    InlineObject,
-
-    /**
      * The Pipeline model constructor.
      * @property {module:model/Pipeline}
      */
     Pipeline,
+
+    /**
+     * The SetCurrentDeployment model constructor.
+     * @property {module:model/SetCurrentDeployment}
+     */
+    SetCurrentDeployment,
 
     /**
     * The DeploymentApi service constructor.

@@ -39,7 +39,7 @@ func (s *DeploymentApiService) ListDeployments() (interface{}, error) {
 }
 
 // SetCurrentDeployment - Set the current Deployment
-func (s *DeploymentApiService) SetCurrentDeployment(inlineObject InlineObject) (interface{}, error) {
+func (s *DeploymentApiService) SetCurrentDeployment(setCurrentDeployment SetCurrentDeployment) (interface{}, error) {
 	// TODO - update SetCurrentDeployment with the required logic for this service method.
 	// Add api_deployment_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
 	return nil, errors.New("service method 'SetCurrentDeployment' not implemented")

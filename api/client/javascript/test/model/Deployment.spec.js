@@ -66,18 +66,6 @@
       //expect(instance).to.be();
     });
 
-    it('should have the property started (base name: "started")', function() {
-      // uncomment below and update the code to test the property started
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be();
-    });
-
-    it('should have the property finished (base name: "finished")', function() {
-      // uncomment below and update the code to test the property finished
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be();
-    });
-
   });
 
 }));

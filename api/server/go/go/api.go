@@ -26,6 +26,7 @@ type DeploymentApiRouter interface {
 // The PipelineApiRouter implementation should parse necessary information from the http request,
 // pass the data to a PipelineApiServicer to perform the required actions, then write the service results to the http response.
 type PipelineApiRouter interface {
+	CreatePipeline(http.ResponseWriter, *http.Request)
 	GetPipeline(http.ResponseWriter, *http.Request)
 	ListPipelines(http.ResponseWriter, *http.Request)
 }
@@ -37,7 +38,7 @@ type PipelineApiRouter interface {
 type DeploymentApiServicer interface {
 	GetCurrentDeployment() (interface{}, error)
 	ListDeployments() (interface{}, error)
-	SetCurrentDeployment(InlineObject) (interface{}, error)
+	SetCurrentDeployment(SetCurrentDeployment) (interface{}, error)
 }
 
 // PipelineApiServicer defines the api actions for the PipelineApi service
@@ -45,6 +46,7 @@ type DeploymentApiServicer interface {
 // while the service implementation can ignored with the .openapi-generator-ignore file
 // and updated with the logic required for the API.
 type PipelineApiServicer interface {
+	CreatePipeline(Pipeline) (interface{}, error)
 	GetPipeline(string) (interface{}, error)
 	ListPipelines() (interface{}, error)
 }

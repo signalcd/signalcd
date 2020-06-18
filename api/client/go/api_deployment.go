@@ -15,8 +15,6 @@ import (
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
-
-	"github.com/antihax/optional"
 )
 
 // Linger please
@@ -175,19 +173,13 @@ func (a *DeploymentApiService) ListDeployments(ctx _context.Context) ([]Deployme
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// SetCurrentDeploymentOpts Optional parameters for the method 'SetCurrentDeployment'
-type SetCurrentDeploymentOpts struct {
-	InlineObject optional.Interface
-}
-
 /*
 SetCurrentDeployment Set the current Deployment
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *SetCurrentDeploymentOpts - Optional Parameters:
- * @param "InlineObject" (optional.Interface of InlineObject) -
+ * @param setCurrentDeployment
 @return Deployment
 */
-func (a *DeploymentApiService) SetCurrentDeployment(ctx _context.Context, localVarOptionals *SetCurrentDeploymentOpts) (Deployment, *_nethttp.Response, error) {
+func (a *DeploymentApiService) SetCurrentDeployment(ctx _context.Context, setCurrentDeployment SetCurrentDeployment) (Deployment, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -221,14 +213,7 @@ func (a *DeploymentApiService) SetCurrentDeployment(ctx _context.Context, localV
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	if localVarOptionals != nil && localVarOptionals.InlineObject.IsSet() {
-		localVarOptionalInlineObject, localVarOptionalInlineObjectok := localVarOptionals.InlineObject.Value().(InlineObject)
-		if !localVarOptionalInlineObjectok {
-			return localVarReturnValue, nil, reportError("inlineObject should be InlineObject")
-		}
-		localVarPostBody = &localVarOptionalInlineObject
-	}
-
+	localVarPostBody = &setCurrentDeployment
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err

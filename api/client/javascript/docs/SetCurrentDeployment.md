@@ -1,9 +1,9 @@
-# SignalCd.InlineObject
+# SignalCd.SetCurrentDeployment
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**pipelineID** | **String** |  | [optional] 
+**pipelineID** | **String** |  | 
 
 

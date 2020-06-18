@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.InlineObject();
+    instance = new SignalCd.SetCurrentDeployment();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,16 +47,16 @@
       object[property] = value;
   }
 
-  describe('InlineObject', function() {
-    it('should create an instance of InlineObject', function() {
-      // uncomment below and update the code to test InlineObject
-      //var instane = new SignalCd.InlineObject();
-      //expect(instance).to.be.a(SignalCd.InlineObject);
+  describe('SetCurrentDeployment', function() {
+    it('should create an instance of SetCurrentDeployment', function() {
+      // uncomment below and update the code to test SetCurrentDeployment
+      //var instane = new SignalCd.SetCurrentDeployment();
+      //expect(instance).to.be.a(SignalCd.SetCurrentDeployment);
     });
 
     it('should have the property pipelineID (base name: "pipelineID")', function() {
       // uncomment below and update the code to test the property pipelineID
-      //var instane = new SignalCd.InlineObject();
+      //var instane = new SignalCd.SetCurrentDeployment();
       //expect(instance).to.be();
     });
 
