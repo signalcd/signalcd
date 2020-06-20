@@ -1,0 +1,31 @@
+{
+  "name": "signalcd",
+  "version": "0.0.0",
+  "description": "Continuous Delivery for Kubernetes reacting to Observability Signals.",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/signalcd/signalcd.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/signalcd/signalcd/issues"
+  },
+  "homepage": "https://github.com/signalcd/signalcd#readme",
+  "devDependencies": {
+    "esbuild": "^0.5.3"
+  },
+  "browser": {
+    "fs": false
+  },
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "lit-element": "^2.3.1",
+    "querystring": "^0.2.0",
+    "superagent": "^5.2.2"
+  }
+}

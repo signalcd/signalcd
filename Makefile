@@ -2,7 +2,9 @@ GO := CGO_ENABLED=0 GO111MODULE=on go
 
 all: build
 
-generate: signalcd/proto ui/lib/src/api
+# Code Generation
+
+generate: api
 
 api: api/client/go api/client/javascript api/server/go
 
@@ -33,6 +35,8 @@ api/server/go: api/api.yaml
 	$(GOIMPORTS) -w $(shell find ./api/server/go/ -name '*.go')
 	touch $@
 
+# Building Binaries with Go
+
 .PHONY: build
 build: \
 	cmd/agent/agent \
@@ -60,19 +64,22 @@ cmd/checks/kubernetes-status/kubernetes-status:
 cmd/plugins/drone/drone:
 	$(GO) build -v -o ./cmd/plugins/drone/drone ./cmd/plugins/drone
 
-.PHONY: ui
-ui:
-	cd ui && webdev build
-
-.PHONY: ui-serve
-ui-serve:
-	cd ui && webdev serve
-
 test: test-unit
 
 .PHONY: test-unit
 test-unit:
 	go test -v -race ./...
+
+# Building the UI
+
+node_modules: package.json package-lock.json
+	npm install
+	touch $@
+
+ui/bundle.js: node_modules $(shell find ./ui -iname '*.js' | grep -v ./ui/bundle.js)
+	node_modules/esbuild/bin/esbuild --bundle ui/index.js --outfile=ui/bundle.js --sourcemap
+
+# Building Containers
 
 container: container-agent container-api container-kubernetes-status
 
