@@ -1,4 +1,4 @@
-import {html, LitElement} from 'lit-element';
+import {css, html, LitElement} from 'lit-element';
 import {ApiClient, Deployment, DeploymentApi, PipelineApi} from '../../api/client/javascript/src/index.js';
 
 class App extends LitElement {
@@ -7,6 +7,31 @@ class App extends LitElement {
             deployments: {type: Array},
             pipelines: {type: Array},
         };
+    }
+
+    static get styles() {
+        return css`
+            .container {
+                width: 900px;
+                margin: 0 auto;
+            }
+            h1.title {
+                font-size: 2rem;
+                font-weight: 600;
+                line-height: 1.125;
+            }
+            h2.subtitle {
+                color: #4a4a4a;
+                font-size: 1.25rem;
+                font-weight: 400;
+                line-height: 1.25;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-column-gap: 1rem;
+            }
+        `;
     }
 
     constructor() {
@@ -18,20 +43,30 @@ class App extends LitElement {
 
     render() {
         return html`
-            <div>
-                <h1>SignalCD is alive again!</h1>
-                <h3>Deployments</h3>
-                <ul>
-                    ${this.deployments.map((d) => html`
-                        <li>${d.number} - ${d.created}</li>
-                    `)}
-                </ul>
-                <h3>Pipelines</h3>
-                <ul>
-                    ${this.pipelines.map((p) => html`
-                        <li>${p.id} - ${p.created}</li>
-                    `)}
-                </ul>
+            <header style="min-height: 3.25rem; background-color: #209cee;">
+            </header>
+            <div class="container">
+                <h1 class="title">Welcome to SignalCD</h1>
+                <h2 class="subtitle">Continuous Delivery for Kubernetes reacting to Observability Signals.</h2>
+
+                <div class="grid">
+                    <div>
+                        <h3>Deployments</h3>
+                        <ul>
+                            ${this.deployments.map((d) => html`
+                                <li>${d.number}</li>
+                            `)}
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Pipelines</h3>
+                        <ul>
+                            ${this.pipelines.map((p) => html`
+                                <li>${p.id}</li>
+                            `)}
+                        </ul>
+                    </div>
+                </div>
             </div>
         `;
     }

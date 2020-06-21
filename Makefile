@@ -2,6 +2,9 @@ GO := CGO_ENABLED=0 GO111MODULE=on go
 
 all: build
 
+run: build
+	./development/run.sh
+
 # Code Generation
 
 generate: api
@@ -42,7 +45,8 @@ build: \
 	cmd/agent/agent \
 	cmd/api/api \
 	cmd/checks/kubernetes-status/kubernetes-status \
-	cmd/plugins/drone/drone
+	cmd/plugins/drone/drone \
+	ui/bundle.js
 
 .PHONY: cmd/agent/agent
 cmd/agent/agent:
