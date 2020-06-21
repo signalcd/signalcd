@@ -92,7 +92,10 @@ container-agent: cmd/agent/agent
 	docker build -t cd-agent ./cmd/agent
 
 .PHONY: container-api
-container-api: cmd/api/api
+container-api: cmd/api/api ui/bundle.js
+	mkdir -p ./cmd/api/assets
+	cp ./ui/index.html ./cmd/api/assets
+	cp ./ui/bundle.js ./cmd/api/assets
 	docker build -t cd-api ./cmd/api
 
 .PHONY: container-kubernetes-status
