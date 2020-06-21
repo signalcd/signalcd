@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -70,7 +69,7 @@ func main() {
 		cli.StringFlag{
 			Name:  flagUIAssets,
 			Usage: "The path to the UI assets on disk",
-			Value: "/assets",
+			Value: "./ui",
 		},
 	}
 
@@ -125,10 +124,11 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 				}
 
 				// Serving the UI assets
-				r.Get("/", file(directory, "index.html", "text/html"))
-				r.Get("/bulma.min.css", file(directory, "bulma.min.css", "text/css"))
-				r.Get("/main.dart.js", file(directory, "main.dart.js", "application/javascript"))
-				r.NotFound(file(directory, "index.html", "text/html"))
+				r.Get("/", file(directory, "index.html"))
+				r.Get("/bulma.min.css", file(directory, "bulma.min.css"))
+				r.Get("/bundle.js", file(directory, "bundle.js"))
+				r.Get("/bundle.js.map", file(directory, "bundle.js.map"))
+				r.NotFound(file(directory, "index.html"))
 			}
 
 			s := http.Server{
@@ -181,11 +181,9 @@ func apiAction(logger log.Logger) cli.ActionFunc {
 	}
 }
 
-func file(directory, name, mime string) http.HandlerFunc {
-	file, _ := ioutil.ReadFile(filepath.Join(directory, name))
+func file(directory, name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", mime)
-		_, _ = w.Write(file)
+		http.ServeFile(w, r, filepath.Join(directory, name))
 	}
 }
 

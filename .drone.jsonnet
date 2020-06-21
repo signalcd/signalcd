@@ -19,6 +19,12 @@ local golang = {
   },
 };
 
+local node = {
+  name: 'node',
+  image: 'node:14.4.0',
+  pull: 'always',
+};
+
 local docker = {
   name: 'docker',
   image: 'plugins/docker',
@@ -50,6 +56,12 @@ local docker = {
         commands: [
           'make cmd/agent/agent',
           'make cmd/api/api',
+        ],
+      },
+      node {
+        name: 'ui',
+        commands: [
+          'make ui/bundle.js',
         ],
       },
     ] + [

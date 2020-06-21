@@ -18,6 +18,12 @@ steps:
     GO111MODULE: on
     GOPROXY: https://proxy.golang.org
 
+- name: ui
+  pull: always
+  image: node:14.4.0
+  commands:
+  - make ui/bundle.js
+
 - name: docker-api
   image: plugins/docker
   settings:

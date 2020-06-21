@@ -31,4 +31,7 @@
 /cmd/plugins/kubernetes-status/kubernetes-status
 /development/caddy
 /development/data
+/node_modules/
+/ui/bundle.js
+/ui/bundle.js.map
 /vendor/
