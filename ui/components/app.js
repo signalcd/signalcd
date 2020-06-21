@@ -1,5 +1,5 @@
 import {html, LitElement} from 'lit-element';
-import {ApiClient, DeploymentApi, PipelineApi} from '../../api/client/javascript/src/index.js';
+import {ApiClient, Deployment, DeploymentApi, PipelineApi} from '../../api/client/javascript/src/index.js';
 
 class App extends LitElement {
     static get properties() {
@@ -42,6 +42,14 @@ class App extends LitElement {
 
         new DeploymentApi(client).listDeployments().then((deployments) => this.deployments = deployments);
         new PipelineApi(client).listPipelines().then((pipelines) => this.pipelines = pipelines);
+
+        let deploymentsEvents = new EventSource(`${client.basePath}/deployments/events`);
+        deploymentsEvents.onmessage = (event) => this.updateDeployments(event);
+    }
+
+    updateDeployments(event) {
+        let deployment = Deployment.constructFromObject(JSON.parse(event.data));
+        this.deployments = [deployment, ...this.deployments];
     }
 }
 

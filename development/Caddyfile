@@ -1,7 +1,0 @@
-https://localhost:6060 {
-    proxy /  https://localhost:6660 {
-        ca_certificates ./development/signalcd.dev+6.pem
-    }
-
-    tls ./development/signalcd.dev+6.pem ./development/signalcd.dev+6-key.pem
-}
