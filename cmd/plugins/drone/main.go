@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
+	"net/url"
 	"os"
 
 	"github.com/ghodss/yaml"
@@ -85,13 +85,15 @@ func action(c *cli.Context) error {
 		return fmt.Errorf("failed to parse SignalCD config: %w", err)
 	}
 
-	apiURLFlag := c.String(flagAPIURL)
-	if apiURLFlag == "" {
-		return errors.New("no API URL provided")
+	apiURL, err := url.Parse(c.String(flagAPIURL))
+	if err != nil {
+		return fmt.Errorf("failed to parse API URL: %w", err)
 	}
 
 	clientCfg := apiclient.NewConfiguration()
-	clientCfg.Host = apiURLFlag
+	clientCfg.Scheme = apiURL.Scheme
+	clientCfg.Host = apiURL.Host
+	clientCfg.BasePath = apiURL.Path
 
 	client := apiclient.NewAPIClient(clientCfg)
 
@@ -111,8 +113,6 @@ func action(c *cli.Context) error {
 	//		},
 	//	}
 	//}
-	//username := c.String(flagAuthUsername)
-	//password := c.String(flagAuthPassword)
 
 	var pipelineSteps []apiclient.PipelineSteps
 	for _, step := range config.Steps {
