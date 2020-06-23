@@ -62,6 +62,7 @@ local docker = {
         name: 'ui',
         commands: [
           'make ui/bundle.js',
+          'mkdir -p ./cmd/api/assets && cp ./ui/{index.html,bundle.js} ./cmd/api/assets/'
         ],
       },
     ] + [
@@ -193,3 +194,4 @@ local docker = {
     ],
   },
 ]
+

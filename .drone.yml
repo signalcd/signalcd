@@ -23,6 +23,7 @@ steps:
   image: node:14.4.0
   commands:
   - make ui/bundle.js
+  - mkdir -p ./cmd/api/assets && cp ./ui/{index.html,bundle.js} ./cmd/api/assets/
 
 - name: docker-api
   image: plugins/docker
