@@ -81,7 +81,7 @@ node_modules: package.json package-lock.json
 	touch $@
 
 ui/bundle.js: node_modules $(shell find ./ui -iname '*.js' | grep -v ./ui/bundle.js)
-	node_modules/esbuild/bin/esbuild --bundle ui/index.js --outfile=ui/bundle.js --sourcemap
+	node_modules/esbuild/bin/esbuild --external:fs --bundle ui/index.js --outfile=ui/bundle.js --sourcemap
 
 # Building Containers
 
