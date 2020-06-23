@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -18,7 +23,6 @@ import (
 	apiclient "github.com/signalcd/signalcd/api/client/go"
 	"github.com/signalcd/signalcd/signalcd"
 	"github.com/urfave/cli"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +37,6 @@ const (
 )
 
 func main() {
-
 	logger := log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
 	logger = log.WithPrefix(logger, "ts", log.DefaultTimestampUTC)
 	logger = log.WithPrefix(logger, "caller", log.DefaultCaller)
@@ -51,7 +54,7 @@ func main() {
 		},
 		cli.StringFlag{
 			Name:  "api.url",
-			Usage: "Full URL to API, like http://localhost:6661",
+			Usage: "Full URL to API, like http://localhost:6660",
 		},
 		cli.StringFlag{
 			Name:  "namespace",
@@ -89,8 +92,15 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			return errors.New("no api.url to API gRPC endpoint given, use --api.url flag")
 		}
 
+		apiURL, err := url.Parse(c.String("api.url"))
+		if err != nil {
+			return fmt.Errorf("failed to parse API URL: %w", err)
+		}
+
 		clientCfg := apiclient.NewConfiguration()
-		clientCfg.Host = c.String("api.url")
+		clientCfg.Scheme = apiURL.Scheme
+		clientCfg.Host = apiURL.Host
+		clientCfg.BasePath = path.Join(apiURL.Path, "/api/v1")
 
 		client := apiclient.NewAPIClient(clientCfg)
 
@@ -114,9 +124,21 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 
 		ctx, cancel := context.WithCancel(context.Background())
 
+		events := make(chan signalcd.Deployment, 1)
+
 		var gr run.Group
 		{
-			u := &updater{
+			l := listener{api: apiURL}
+
+			gr.Add(func() error {
+				return l.listen(ctx, events)
+			}, func(err error) {
+				close(events)
+				cancel()
+			})
+		}
+		{
+			u := &runner{
 				client: client,
 				klient: klient,
 				logger: logger,
@@ -127,7 +149,7 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 			}
 
 			gr.Add(func() error {
-				return u.pollLoop(ctx)
+				return u.run(ctx, events)
 			}, func(err error) {
 				cancel()
 			})
@@ -174,7 +196,72 @@ func (cd *currentDeployment) set(d signalcd.Deployment) {
 	cd.deployment = &d
 }
 
-type updater struct {
+type listener struct {
+	api *url.URL
+}
+
+func (l *listener) listen(ctx context.Context, deployments chan<- signalcd.Deployment) error {
+	client := http.Client{}
+
+	// refactor so that 2 goroutines write into channel
+	// first periodically does a simple GET /api/v1/deployments to check if events were missed
+	// second watches GET /api/v1/deployments/events with SSE
+
+	u := url.URL{
+		Scheme: l.api.Scheme,
+		Host:   l.api.Host,
+		Path:   path.Join(l.api.Path, "/api/v1/deployments/events"),
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if atEOF || len(data) == 0 {
+			return 0, nil, nil
+		}
+
+		index := bytes.Index(data, []byte("\n\n"))
+		if index > 0 {
+			return index + 2, data[0:index], nil
+		}
+
+		if atEOF {
+			return len(data), data, nil
+		}
+
+		return 0, nil, nil
+	})
+
+	for scanner.Scan() {
+		var d signalcd.Deployment
+
+		text := bytes.TrimPrefix(scanner.Bytes(), []byte("data:"))
+		text = bytes.TrimSpace(text)
+
+		if err := json.Unmarshal(text, &d); err != nil {
+			fmt.Println(scanner.Text())
+			return err
+		}
+		deployments <- d
+	}
+	if scanner.Err() != nil {
+		return err
+	}
+
+	return nil
+}
+
+type runner struct {
 	client *apiclient.APIClient
 	klient *kubernetes.Clientset
 	logger log.Logger
@@ -186,136 +273,118 @@ type updater struct {
 	currentDeployment currentDeployment
 }
 
-func (u *updater) pollLoop(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-
-	level.Info(u.logger).Log("msg", "starting poll loop")
+func (r *runner) run(ctx context.Context, events <-chan signalcd.Deployment) error {
+	level.Info(r.logger).Log("msg", "runner starting, waiting for events")
 
 	for {
 		select {
 		case <-ctx.Done():
-			ticker.Stop()
 			return nil
-		case <-ticker.C:
-			err := u.poll(ctx)
-			if err != nil {
-				level.Warn(u.logger).Log(
-					"msg", "failed to poll",
-					"err", err,
-				)
+		case deployment := <-events:
+			if err := r.poll(ctx, deployment); err != nil {
+				level.Warn(r.logger).Log("msg", "failed to run pipeline", "err", err)
 			}
 		}
 	}
 }
 
-func (u *updater) poll(ctx context.Context) error {
-	deploymentResp, _, err := u.client.DeploymentApi.GetCurrentDeployment(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get current deployment: %w", err)
-	}
-
-	deployment := signalcd.Deployment{
-		Number:  deploymentResp.Number,
-		Created: deploymentResp.Created,
-	}
-
-	if u.currentDeployment.get() == nil {
-		loaded, err := u.loadDeployment()
+func (r *runner) poll(ctx context.Context, deployment signalcd.Deployment) error {
+	if r.currentDeployment.get() == nil {
+		loaded, err := r.loadDeployment()
 		if err != nil && !apierrors.IsNotFound(err) {
-			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to load pipeline: %v", err))
+			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to load pipeline: %v", err))
 		}
-		level.Debug(u.logger).Log("msg", "loaded pipeline from ConfigMap")
+		level.Debug(r.logger).Log("msg", "loaded pipeline from ConfigMap")
 
-		u.currentDeployment.set(deployment)
+		r.currentDeployment.set(deployment)
 
 		// if running deployment id in cluster equals to wanted deployment
 		// we don't need to run the pipeline
 		if loaded.Number == deployment.Number {
-			level.Debug(u.logger).Log("msg", "ConfigMap has same deployment ID", "number", deployment.Number)
+			level.Debug(r.logger).Log("msg", "ConfigMap has same deployment ID", "number", deployment.Number)
 			return nil
 		}
 
-		level.Info(u.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
+		level.Info(r.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
 
 		// TODO: Introduce in OpenAPI again
-		//_, err = u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		//_, err = r.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 		//	Number: deployment.Number,
 		//	Status: &signalcdproto.DeploymentStatus{
 		//		Phase: signalcdproto.DeploymentStatus_PROGRESS,
 		//	},
 		//})
 		//if err != nil {
-		//	return xerrors.Errorf("failed to update deployment status: %w", err)
+		//	return fmt.Errorf("failed to update deployment status: %w", err)
 		//}
 
-		if err := u.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
-			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to run pipeline: %w", err))
+		if err := r.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
+			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to run pipeline: %w", err))
 		}
 
-		err = u.saveDeployment(deployment)
+		err = r.saveDeployment(deployment)
 		if err != nil {
-			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to save pipeline: %w", err))
+			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to save pipeline: %w", err))
 		}
 
-		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
+		level.Info(r.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
 
-		return u.sendStatus(ctx, deployment.Number, nil)
+		return r.sendStatus(ctx, deployment.Number, nil)
 	}
 
-	if u.currentDeployment.get().Number != deployment.Number {
-		u.currentDeployment.set(deployment)
-		level.Info(u.logger).Log("msg", "update deployment", "number", deployment.Number)
+	if r.currentDeployment.get().Number != deployment.Number {
+		r.currentDeployment.set(deployment)
+		level.Info(r.logger).Log("msg", "update deployment", "number", deployment.Number)
 
 		// TODO: Introduce in OpenAPI again
-		//_, err := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+		//_, err := r.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 		//	Number: deployment.Number,
 		//	Status: &signalcdproto.DeploymentStatus{
 		//		Phase: signalcdproto.DeploymentStatus_PROGRESS,
 		//	},
 		//})
 		//if err != nil {
-		//	return xerrors.Errorf("failed to update deployment status: %w", err)
+		//	return fmt.Errorf("failed to update deployment status: %w", err)
 		//}
 
-		if err := u.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
-			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to run deployment: %w", err))
+		if err := r.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
+			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to run deployment: %w", err))
 		}
 
-		if err := u.saveDeployment(deployment); err != nil {
-			return u.sendStatus(ctx, deployment.Number, xerrors.Errorf("failed to save deployment: %w", err))
+		if err := r.saveDeployment(deployment); err != nil {
+			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to save deployment: %w", err))
 		}
 
-		level.Info(u.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
+		level.Info(r.logger).Log("msg", "finished updating deployment", "number", deployment.Number)
 
-		return u.sendStatus(ctx, deployment.Number, nil)
+		return r.sendStatus(ctx, deployment.Number, nil)
 	}
 
 	return nil
 }
 
-func (u *updater) sendStatus(ctx context.Context, number int64, err error) error {
+func (r *runner) sendStatus(ctx context.Context, number int64, err error) error {
 	return nil
 	// TODO: Introduce in OpenAPI again
 	//	if err != nil {
-	//		_, err2 := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+	//		_, err2 := r.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 	//			Number: number,
 	//			Status: &signalcdproto.DeploymentStatus{
 	//				Phase: signalcdproto.DeploymentStatus_FAILURE,
 	//			},
 	//		})
 	//		if err2 != nil {
-	//			return xerrors.Errorf("failed to update deployment status: %w - original error: %w", err2, err)
+	//			return fmt.Errorf("failed to update deployment status: %w - original error: %w", err2, err)
 	//		}
 	//	} else {
-	//		_, err2 := u.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
+	//		_, err2 := r.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
 	//			Number: number,
 	//			Status: &signalcdproto.DeploymentStatus{
 	//				Phase: signalcdproto.DeploymentStatus_SUCCESS,
 	//			},
 	//		})
 	//		if err2 != nil {
-	//			return xerrors.Errorf("failed to update deployment status: %w", err2)
+	//			return fmt.Errorf("failed to update deployment status: %w", err2)
 	//		}
 	//	}
 	//
@@ -323,34 +392,34 @@ func (u *updater) sendStatus(ctx context.Context, number int64, err error) error
 	//}
 }
 
-func (u *updater) runPipeline(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
-	level.Info(u.logger).Log("msg", "running steps")
-	if err := u.runSteps(ctx, deploymentNumber, p); err != nil {
+func (r *runner) runPipeline(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
+	level.Info(r.logger).Log("msg", "running steps")
+	if err := r.runSteps(ctx, deploymentNumber, p); err != nil {
 		return fmt.Errorf("failed to run steps: %w", err)
 	}
 
-	level.Info(u.logger).Log("msg", "cleaning checks")
-	if err := u.cleanChecks(p); err != nil {
+	level.Info(r.logger).Log("msg", "cleaning checks")
+	if err := r.cleanChecks(p); err != nil {
 		return fmt.Errorf("failed to clean old checks: %w", err)
 	}
 
-	level.Info(u.logger).Log("msg", "running checks")
-	if err := u.runChecks(ctx, deploymentNumber, p); err != nil {
+	level.Info(r.logger).Log("msg", "running checks")
+	if err := r.runChecks(ctx, deploymentNumber, p); err != nil {
 		return fmt.Errorf("failed to run checks: %w", err)
 	}
 
 	return nil
 }
 
-func (u *updater) runSteps(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
+func (r *runner) runSteps(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
 	for i, s := range p.Steps {
-		level.Debug(u.logger).Log(
+		level.Debug(r.logger).Log(
 			"msg", "running step",
 			"pipeline", p.Name,
 			"step", s.Name,
 		)
 
-		if err := u.runStep(ctx, deploymentNumber, int64(i), p, s); err != nil {
+		if err := r.runStep(ctx, deploymentNumber, int64(i), p, s); err != nil {
 			return fmt.Errorf("failed to run pipeline %s step %s: %w", p.Name, s.Name, err)
 		}
 	}
@@ -358,7 +427,7 @@ func (u *updater) runSteps(ctx context.Context, deploymentNumber int64, p signal
 	return nil
 }
 
-func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumber int64, pipeline signalcd.Pipeline, step signalcd.Step) error {
+func (r *runner) runStep(ctx context.Context, deploymentNumber int64, stepNumber int64, pipeline signalcd.Pipeline, step signalcd.Step) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
@@ -377,7 +446,7 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: u.namespace,
+			Namespace: r.namespace,
 			Labels: map[string]string{
 				"signalcd": "step",
 				"pipeline": pipeline.Name,
@@ -385,7 +454,7 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 			},
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: u.serviceAccount,
+			ServiceAccountName: r.serviceAccount,
 			Containers: []corev1.Container{{
 				Name:            step.Name,
 				Image:           step.Image,
@@ -398,21 +467,21 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 		},
 	}
 
-	podLogger := log.With(u.logger, "namespace", u.namespace, "pod", p.Name)
+	podLogger := log.With(r.logger, "namespace", r.namespace, "pod", p.Name)
 
 	// Clean up previous runs if the pods still exists
-	err := u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+	err := r.klient.CoreV1().Pods(r.namespace).Delete(p.Name, nil)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete previous pod: %w", err)
 	}
 
-	_, err = u.klient.CoreV1().Pods(u.namespace).Create(&p)
+	_, err = r.klient.CoreV1().Pods(r.namespace).Create(&p)
 	if err != nil {
 		return fmt.Errorf("failed to create pod: %w", err)
 	}
 
 	defer func(p *corev1.Pod) {
-		logs, err := u.podLogs(p.Name)
+		logs, err := r.podLogs(p.Name)
 		if err != nil {
 			level.Warn(podLogger).Log("msg", "failed to get pod logs", "err", err)
 		}
@@ -420,7 +489,7 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 		level.Debug(podLogger).Log("msg", "step logs", "logs", string(logs))
 
 		// TODO: Introduce in OpenAPI again
-		//_, err = u.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
+		//_, err = r.client.StepLogs(ctx, &signalcdproto.StepLogsRequest{
 		//	Number: deploymentNumber,
 		//	Step:   stepNumber,
 		//	Logs:   logs,
@@ -429,14 +498,14 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 		//	level.Warn(podLogger).Log("msg", "failed to ship logs", "err", err)
 		//}
 
-		_ = u.klient.CoreV1().Pods(u.namespace).Delete(p.Name, nil)
+		_ = r.klient.CoreV1().Pods(r.namespace).Delete(p.Name, nil)
 		level.Debug(podLogger).Log("msg", "deleted pod")
 	}(&p)
 
 	level.Debug(podLogger).Log("msg", "created pod")
 
 	timeout := int64(time.Minute.Seconds())
-	watch, err := u.klient.CoreV1().Pods(u.namespace).Watch(metav1.ListOptions{
+	watch, err := r.klient.CoreV1().Pods(r.namespace).Watch(metav1.ListOptions{
 		LabelSelector:  labelsSelector(p.GetLabels()),
 		Watch:          true,
 		TimeoutSeconds: &timeout,
@@ -459,30 +528,30 @@ func (u *updater) runStep(ctx context.Context, deploymentNumber int64, stepNumbe
 	return nil
 }
 
-func (u *updater) podLogs(name string) ([]byte, error) {
+func (r *runner) podLogs(name string) ([]byte, error) {
 	limit := int64(1048576)
-	r, err := u.klient.CoreV1().Pods(u.namespace).GetLogs(name, &corev1.PodLogOptions{LimitBytes: &limit}).Stream()
+	reader, err := r.klient.CoreV1().Pods(r.namespace).GetLogs(name, &corev1.PodLogOptions{LimitBytes: &limit}).Stream()
 	if err != nil {
 		return nil, err
 	}
 
-	return ioutil.ReadAll(r)
+	return ioutil.ReadAll(reader)
 }
 
-func (u *updater) cleanChecks(pipeline signalcd.Pipeline) error {
-	err := u.klient.CoreV1().Pods(u.namespace).DeleteCollection(nil, metav1.ListOptions{
+func (r *runner) cleanChecks(pipeline signalcd.Pipeline) error {
+	err := r.klient.CoreV1().Pods(r.namespace).DeleteCollection(nil, metav1.ListOptions{
 		LabelSelector: labelsSelector(checkLabels),
 	})
 	if err != nil {
-		return xerrors.Errorf("failed to delete pods: %w", err)
+		return fmt.Errorf("failed to delete pods: %w", err)
 	}
 
 	return nil
 }
 
-func (u *updater) runChecks(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
+func (r *runner) runChecks(ctx context.Context, deploymentNumber int64, p signalcd.Pipeline) error {
 	for i, c := range p.Checks {
-		if err := u.runCheck(ctx, deploymentNumber, int64(i), p, c); err != nil {
+		if err := r.runCheck(ctx, deploymentNumber, int64(i), p, c); err != nil {
 			return fmt.Errorf("failed to run pipeline %s check %s: %w", p.Name, c.Name, err)
 		}
 	}
@@ -494,7 +563,7 @@ var checkLabels = map[string]string{
 	"cd": "check",
 }
 
-func (u *updater) runCheck(ctx context.Context, deploymentNumber, checkNumber int64, pipeline signalcd.Pipeline, check signalcd.Check) error {
+func (r *runner) runCheck(ctx context.Context, deploymentNumber, checkNumber int64, pipeline signalcd.Pipeline, check signalcd.Check) error {
 	// Add PLUGIN_API for checks to find the API
 	check.Environment["PLUGIN_API"] = apiURL
 
@@ -511,11 +580,11 @@ func (u *updater) runCheck(ctx context.Context, deploymentNumber, checkNumber in
 	p := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      strings.ToLower(pipeline.Name + "-" + check.Name),
-			Namespace: u.namespace,
+			Namespace: r.namespace,
 			Labels:    checkLabels,
 		},
 		Spec: corev1.PodSpec{
-			ServiceAccountName: u.serviceAccount,
+			ServiceAccountName: r.serviceAccount,
 			Containers: []corev1.Container{{
 				Name:            strings.ToLower(check.Name),
 				Image:           check.Image,
@@ -527,9 +596,9 @@ func (u *updater) runCheck(ctx context.Context, deploymentNumber, checkNumber in
 		},
 	}
 
-	_, err := u.klient.CoreV1().Pods(u.namespace).Create(&p)
+	_, err := r.klient.CoreV1().Pods(r.namespace).Create(&p)
 	if err != nil {
-		return xerrors.Errorf("failed to create check pod: %w", err)
+		return fmt.Errorf("failed to create check pod: %w", err)
 	}
 
 	return nil
@@ -546,8 +615,8 @@ func labelsSelector(ls map[string]string) string {
 const configMapName = "signalcd"
 const configMapFilename = "deployment.json"
 
-func (u *updater) loadDeployment() (signalcd.Deployment, error) {
-	cm, err := u.klient.CoreV1().ConfigMaps(u.namespace).Get(configMapName, metav1.GetOptions{})
+func (r *runner) loadDeployment() (signalcd.Deployment, error) {
+	cm, err := r.klient.CoreV1().ConfigMaps(r.namespace).Get(configMapName, metav1.GetOptions{})
 	if err != nil {
 		return signalcd.Deployment{}, err
 	}
@@ -562,7 +631,7 @@ func (u *updater) loadDeployment() (signalcd.Deployment, error) {
 	return d, nil
 }
 
-func (u *updater) saveDeployment(d signalcd.Deployment) error {
+func (r *runner) saveDeployment(d signalcd.Deployment) error {
 	b, err := json.Marshal(&d)
 	if err != nil {
 		return fmt.Errorf("failed to marshal deployment configmap: %w", err)
@@ -571,28 +640,28 @@ func (u *updater) saveDeployment(d signalcd.Deployment) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      configMapName,
-			Namespace: u.namespace,
+			Namespace: r.namespace,
 		},
 		Data: map[string]string{
 			configMapFilename: string(b),
 		},
 	}
 
-	_, err = u.klient.CoreV1().ConfigMaps(u.namespace).Get(configMapName, metav1.GetOptions{})
+	_, err = r.klient.CoreV1().ConfigMaps(r.namespace).Get(configMapName, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		_, err = u.klient.CoreV1().ConfigMaps(u.namespace).Create(cm)
+		_, err = r.klient.CoreV1().ConfigMaps(r.namespace).Create(cm)
 		if err != nil {
-			return xerrors.Errorf("failed to create ConfigMap: %v", err)
+			return fmt.Errorf("failed to create ConfigMap: %v", err)
 		}
 		return nil
 	}
 	if err != nil {
-		return xerrors.Errorf("failed to get ConfigMap: %v", err)
+		return fmt.Errorf("failed to get ConfigMap: %v", err)
 	}
 
-	_, err = u.klient.CoreV1().ConfigMaps(u.namespace).Update(cm)
+	_, err = r.klient.CoreV1().ConfigMaps(r.namespace).Update(cm)
 	if err != nil {
-		return xerrors.Errorf("failed to update ConfigMap: %v", err)
+		return fmt.Errorf("failed to update ConfigMap: %v", err)
 	}
 	return nil
 }

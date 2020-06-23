@@ -7,7 +7,7 @@ import (
 )
 
 func TestCurrentDeployment(t *testing.T) {
-	u := updater{}
+	u := runner{}
 
 	d := u.currentDeployment.get()
 	if d != nil {
