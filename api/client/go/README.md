@@ -44,6 +44,7 @@ Class | Method | HTTP request | Description
 
  - [Deployment](docs/Deployment.md)
  - [Pipeline](docs/Pipeline.md)
+ - [PipelineSteps](docs/PipelineSteps.md)
  - [SetCurrentDeployment](docs/SetCurrentDeployment.md)
 
 

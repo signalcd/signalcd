@@ -9,14 +9,10 @@
 
 package openapi
 
-import (
-	"time"
-)
+type PipelineSteps struct {
+	Name string `json:"name,omitempty"`
 
-type Deployment struct {
-	Number int64 `json:"number"`
+	Image string `json:"image,omitempty"`
 
-	Created time.Time `json:"created,omitempty"`
-
-	Pipeline Pipeline `json:"pipeline,omitempty"`
+	Commands []string `json:"commands,omitempty"`
 }

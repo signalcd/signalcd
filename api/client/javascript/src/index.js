@@ -15,6 +15,7 @@
 import ApiClient from './ApiClient';
 import Deployment from './model/Deployment';
 import Pipeline from './model/Pipeline';
+import PipelineSteps from './model/PipelineSteps';
 import SetCurrentDeployment from './model/SetCurrentDeployment';
 import DeploymentApi from './api/DeploymentApi';
 import PipelineApi from './api/PipelineApi';
@@ -69,6 +70,12 @@ export {
      * @property {module:model/Pipeline}
      */
     Pipeline,
+
+    /**
+     * The PipelineSteps model constructor.
+     * @property {module:model/PipelineSteps}
+     */
+    PipelineSteps,
 
     /**
      * The SetCurrentDeployment model constructor.

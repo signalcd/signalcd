@@ -6,5 +6,6 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **_number** | **Number** |  | 
 **created** | **Date** |  | [optional] 
+**pipeline** | [**Pipeline**](Pipeline.md) |  | [optional] 
 
 

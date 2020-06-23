@@ -19,4 +19,6 @@ type Pipeline struct {
 	Name string `json:"name,omitempty"`
 
 	Created time.Time `json:"created,omitempty"`
+
+	Steps []PipelineSteps `json:"steps,omitempty"`
 }

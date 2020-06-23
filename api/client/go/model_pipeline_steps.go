@@ -10,14 +10,9 @@
 
 package openapi
 
-import (
-	"time"
-)
-
-// Pipeline struct for Pipeline
-type Pipeline struct {
-	Id      string          `json:"id"`
-	Name    string          `json:"name,omitempty"`
-	Created time.Time       `json:"created,omitempty"`
-	Steps   []PipelineSteps `json:"steps,omitempty"`
+// PipelineSteps struct for PipelineSteps
+type PipelineSteps struct {
+	Name     string   `json:"name,omitempty"`
+	Image    string   `json:"image,omitempty"`
+	Commands []string `json:"commands,omitempty"`
 }

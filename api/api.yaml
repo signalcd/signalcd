@@ -114,6 +114,8 @@ components:
         created:
           type: string
           format: 'date-time'
+        pipeline:
+          $ref: '#/components/schemas/Pipeline'
     Deployments:
       type: array
       items:
@@ -139,6 +141,19 @@ components:
         created:
           type: string
           format: 'date-time'
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              image:
+                type: string
+              commands:
+                type: array
+                items:
+                  type: string
     Pipelines:
       type: array
       items:

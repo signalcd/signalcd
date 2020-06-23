@@ -12,6 +12,7 @@
  */
 
 import ApiClient from '../ApiClient';
+import PipelineSteps from './PipelineSteps';
 
 /**
  * The Pipeline model module.
@@ -58,6 +59,9 @@ class Pipeline {
             if (data.hasOwnProperty('created')) {
                 obj['created'] = ApiClient.convertToType(data['created'], 'Date');
             }
+            if (data.hasOwnProperty('steps')) {
+                obj['steps'] = ApiClient.convertToType(data['steps'], [PipelineSteps]);
+            }
         }
         return obj;
     }
@@ -79,6 +83,11 @@ Pipeline.prototype['name'] = undefined;
  * @member {Date} created
  */
 Pipeline.prototype['created'] = undefined;
+
+/**
+ * @member {Array.<module:model/PipelineSteps>} steps
+ */
+Pipeline.prototype['steps'] = undefined;
 
 
 

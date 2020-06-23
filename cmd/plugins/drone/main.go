@@ -114,8 +114,18 @@ func action(c *cli.Context) error {
 	//username := c.String(flagAuthUsername)
 	//password := c.String(flagAuthPassword)
 
+	var pipelineSteps []apiclient.PipelineSteps
+	for _, step := range config.Steps {
+		pipelineSteps = append(pipelineSteps, apiclient.PipelineSteps{
+			Name:     step.Name,
+			Image:    step.Image,
+			Commands: step.Commands,
+		})
+	}
+
 	pipeline, _, err := client.PipelineApi.CreatePipeline(context.Background(), apiclient.Pipeline{
-		Name: config.Name,
+		Name:  config.Name,
+		Steps: pipelineSteps,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create pipeline: %w", err)

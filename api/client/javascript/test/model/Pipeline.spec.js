@@ -72,6 +72,12 @@
       //expect(instance).to.be();
     });
 
+    it('should have the property steps (base name: "steps")', function() {
+      // uncomment below and update the code to test the property steps
+      //var instane = new SignalCd.Pipeline();
+      //expect(instance).to.be();
+    });
+
   });
 
 }));

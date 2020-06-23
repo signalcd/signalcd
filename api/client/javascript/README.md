@@ -129,6 +129,7 @@ Class | Method | HTTP request | Description
 
  - [SignalCd.Deployment](docs/Deployment.md)
  - [SignalCd.Pipeline](docs/Pipeline.md)
+ - [SignalCd.PipelineSteps](docs/PipelineSteps.md)
  - [SignalCd.SetCurrentDeployment](docs/SetCurrentDeployment.md)
 
 

@@ -12,6 +12,7 @@
  */
 
 import ApiClient from '../ApiClient';
+import Pipeline from './Pipeline';
 
 /**
  * The Deployment model module.
@@ -55,6 +56,9 @@ class Deployment {
             if (data.hasOwnProperty('created')) {
                 obj['created'] = ApiClient.convertToType(data['created'], 'Date');
             }
+            if (data.hasOwnProperty('pipeline')) {
+                obj['pipeline'] = Pipeline.constructFromObject(data['pipeline']);
+            }
         }
         return obj;
     }
@@ -71,6 +75,11 @@ Deployment.prototype['number'] = undefined;
  * @member {Date} created
  */
 Deployment.prototype['created'] = undefined;
+
+/**
+ * @member {module:model/Pipeline} pipeline
+ */
+Deployment.prototype['pipeline'] = undefined;
 
 
 

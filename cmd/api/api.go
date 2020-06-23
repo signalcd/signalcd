@@ -140,8 +140,9 @@ func (d *Deployments) SetCurrentDeployment(params openapi.SetCurrentDeployment) 
 
 func deploymentOpenAPI(d signalcd.Deployment) openapi.Deployment {
 	return openapi.Deployment{
-		Number:  d.Number,
-		Created: d.Created,
+		Number:   d.Number,
+		Created:  d.Created,
+		Pipeline: pipelineOpenAPI(d.Pipeline),
 	}
 }
 
@@ -193,17 +194,37 @@ func (p *Pipelines) CreatePipeline(newPipeline openapi.Pipeline) (interface{}, e
 }
 
 func pipelineOpenAPI(p signalcd.Pipeline) openapi.Pipeline {
+	var steps []openapi.PipelineSteps
+	for _, s := range p.Steps {
+		steps = append(steps, openapi.PipelineSteps{
+			Name:     s.Name,
+			Image:    s.Image,
+			Commands: s.Commands,
+		})
+	}
+
 	return openapi.Pipeline{
 		Id:      p.ID,
 		Name:    p.Name,
 		Created: p.Created,
+		Steps:   steps,
 	}
 }
 
 func pipelineSignalCD(p openapi.Pipeline) signalcd.Pipeline {
+	var steps []signalcd.Step
+	for _, s := range p.Steps {
+		steps = append(steps, signalcd.Step{
+			Name:     s.Name,
+			Image:    s.Image,
+			Commands: s.Commands,
+		})
+	}
+
 	return signalcd.Pipeline{
 		ID:      p.Id,
 		Name:    p.Name,
 		Created: p.Created,
+		Steps:   steps,
 	}
 }

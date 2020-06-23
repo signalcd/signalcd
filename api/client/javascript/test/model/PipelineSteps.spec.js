@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.Deployment();
+    instance = new SignalCd.PipelineSteps();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,28 +47,28 @@
       object[property] = value;
   }
 
-  describe('Deployment', function() {
-    it('should create an instance of Deployment', function() {
-      // uncomment below and update the code to test Deployment
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be.a(SignalCd.Deployment);
+  describe('PipelineSteps', function() {
+    it('should create an instance of PipelineSteps', function() {
+      // uncomment below and update the code to test PipelineSteps
+      //var instane = new SignalCd.PipelineSteps();
+      //expect(instance).to.be.a(SignalCd.PipelineSteps);
     });
 
-    it('should have the property _number (base name: "number")', function() {
-      // uncomment below and update the code to test the property _number
-      //var instane = new SignalCd.Deployment();
+    it('should have the property name (base name: "name")', function() {
+      // uncomment below and update the code to test the property name
+      //var instane = new SignalCd.PipelineSteps();
       //expect(instance).to.be();
     });
 
-    it('should have the property created (base name: "created")', function() {
-      // uncomment below and update the code to test the property created
-      //var instane = new SignalCd.Deployment();
+    it('should have the property image (base name: "image")', function() {
+      // uncomment below and update the code to test the property image
+      //var instane = new SignalCd.PipelineSteps();
       //expect(instance).to.be();
     });
 
-    it('should have the property pipeline (base name: "pipeline")', function() {
-      // uncomment below and update the code to test the property pipeline
-      //var instane = new SignalCd.Deployment();
+    it('should have the property commands (base name: "commands")', function() {
+      // uncomment below and update the code to test the property commands
+      //var instane = new SignalCd.PipelineSteps();
       //expect(instance).to.be();
     });
 
