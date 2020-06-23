@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	stdlog "log"
 	"net/url"
 	"os"
+	"path"
 
 	"github.com/ghodss/yaml"
 	apiclient "github.com/signalcd/signalcd/api/client/go"
@@ -74,10 +76,10 @@ func main() {
 }
 
 func action(c *cli.Context) error {
-	path := c.String(flagFile)
-	fileContent, err := ioutil.ReadFile(path)
+	filepath := c.String(flagFile)
+	fileContent, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return fmt.Errorf("failed to read SignalCD file from: %s", path)
+		return fmt.Errorf("failed to read SignalCD file from: %s", filepath)
 	}
 
 	config, err := signalcd.ParseConfig(string(fileContent))
@@ -93,7 +95,14 @@ func action(c *cli.Context) error {
 	clientCfg := apiclient.NewConfiguration()
 	clientCfg.Scheme = apiURL.Scheme
 	clientCfg.Host = apiURL.Host
-	clientCfg.BasePath = apiURL.Path
+	clientCfg.BasePath = path.Join(apiURL.Path, "/api/v1")
+
+	authUsername := c.String(flagAuthUsername)
+	authPassword := c.String(flagAuthPassword)
+	if authUsername != "" && authPassword != "" {
+		b := authUsername + ":" + authPassword
+		clientCfg.AddDefaultHeader("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(b)))
+	}
 
 	client := apiclient.NewAPIClient(clientCfg)
 
