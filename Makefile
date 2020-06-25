@@ -38,6 +38,9 @@ api/server/go: api/api.yaml
 	$(GOIMPORTS) -w $(shell find ./api/server/go/ -name '*.go')
 	touch $@
 
+.drone.yml: .drone.jsonnet
+	drone jsonnet --stream
+
 # Building Binaries with Go
 
 .PHONY: build
