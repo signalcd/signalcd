@@ -8,7 +8,6 @@ import (
 
 	"github.com/drone/envsubst"
 	"github.com/ghodss/yaml"
-	"golang.org/x/xerrors"
 )
 
 // Config for a SignalCD Pipeline
@@ -54,7 +53,7 @@ func parseConfigEnv(s string, env func(string) string) (Config, error) {
 
 	err = yaml.Unmarshal([]byte(s), &c)
 	if err != nil {
-		return c, xerrors.Errorf("failed to unmarshal config: %w", err)
+		return c, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
 	return c, nil
