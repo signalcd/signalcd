@@ -90,11 +90,8 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 		}
 
 		d = signalcd.Deployment{
-			Number:  int64(num + 1),
-			Created: time.Now().UTC(),
-			Status: signalcd.DeploymentStatus{
-				Phase: signalcd.Unknown,
-			},
+			Number:   int64(num + 1),
+			Created:  time.Now().UTC(),
 			Pipeline: pipeline,
 		}
 
@@ -214,11 +211,11 @@ func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment, step int64, log
 			return fmt.Errorf("step %d does not exist", step)
 		}
 
-		if d.Pipeline.Steps[step].Status == nil {
-			d.Pipeline.Steps[step].Status = &signalcd.Status{}
-		}
-
-		d.Pipeline.Steps[step].Status.Logs = logs
+		//if d.Pipeline.Steps[step].Status == nil {
+		//	d.Pipeline.Steps[step].Status = &signalcd.Status{}
+		//}
+		//
+		//d.Pipeline.Steps[step].Status.Logs = logs
 
 		value, err := json.Marshal(d)
 		if err != nil {
