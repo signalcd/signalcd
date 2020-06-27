@@ -12,6 +12,7 @@
  */
 
 import ApiClient from '../ApiClient';
+import DeploymentStatus from './DeploymentStatus';
 import Pipeline from './Pipeline';
 
 /**
@@ -59,6 +60,9 @@ class Deployment {
             if (data.hasOwnProperty('pipeline')) {
                 obj['pipeline'] = Pipeline.constructFromObject(data['pipeline']);
             }
+            if (data.hasOwnProperty('status')) {
+                obj['status'] = ApiClient.convertToType(data['status'], {'String': DeploymentStatus});
+            }
         }
         return obj;
     }
@@ -80,6 +84,11 @@ Deployment.prototype['created'] = undefined;
  * @member {module:model/Pipeline} pipeline
  */
 Deployment.prototype['pipeline'] = undefined;
+
+/**
+ * @member {Object.<String, module:model/DeploymentStatus>} status
+ */
+Deployment.prototype['status'] = undefined;
 
 
 

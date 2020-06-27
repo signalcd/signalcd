@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.Deployment();
+    instance = new SignalCd.DeploymentStepStatus();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,34 +47,28 @@
       object[property] = value;
   }
 
-  describe('Deployment', function() {
-    it('should create an instance of Deployment', function() {
-      // uncomment below and update the code to test Deployment
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be.a(SignalCd.Deployment);
+  describe('DeploymentStepStatus', function() {
+    it('should create an instance of DeploymentStepStatus', function() {
+      // uncomment below and update the code to test DeploymentStepStatus
+      //var instane = new SignalCd.DeploymentStepStatus();
+      //expect(instance).to.be.a(SignalCd.DeploymentStepStatus);
     });
 
-    it('should have the property _number (base name: "number")', function() {
-      // uncomment below and update the code to test the property _number
-      //var instane = new SignalCd.Deployment();
+    it('should have the property phase (base name: "phase")', function() {
+      // uncomment below and update the code to test the property phase
+      //var instane = new SignalCd.DeploymentStepStatus();
       //expect(instance).to.be();
     });
 
-    it('should have the property created (base name: "created")', function() {
-      // uncomment below and update the code to test the property created
-      //var instane = new SignalCd.Deployment();
+    it('should have the property started (base name: "started")', function() {
+      // uncomment below and update the code to test the property started
+      //var instane = new SignalCd.DeploymentStepStatus();
       //expect(instance).to.be();
     });
 
-    it('should have the property pipeline (base name: "pipeline")', function() {
-      // uncomment below and update the code to test the property pipeline
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be();
-    });
-
-    it('should have the property status (base name: "status")', function() {
-      // uncomment below and update the code to test the property status
-      //var instane = new SignalCd.Deployment();
+    it('should have the property stopped (base name: "stopped")', function() {
+      // uncomment below and update the code to test the property stopped
+      //var instane = new SignalCd.DeploymentStepStatus();
       //expect(instance).to.be();
     });
 

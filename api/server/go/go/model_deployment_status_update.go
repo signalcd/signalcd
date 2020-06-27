@@ -9,16 +9,10 @@
 
 package openapi
 
-import (
-	"time"
-)
+type DeploymentStatusUpdate struct {
+	Agent string `json:"agent"`
 
-type Deployment struct {
-	Number int64 `json:"number"`
+	Step int64 `json:"step"`
 
-	Created time.Time `json:"created,omitempty"`
-
-	Pipeline Pipeline `json:"pipeline,omitempty"`
-
-	Status map[string]DeploymentStatus `json:"status,omitempty"`
+	Phase string `json:"phase,omitempty"`
 }

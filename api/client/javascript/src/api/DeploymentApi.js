@@ -14,6 +14,7 @@
 
 import ApiClient from "../ApiClient";
 import Deployment from '../model/Deployment';
+import DeploymentStatusUpdate from '../model/DeploymentStatusUpdate';
 import SetCurrentDeployment from '../model/SetCurrentDeployment';
 
 /**
@@ -153,6 +154,58 @@ export default class DeploymentApi {
      */
     setCurrentDeployment(setCurrentDeployment) {
       return this.setCurrentDeploymentWithHttpInfo(setCurrentDeployment)
+        .then(function(response_and_data) {
+          return response_and_data.data;
+        });
+    }
+
+
+    /**
+     * Update parts of the Status of a Deployment
+     * @param {Number} id 
+     * @param {module:model/DeploymentStatusUpdate} deploymentStatusUpdate 
+     * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with an object containing data of type {@link module:model/Deployment} and HTTP response
+     */
+    updateDeploymentStatusWithHttpInfo(id, deploymentStatusUpdate) {
+      let postBody = deploymentStatusUpdate;
+      // verify the required parameter 'id' is set
+      if (id === undefined || id === null) {
+        throw new Error("Missing the required parameter 'id' when calling updateDeploymentStatus");
+      }
+      // verify the required parameter 'deploymentStatusUpdate' is set
+      if (deploymentStatusUpdate === undefined || deploymentStatusUpdate === null) {
+        throw new Error("Missing the required parameter 'deploymentStatusUpdate' when calling updateDeploymentStatus");
+      }
+
+      let pathParams = {
+        'id': id
+      };
+      let queryParams = {
+      };
+      let headerParams = {
+      };
+      let formParams = {
+      };
+
+      let authNames = [];
+      let contentTypes = ['application/json'];
+      let accepts = ['application/json'];
+      let returnType = Deployment;
+      return this.apiClient.callApi(
+        '/deployments/{id}/status', 'PATCH',
+        pathParams, queryParams, headerParams, formParams, postBody,
+        authNames, contentTypes, accepts, returnType, null
+      );
+    }
+
+    /**
+     * Update parts of the Status of a Deployment
+     * @param {Number} id 
+     * @param {module:model/DeploymentStatusUpdate} deploymentStatusUpdate 
+     * @return {Promise} a {@link https://www.promisejs.org/|Promise}, with data of type {@link module:model/Deployment}
+     */
+    updateDeploymentStatus(id, deploymentStatusUpdate) {
+      return this.updateDeploymentStatusWithHttpInfo(id, deploymentStatusUpdate)
         .then(function(response_and_data) {
           return response_and_data.data;
         });

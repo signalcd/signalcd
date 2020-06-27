@@ -16,7 +16,8 @@ import (
 
 // Deployment struct for Deployment
 type Deployment struct {
-	Number   int64     `json:"number"`
-	Created  time.Time `json:"created,omitempty"`
-	Pipeline Pipeline  `json:"pipeline,omitempty"`
+	Number   int64                       `json:"number"`
+	Created  time.Time                   `json:"created,omitempty"`
+	Pipeline Pipeline                    `json:"pipeline,omitempty"`
+	Status   map[string]DeploymentStatus `json:"status,omitempty"`
 }

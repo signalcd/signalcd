@@ -44,3 +44,10 @@ func (s *DeploymentApiService) SetCurrentDeployment(setCurrentDeployment SetCurr
 	// Add api_deployment_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
 	return nil, errors.New("service method 'SetCurrentDeployment' not implemented")
 }
+
+// UpdateDeploymentStatus - Update parts of the Status of a Deployment
+func (s *DeploymentApiService) UpdateDeploymentStatus(id int64, deploymentStatusUpdate DeploymentStatusUpdate) (interface{}, error) {
+	// TODO - update UpdateDeploymentStatus with the required logic for this service method.
+	// Add api_deployment_service.go to the .openapi-generator-ignore to avoid overwriting this service implementation when updating open api generation.
+	return nil, errors.New("service method 'UpdateDeploymentStatus' not implemented")
+}

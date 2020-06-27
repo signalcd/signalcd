@@ -28,7 +28,7 @@
   var instance;
 
   beforeEach(function() {
-    instance = new SignalCd.Deployment();
+    instance = new SignalCd.DeploymentStatus();
   });
 
   var getProperty = function(object, getter, property) {
@@ -47,34 +47,16 @@
       object[property] = value;
   }
 
-  describe('Deployment', function() {
-    it('should create an instance of Deployment', function() {
-      // uncomment below and update the code to test Deployment
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be.a(SignalCd.Deployment);
+  describe('DeploymentStatus', function() {
+    it('should create an instance of DeploymentStatus', function() {
+      // uncomment below and update the code to test DeploymentStatus
+      //var instane = new SignalCd.DeploymentStatus();
+      //expect(instance).to.be.a(SignalCd.DeploymentStatus);
     });
 
-    it('should have the property _number (base name: "number")', function() {
-      // uncomment below and update the code to test the property _number
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be();
-    });
-
-    it('should have the property created (base name: "created")', function() {
-      // uncomment below and update the code to test the property created
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be();
-    });
-
-    it('should have the property pipeline (base name: "pipeline")', function() {
-      // uncomment below and update the code to test the property pipeline
-      //var instane = new SignalCd.Deployment();
-      //expect(instance).to.be();
-    });
-
-    it('should have the property status (base name: "status")', function() {
-      // uncomment below and update the code to test the property status
-      //var instane = new SignalCd.Deployment();
+    it('should have the property steps (base name: "steps")', function() {
+      // uncomment below and update the code to test the property steps
+      //var instane = new SignalCd.DeploymentStatus();
       //expect(instance).to.be();
     });
 
