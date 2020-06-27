@@ -1,8 +1,6 @@
 package boltdb
 
 import (
-	"context"
-
 	"github.com/signalcd/signalcd/signalcd"
 )
 
@@ -23,21 +21,20 @@ func NewEvents(db *BoltDB, events *signalcd.Events) *Events {
 // CreateDeployment wraps the underlying BoltDB func to publish successfully created Deployments
 func (e *Events) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deployment, error) {
 	deployment, err := e.BoltDB.CreateDeployment(pipeline)
-
-	if err == nil {
-		e.events.PublishDeployment(deployment)
+	if err != nil {
+		return deployment, err
 	}
 
-	return deployment, err
+	e.events.PublishDeployment(deployment)
+	return deployment, nil
 }
 
-// SetDeploymentStatus wraps t he underlying BoltDB func to publish successfully updated Deployments
-func (e *Events) SetDeploymentStatus(ctx context.Context, number int64, phase signalcd.DeploymentPhase) (signalcd.Deployment, error) {
-	deployment, err := e.BoltDB.SetDeploymentStatus(ctx, number, phase)
-
-	if err == nil {
-		e.events.PublishDeployment(deployment)
+func (e *Events) UpdateDeploymentStatus(deploymentNumber int64, step int64, agent string, phase signalcd.Phase) (signalcd.Deployment, error) {
+	deployment, err := e.BoltDB.UpdateDeploymentStatus(deploymentNumber, step, agent, phase)
+	if err != nil {
+		return deployment, err
 	}
 
-	return deployment, err
+	e.events.PublishDeployment(deployment)
+	return deployment, nil
 }

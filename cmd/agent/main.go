@@ -367,17 +367,6 @@ func (r *runner) poll(ctx context.Context, deployment signalcd.Deployment) error
 
 		level.Info(r.logger).Log("msg", "unknown pipeline, deploying...", "deployment", deployment.Number)
 
-		// TODO: Introduce in OpenAPI again
-		//_, err = r.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-		//	Number: deployment.Number,
-		//	Status: &signalcdproto.DeploymentStatus{
-		//		Phase: signalcdproto.DeploymentStatus_PROGRESS,
-		//	},
-		//})
-		//if err != nil {
-		//	return fmt.Errorf("failed to update deployment status: %w", err)
-		//}
-
 		if err := r.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
 			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to run pipeline: %w", err))
 		}
@@ -395,17 +384,6 @@ func (r *runner) poll(ctx context.Context, deployment signalcd.Deployment) error
 	if r.currentDeployment.get().Number != deployment.Number {
 		r.currentDeployment.set(deployment)
 		level.Info(r.logger).Log("msg", "update deployment", "number", deployment.Number)
-
-		// TODO: Introduce in OpenAPI again
-		//_, err := r.client.SetDeploymentStatus(ctx, &signalcdproto.SetDeploymentStatusRequest{
-		//	Number: deployment.Number,
-		//	Status: &signalcdproto.DeploymentStatus{
-		//		Phase: signalcdproto.DeploymentStatus_PROGRESS,
-		//	},
-		//})
-		//if err != nil {
-		//	return fmt.Errorf("failed to update deployment status: %w", err)
-		//}
 
 		if err := r.runPipeline(ctx, deployment.Number, deployment.Pipeline); err != nil {
 			return r.sendStatus(ctx, deployment.Number, fmt.Errorf("failed to run deployment: %w", err))
@@ -480,7 +458,25 @@ func (r *runner) runSteps(ctx context.Context, deploymentNumber int64, p signalc
 		)
 
 		if err := r.runStep(ctx, deploymentNumber, int64(i), p, s); err != nil {
+			_, _, err := r.client.DeploymentApi.UpdateDeploymentStatus(context.Background(), deploymentNumber, apiclient.DeploymentStatusUpdate{
+				Agent: r.agentName,
+				Step:  int64(i),
+				Phase: string(signalcd.Failure),
+			})
+			if err != nil {
+				// TODO: Log and increase error metrics for failed step
+			}
+
 			return fmt.Errorf("failed to run pipeline %s step %s: %w", p.Name, s.Name, err)
+		}
+
+		_, _, err := r.client.DeploymentApi.UpdateDeploymentStatus(context.Background(), deploymentNumber, apiclient.DeploymentStatusUpdate{
+			Agent: r.agentName,
+			Step:  int64(i),
+			Phase: string(signalcd.Success),
+		})
+		if err != nil {
+			// TODO: Log and increase error metrics for failed step
 		}
 	}
 
@@ -488,6 +484,15 @@ func (r *runner) runSteps(ctx context.Context, deploymentNumber int64, p signalc
 }
 
 func (r *runner) runStep(ctx context.Context, deploymentNumber int64, stepNumber int64, pipeline signalcd.Pipeline, step signalcd.Step) error {
+	_, _, err := r.client.DeploymentApi.UpdateDeploymentStatus(context.Background(), deploymentNumber, apiclient.DeploymentStatusUpdate{
+		Agent: r.agentName,
+		Step:  stepNumber,
+		Phase: string(signalcd.Progress),
+	})
+	if err != nil {
+		// TODO: Log and increase error metrics for failed step
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
@@ -530,7 +535,7 @@ func (r *runner) runStep(ctx context.Context, deploymentNumber int64, stepNumber
 	podLogger := log.With(r.logger, "namespace", r.namespace, "pod", p.Name)
 
 	// Clean up previous runs if the pods still exists
-	err := r.klient.CoreV1().Pods(r.namespace).Delete(p.Name, nil)
+	err = r.klient.CoreV1().Pods(r.namespace).Delete(p.Name, nil)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return fmt.Errorf("failed to delete previous pod: %w", err)
 	}
