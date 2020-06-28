@@ -2,36 +2,40 @@ package signalcd
 
 import "time"
 
-//DeploymentPhase is the current state of a Deployment
-type DeploymentPhase string
+//Phase is the current state of a Deployment Step or Check
+type Phase string
 
 const (
 	//Unknown is the state of a Deployment that is currently unknown
-	Unknown DeploymentPhase = "unknown"
+	Unknown Phase = "unknown"
 	//Success is the state of a Deployment that was successfully executed
-	Success DeploymentPhase = "success"
+	Success Phase = "success"
 	//Failure is the state of a Deployment that failed to execute
-	Failure DeploymentPhase = "failure"
+	Failure Phase = "failure"
 	//Progress is the state of a Deployment that is currently running
-	Progress DeploymentPhase = "progress"
+	Progress Phase = "progress"
 	//Pending is the state of a Deployment that is schedule but not yet progressing
-	Pending DeploymentPhase = "pending"
+	Pending Phase = "pending"
 	//Killed is the state of a Deployment that was killed during execution
-	Killed DeploymentPhase = "killed"
+	Killed Phase = "killed"
 )
 
 //Deployment is a specific execution of a Pipeline with more meta data
 type Deployment struct {
 	Number   int64
 	Created  time.Time
-	Started  time.Time
-	Finished time.Time
-	Status   DeploymentStatus
-
 	Pipeline Pipeline
+
+	Status map[string]*Status
 }
 
-//DeploymentStatus is the status of a Deployment
-type DeploymentStatus struct {
-	Phase DeploymentPhase
+type Status struct {
+	Steps []StepStatus
+}
+
+type StepStatus struct {
+	Phase    Phase
+	ExitCode int
+	Started  time.Time
+	Stopped  *time.Time
 }

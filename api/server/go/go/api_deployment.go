@@ -13,6 +13,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // A DeploymentApiController binds http requests to an api service and writes the service results to the http response
@@ -45,6 +47,12 @@ func (c *DeploymentApiController) Routes() Routes {
 			strings.ToUpper("Post"),
 			"/api/v1/deployments/current",
 			c.SetCurrentDeployment,
+		},
+		{
+			"UpdateDeploymentStatus",
+			strings.ToUpper("Patch"),
+			"/api/v1/deployments/{id}/status",
+			c.UpdateDeploymentStatus,
 		},
 	}
 }
@@ -80,6 +88,30 @@ func (c *DeploymentApiController) SetCurrentDeployment(w http.ResponseWriter, r 
 	}
 
 	result, err := c.service.SetCurrentDeployment(*setCurrentDeployment)
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	EncodeJSONResponse(result, nil, w)
+}
+
+// UpdateDeploymentStatus - Update parts of the Status of a Deployment
+func (c *DeploymentApiController) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := parseIntParameter(params["id"])
+	if err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	deploymentStatusUpdate := &DeploymentStatusUpdate{}
+	if err := json.NewDecoder(r.Body).Decode(&deploymentStatusUpdate); err != nil {
+		w.WriteHeader(500)
+		return
+	}
+
+	result, err := c.service.UpdateDeploymentStatus(id, *deploymentStatusUpdate)
 	if err != nil {
 		w.WriteHeader(500)
 		return

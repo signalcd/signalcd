@@ -20,6 +20,7 @@ type DeploymentApiRouter interface {
 	GetCurrentDeployment(http.ResponseWriter, *http.Request)
 	ListDeployments(http.ResponseWriter, *http.Request)
 	SetCurrentDeployment(http.ResponseWriter, *http.Request)
+	UpdateDeploymentStatus(http.ResponseWriter, *http.Request)
 }
 
 // PipelineApiRouter defines the required methods for binding the api requests to a responses for the PipelineApi
@@ -39,6 +40,7 @@ type DeploymentApiServicer interface {
 	GetCurrentDeployment() (interface{}, error)
 	ListDeployments() (interface{}, error)
 	SetCurrentDeployment(SetCurrentDeployment) (interface{}, error)
+	UpdateDeploymentStatus(int64, DeploymentStatusUpdate) (interface{}, error)
 }
 
 // PipelineApiServicer defines the api actions for the PipelineApi service

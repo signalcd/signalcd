@@ -13,12 +13,10 @@ import (
 	"time"
 )
 
-type Deployment struct {
-	Number int64 `json:"number"`
+type DeploymentStepStatus struct {
+	Phase string `json:"phase"`
 
-	Created time.Time `json:"created,omitempty"`
+	Started time.Time `json:"started"`
 
-	Pipeline Pipeline `json:"pipeline,omitempty"`
-
-	Status map[string]DeploymentStatus `json:"status,omitempty"`
+	Stopped time.Time `json:"stopped,omitempty"`
 }

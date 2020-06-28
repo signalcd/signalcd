@@ -78,6 +78,16 @@
         done();
       });
     });
+    describe('updateDeploymentStatus', function() {
+      it('should call updateDeploymentStatus successfully', function(done) {
+        //uncomment below and update the code to test updateDeploymentStatus
+        //instance.updateDeploymentStatus(function(error) {
+        //  if (error) throw error;
+        //expect().to.be();
+        //});
+        done();
+      });
+    });
   });
 
 }));

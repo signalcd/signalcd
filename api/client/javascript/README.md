@@ -120,6 +120,7 @@ Class | Method | HTTP request | Description
 *SignalCd.DeploymentApi* | [**getCurrentDeployment**](docs/DeploymentApi.md#getCurrentDeployment) | **GET** /deployments/current | Get the current Deployment
 *SignalCd.DeploymentApi* | [**listDeployments**](docs/DeploymentApi.md#listDeployments) | **GET** /deployments | List Deployments
 *SignalCd.DeploymentApi* | [**setCurrentDeployment**](docs/DeploymentApi.md#setCurrentDeployment) | **POST** /deployments/current | Set the current Deployment
+*SignalCd.DeploymentApi* | [**updateDeploymentStatus**](docs/DeploymentApi.md#updateDeploymentStatus) | **PATCH** /deployments/{id}/status | Update parts of the Status of a Deployment
 *SignalCd.PipelineApi* | [**createPipeline**](docs/PipelineApi.md#createPipeline) | **POST** /pipelines | Create a new Pipeline.
 *SignalCd.PipelineApi* | [**getPipeline**](docs/PipelineApi.md#getPipeline) | **GET** /pipelines/{id} | Get Pipeline by its ID
 *SignalCd.PipelineApi* | [**listPipelines**](docs/PipelineApi.md#listPipelines) | **GET** /pipelines | List of Pipelines.
@@ -128,6 +129,9 @@ Class | Method | HTTP request | Description
 ## Documentation for Models
 
  - [SignalCd.Deployment](docs/Deployment.md)
+ - [SignalCd.DeploymentStatus](docs/DeploymentStatus.md)
+ - [SignalCd.DeploymentStatusUpdate](docs/DeploymentStatusUpdate.md)
+ - [SignalCd.DeploymentStepStatus](docs/DeploymentStepStatus.md)
  - [SignalCd.Pipeline](docs/Pipeline.md)
  - [SignalCd.PipelineSteps](docs/PipelineSteps.md)
  - [SignalCd.SetCurrentDeployment](docs/SetCurrentDeployment.md)

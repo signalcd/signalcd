@@ -90,11 +90,8 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 		}
 
 		d = signalcd.Deployment{
-			Number:  int64(num + 1),
-			Created: time.Now().UTC(),
-			Status: signalcd.DeploymentStatus{
-				Phase: signalcd.Unknown,
-			},
+			Number:   int64(num + 1),
+			Created:  time.Now().UTC(),
 			Pipeline: pipeline,
 		}
 
@@ -107,31 +104,52 @@ func (bdb *BoltDB) CreateDeployment(pipeline signalcd.Pipeline) (signalcd.Deploy
 	return d, err
 }
 
-// SetDeploymentStatus finds a Deployment by its number and sets its phase
-func (bdb *BoltDB) SetDeploymentStatus(ctx context.Context, number int64, phase signalcd.DeploymentPhase) (signalcd.Deployment, error) {
+func (bdb *BoltDB) UpdateDeploymentStatus(deploymentNumber int64, step int64, agent string, phase signalcd.Phase) (signalcd.Deployment, error) {
 	var d signalcd.Deployment
 
 	err := bdb.db.Update(func(tx *bolt.Tx) error {
+
 		b := tx.Bucket([]byte(bucketDeployments))
-		key := []byte(strconv.Itoa(int(number)))
+		key := []byte(strconv.Itoa(int(deploymentNumber)))
 		value := b.Get(key)
+
+		if value == nil {
+			return fmt.Errorf("deployment not found")
+		}
 
 		if err := json.Unmarshal(value, &d); err != nil {
 			return err
 		}
 
-		d.Status.Phase = phase
-
-		switch phase {
-		case signalcd.Progress:
-			d.Started = time.Now().UTC()
-		case signalcd.Success, signalcd.Failure, signalcd.Killed:
-			d.Finished = time.Now().UTC()
+		status := d.Status[agent]
+		if status == nil {
+			status = &signalcd.Status{}
 		}
+
+		if int64(len(status.Steps)) == step {
+			status.Steps = append(status.Steps, signalcd.StepStatus{
+				Phase:    phase,
+				ExitCode: 0,
+				Started:  time.Now().UTC(),
+				Stopped:  nil,
+			})
+		} else {
+			status.Steps[step].Phase = phase
+			if phase == signalcd.Success || phase == signalcd.Failure || phase == signalcd.Killed {
+				now := time.Now().UTC()
+				status.Steps[step].Stopped = &now
+			}
+		}
+
+		if d.Status == nil {
+			d.Status = map[string]*signalcd.Status{}
+		}
+
+		d.Status[agent] = status
 
 		value, err := json.Marshal(d)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to marshal Deployment after updating status: %w", err)
 		}
 
 		return b.Put(key, value)
@@ -193,11 +211,11 @@ func (bdb *BoltDB) SaveStepLogs(ctx context.Context, deployment, step int64, log
 			return fmt.Errorf("step %d does not exist", step)
 		}
 
-		if d.Pipeline.Steps[step].Status == nil {
-			d.Pipeline.Steps[step].Status = &signalcd.Status{}
-		}
-
-		d.Pipeline.Steps[step].Status.Logs = logs
+		//if d.Pipeline.Steps[step].Status == nil {
+		//	d.Pipeline.Steps[step].Status = &signalcd.Status{}
+		//}
+		//
+		//d.Pipeline.Steps[step].Status.Logs = logs
 
 		value, err := json.Marshal(d)
 		if err != nil {

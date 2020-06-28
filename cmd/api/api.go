@@ -17,6 +17,7 @@ type Database interface {
 	DeploymentLister
 	CurrentDeploymentGetter
 	CurrentDeploymentSetter
+	DeploymentStatusUpdater
 	PipelineLister
 	PipelineGetter
 	PipelineCreater
@@ -30,6 +31,7 @@ func NewV1(logger log.Logger, registry *prometheus.Registry, database Database, 
 			lister:        database,
 			currentGetter: database,
 			currentSetter: database,
+			statusUpdater: database,
 		}),
 		openapi.NewPipelineApiController(&Pipelines{
 			lister:  database,
@@ -86,6 +88,7 @@ type Deployments struct {
 	lister        DeploymentLister
 	currentGetter CurrentDeploymentGetter
 	currentSetter CurrentDeploymentSetter
+	statusUpdater DeploymentStatusUpdater
 }
 
 type DeploymentLister interface {
@@ -138,12 +141,65 @@ func (d *Deployments) SetCurrentDeployment(params openapi.SetCurrentDeployment) 
 	return deployment, nil
 }
 
+type DeploymentStatusUpdater interface {
+	UpdateDeploymentStatus(deploymentNumber int64, step int64, agent string, phase signalcd.Phase) (signalcd.Deployment, error)
+}
+
+func (d *Deployments) UpdateDeploymentStatus(i int64, update openapi.DeploymentStatusUpdate) (interface{}, error) {
+	var phase signalcd.Phase
+	switch update.Phase {
+	case "unknown":
+		phase = signalcd.Unknown
+	case "success":
+		phase = signalcd.Success
+	case "failure":
+		phase = signalcd.Failure
+	case "progress":
+		phase = signalcd.Progress
+	case "pending":
+		phase = signalcd.Pending
+	case "killed":
+		phase = signalcd.Killed
+	}
+
+	// TODO: If we maintain a list of connected agents we can verify if agent exists before updating random status
+	deployment, err := d.statusUpdater.UpdateDeploymentStatus(i, update.Step, update.Agent, phase)
+
+	return deploymentOpenAPI(deployment), err
+}
+
 func deploymentOpenAPI(d signalcd.Deployment) openapi.Deployment {
-	return openapi.Deployment{
+	deploy := openapi.Deployment{
 		Number:   d.Number,
 		Created:  d.Created,
 		Pipeline: pipelineOpenAPI(d.Pipeline),
 	}
+
+	if d.Status != nil {
+		deploy.Status = map[string]openapi.DeploymentStatus{}
+
+		for dAgent, dStatus := range d.Status {
+			status := openapi.DeploymentStatus{}
+			stepStatuses := []openapi.DeploymentStepStatus{}
+			for _, s := range dStatus.Steps {
+				stopped := time.Time{}
+				if s.Stopped != nil {
+					stopped = *s.Stopped
+				}
+
+				stepStatuses = append(stepStatuses, openapi.DeploymentStepStatus{
+					Phase:   string(s.Phase),
+					Started: s.Started,
+					Stopped: stopped,
+				})
+			}
+			status.Steps = stepStatuses
+
+			deploy.Status[dAgent] = status
+		}
+	}
+
+	return deploy
 }
 
 type Pipelines struct {

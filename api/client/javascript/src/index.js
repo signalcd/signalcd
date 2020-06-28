@@ -14,6 +14,9 @@
 
 import ApiClient from './ApiClient';
 import Deployment from './model/Deployment';
+import DeploymentStatus from './model/DeploymentStatus';
+import DeploymentStatusUpdate from './model/DeploymentStatusUpdate';
+import DeploymentStepStatus from './model/DeploymentStepStatus';
 import Pipeline from './model/Pipeline';
 import PipelineSteps from './model/PipelineSteps';
 import SetCurrentDeployment from './model/SetCurrentDeployment';
@@ -64,6 +67,24 @@ export {
      * @property {module:model/Deployment}
      */
     Deployment,
+
+    /**
+     * The DeploymentStatus model constructor.
+     * @property {module:model/DeploymentStatus}
+     */
+    DeploymentStatus,
+
+    /**
+     * The DeploymentStatusUpdate model constructor.
+     * @property {module:model/DeploymentStatusUpdate}
+     */
+    DeploymentStatusUpdate,
+
+    /**
+     * The DeploymentStepStatus model constructor.
+     * @property {module:model/DeploymentStepStatus}
+     */
+    DeploymentStepStatus,
 
     /**
      * The Pipeline model constructor.

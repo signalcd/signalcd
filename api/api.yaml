@@ -49,6 +49,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Deployment"
+  /deployments/{id}/status:
+    patch:
+      summary: Update parts of the Status of a Deployment
+      operationId: UpdateDeploymentStatus
+      tags:
+        - deployment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeploymentStatusUpdate'
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        200:
+          description: Status update successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Deployment"
   /pipelines:
     get:
       summary: List of Pipelines.
@@ -116,6 +142,10 @@ components:
           format: 'date-time'
         pipeline:
           $ref: '#/components/schemas/Pipeline'
+        status:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/DeploymentStatus'
     Deployments:
       type: array
       items:
@@ -128,6 +158,43 @@ components:
         pipelineID:
           type: string
           format: uuid
+    DeploymentStatus:
+      type: object
+      required:
+        - steps
+      properties:
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeploymentStepStatus'
+    DeploymentStepStatus:
+      type: object
+      required:
+        - phase
+        - started
+      properties:
+        phase:
+          type: string
+        started:
+          type: string
+          format: 'date-time'
+        stopped:
+          type: string
+          format: 'date-time'
+    DeploymentStatusUpdate:
+      type: object
+      required:
+        - agent
+        - step
+      properties:
+        agent:
+          type: string
+        step:
+          type: integer
+          format: int64
+        phase:
+          type: string
+          enum: ['unknown', 'success', 'failure', 'progress', 'pending', 'killed']
     Pipeline:
       type: object
       required:
