@@ -113,7 +113,7 @@ local docker = {
         },
         commands: [
           'apk add -U git make',
-          'make %s --always-make' % target,
+          'make %s' % target,
           'git diff --exit-code %s' % target,
         ],
       }

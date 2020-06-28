@@ -102,7 +102,7 @@ steps:
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make api/client/go --always-make
+  - make api/client/go
   - git diff --exit-code api/client/go
   environment:
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
@@ -111,7 +111,7 @@ steps:
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make api/client/javascript --always-make
+  - make api/client/javascript
   - git diff --exit-code api/client/javascript
   environment:
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
@@ -120,7 +120,7 @@ steps:
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make api/server/go --always-make
+  - make api/server/go
   - git diff --exit-code api/server/go
   environment:
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
