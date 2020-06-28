@@ -124,11 +124,11 @@ func agentAction(logger log.Logger) cli.ActionFunc {
 
 		ctx, cancel := context.WithCancel(context.Background())
 
-		events := make(chan signalcd.Deployment, 1)
+		events := make(chan signalcd.Deployment, 3)
 
 		var gr run.Group
 		{
-			l := listener{api: apiURL}
+			l := listener{client: client}
 
 			gr.Add(func() error {
 				return l.listen(ctx, events)
@@ -197,68 +197,128 @@ func (cd *currentDeployment) set(d signalcd.Deployment) {
 }
 
 type listener struct {
-	api *url.URL
+	client *apiclient.APIClient
 }
 
 func (l *listener) listen(ctx context.Context, deployments chan<- signalcd.Deployment) error {
-	client := http.Client{}
+	var gr run.Group
+	{
+		t := time.NewTicker(time.Minute)
 
-	// refactor so that 2 goroutines write into channel
-	// first periodically does a simple GET /api/v1/deployments to check if events were missed
-	// second watches GET /api/v1/deployments/events with SSE
+		gr.Add(func() error {
+			deployment, _, err := l.client.DeploymentApi.GetCurrentDeployment(context.Background())
+			if err != nil {
+				return err
+			}
+			fmt.Println("successfully gotten deployment")
 
-	u := url.URL{
-		Scheme: l.api.Scheme,
-		Host:   l.api.Host,
-		Path:   path.Join(l.api.Path, "/api/v1/deployments/events"),
+			deployments <- signalDeployment(deployment)
+
+			for {
+				select {
+				case <-t.C:
+					ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+					defer cancel()
+					deployment, _, err := l.client.DeploymentApi.GetCurrentDeployment(ctx)
+					if err != nil {
+						return err
+					}
+					fmt.Println("successfully gotten deployment")
+					deployments <- signalDeployment(deployment)
+				case <-ctx.Done():
+					return nil
+				}
+			}
+		}, func(err error) {
+			t.Stop()
+		})
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	scanner := bufio.NewScanner(resp.Body)
-	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
-		if atEOF || len(data) == 0 {
-			return 0, nil, nil
+	{
+		u := url.URL{
+			Scheme: l.client.GetConfig().Scheme,
+			Host:   l.client.GetConfig().Host,
+			Path:   path.Join(l.client.GetConfig().BasePath, "deployments/events"),
 		}
 
-		index := bytes.Index(data, []byte("\n\n"))
-		if index > 0 {
-			return index + 2, data[0:index], nil
-		}
+		gr.Add(func() error {
+			req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+			if err != nil {
+				return err
+			}
 
-		if atEOF {
-			return len(data), data, nil
-		}
+			client := http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
 
-		return 0, nil, nil
-	})
+			scanner := bufio.NewScanner(resp.Body)
+			scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+				if atEOF || len(data) == 0 {
+					return 0, nil, nil
+				}
 
-	for scanner.Scan() {
-		var d signalcd.Deployment
+				index := bytes.Index(data, []byte("\n\n"))
+				if index > 0 {
+					return index + 2, data[0:index], nil
+				}
 
-		text := bytes.TrimPrefix(scanner.Bytes(), []byte("data:"))
-		text = bytes.TrimSpace(text)
+				if atEOF {
+					return len(data), data, nil
+				}
 
-		if err := json.Unmarshal(text, &d); err != nil {
-			fmt.Println(scanner.Text())
-			return err
-		}
-		deployments <- d
+				return 0, nil, nil
+			})
+
+			for scanner.Scan() {
+				var d apiclient.Deployment
+
+				text := bytes.TrimPrefix(scanner.Bytes(), []byte("data:"))
+				text = bytes.TrimSpace(text)
+
+				if err := json.Unmarshal(text, &d); err != nil {
+					fmt.Println(scanner.Text())
+					return err
+				}
+				deployments <- signalDeployment(d)
+			}
+			if scanner.Err() != nil {
+				return err
+			}
+
+			return nil
+		}, func(err error) {
+		})
 	}
-	if scanner.Err() != nil {
-		return err
+
+	return gr.Run()
+}
+
+func signalDeployment(d apiclient.Deployment) signalcd.Deployment {
+	var steps []signalcd.Step
+	for _, step := range d.Pipeline.Steps {
+		steps = append(steps, signalcd.Step{
+			Name:     step.Name,
+			Image:    step.Image,
+			Commands: step.Commands,
+		})
 	}
 
-	return nil
+	return signalcd.Deployment{
+		Number:   d.Number,
+		Created:  d.Created,
+		Started:  time.Time{},
+		Finished: time.Time{},
+		Pipeline: signalcd.Pipeline{
+			ID:      d.Pipeline.Id,
+			Name:    d.Pipeline.Name,
+			Steps:   steps,
+			Checks:  nil,
+			Created: d.Pipeline.Created,
+		},
+		Status: signalcd.DeploymentStatus{},
+	}
 }
 
 type runner struct {
