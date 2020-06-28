@@ -16,14 +16,15 @@ OPENAPI ?= docker run --rm \
 		-v $(shell pwd):$(shell pwd) \
 		openapitools/openapi-generator-cli:v4.3.1
 
-GOIMPORTS ?= goimports
+.bingo/bin/goimports:
+	cd .bingo && $(GO) build -modfile goimports.mod -o bin/goimports "golang.org/x/tools/cmd/goimports"
 
-api/client/go: api/api.yaml
+api/client/go: api/api.yaml .bingo/bin/goimports
 	-rm -rf $@
 	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go -o $(shell pwd)/api/client/go --additional-properties=withGoCodegenComment=true
 	-rm -rf $@/go.mod
 	-rm -rf $@/go.sum
-	$(GOIMPORTS) -w $(shell find ./api/client/go/ -name '*.go')
+	.bingo/bin/goimports -w $(shell find ./api/client/go/ -name '*.go')
 	touch $@
 
 api/client/javascript: api/api.yaml
@@ -31,11 +32,11 @@ api/client/javascript: api/api.yaml
 	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g javascript -o $(shell pwd)/api/client/javascript --additional-properties=usePromises=true
 	touch $@
 
-api/server/go: api/api.yaml
+api/server/go: api/api.yaml .bingo/bin/goimports
 	-rm -rf $@
 	$(OPENAPI) generate -i $(shell pwd)/api/api.yaml -g go-server -o $(shell pwd)/api/server/go
 	-rm -rf $@/{go.mod,main.go}
-	$(GOIMPORTS) -w $(shell find ./api/server/go/ -name '*.go')
+	.bingo/bin/goimports -w $(shell find ./api/server/go/ -name '*.go')
 	touch $@
 
 .drone.yml: .drone.jsonnet

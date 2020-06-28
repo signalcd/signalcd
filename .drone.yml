@@ -92,8 +92,7 @@ steps:
   pull: always
   image: golang:1.14
   commands:
-  - go get golang.org/x/tools/cmd/goimports
-  - cp $(which goimports) ./goimports
+  - make .bingo/bin/goimports
   environment:
     CGO_ENABLED: 0
     GO111MODULE: on
@@ -103,30 +102,27 @@ steps:
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make api/client/go --always-make
+  - make api/client/go
   - git diff --exit-code api/client/go
   environment:
-    GOIMPORTS: ./goimports
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 - name: api/client/javascript
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make api/client/javascript --always-make
+  - make api/client/javascript
   - git diff --exit-code api/client/javascript
   environment:
-    GOIMPORTS: ./goimports
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 - name: api/server/go
   image: openapitools/openapi-generator-cli:v4.3.1
   commands:
   - apk add -U git make
-  - make api/server/go --always-make
+  - make api/server/go
   - git diff --exit-code api/server/go
   environment:
-    GOIMPORTS: ./goimports
     OPENAPI: /usr/local/bin/docker-entrypoint.sh
 
 ---
