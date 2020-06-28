@@ -210,8 +210,6 @@ func (l *listener) listen(ctx context.Context, deployments chan<- signalcd.Deplo
 			if err != nil {
 				return err
 			}
-			fmt.Println("successfully gotten deployment")
-
 			deployments <- signalDeployment(deployment)
 
 			for {
@@ -223,7 +221,6 @@ func (l *listener) listen(ctx context.Context, deployments chan<- signalcd.Deplo
 					if err != nil {
 						return err
 					}
-					fmt.Println("successfully gotten deployment")
 					deployments <- signalDeployment(deployment)
 				case <-ctx.Done():
 					return nil
@@ -239,6 +236,9 @@ func (l *listener) listen(ctx context.Context, deployments chan<- signalcd.Deplo
 			Host:   l.client.GetConfig().Host,
 			Path:   path.Join(l.client.GetConfig().BasePath, "deployments/events"),
 		}
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 
 		gr.Add(func() error {
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -289,6 +289,7 @@ func (l *listener) listen(ctx context.Context, deployments chan<- signalcd.Deplo
 
 			return nil
 		}, func(err error) {
+			cancel()
 		})
 	}
 
@@ -305,11 +306,50 @@ func signalDeployment(d apiclient.Deployment) signalcd.Deployment {
 		})
 	}
 
+	var status map[string]*signalcd.Status
+	if d.Status != nil {
+		status = make(map[string]*signalcd.Status, len(d.Status))
+		for agent, s := range d.Status {
+			var steps []signalcd.StepStatus
+			for _, step := range s.Steps {
+				var phase signalcd.Phase
+				switch step.Phase {
+				case "unknown":
+					phase = signalcd.Unknown
+				case "success":
+					phase = signalcd.Success
+				case "failure":
+					phase = signalcd.Failure
+				case "progress":
+					phase = signalcd.Progress
+				case "pending":
+					phase = signalcd.Pending
+				case "killed":
+					phase = signalcd.Killed
+				}
+
+				var stopped *time.Time
+				if !step.Stopped.IsZero() {
+					stopped = &step.Stopped
+				}
+
+				steps = append(steps, signalcd.StepStatus{
+					Phase:    phase,
+					ExitCode: 0,
+					Started:  step.Started,
+					Stopped:  stopped,
+				})
+			}
+
+			status[agent] = &signalcd.Status{
+				Steps: steps,
+			}
+		}
+	}
+
 	return signalcd.Deployment{
-		Number:   d.Number,
-		Created:  d.Created,
-		Started:  time.Time{},
-		Finished: time.Time{},
+		Number:  d.Number,
+		Created: d.Created,
 		Pipeline: signalcd.Pipeline{
 			ID:      d.Pipeline.Id,
 			Name:    d.Pipeline.Name,
@@ -317,7 +357,7 @@ func signalDeployment(d apiclient.Deployment) signalcd.Deployment {
 			Checks:  nil,
 			Created: d.Pipeline.Created,
 		},
-		Status: signalcd.DeploymentStatus{},
+		Status: status,
 	}
 }
 
@@ -341,6 +381,7 @@ func (r *runner) run(ctx context.Context, events <-chan signalcd.Deployment) err
 		case <-ctx.Done():
 			return nil
 		case deployment := <-events:
+			level.Debug(r.logger).Log("msg", "received deployment event", "number", deployment.Number)
 			if err := r.poll(ctx, deployment); err != nil {
 				level.Warn(r.logger).Log("msg", "failed to run pipeline", "err", err)
 			}
