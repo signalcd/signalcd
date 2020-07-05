@@ -253,9 +253,10 @@ func pipelineOpenAPI(p signalcd.Pipeline) openapi.Pipeline {
 	var steps []openapi.PipelineSteps
 	for _, s := range p.Steps {
 		steps = append(steps, openapi.PipelineSteps{
-			Name:     s.Name,
-			Image:    s.Image,
-			Commands: s.Commands,
+			Name:             s.Name,
+			Image:            s.Image,
+			ImagePullSecrets: s.ImagePullSecrets,
+			Commands:         s.Commands,
 		})
 	}
 
@@ -271,9 +272,10 @@ func pipelineSignalCD(p openapi.Pipeline) signalcd.Pipeline {
 	var steps []signalcd.Step
 	for _, s := range p.Steps {
 		steps = append(steps, signalcd.Step{
-			Name:     s.Name,
-			Image:    s.Image,
-			Commands: s.Commands,
+			Name:             s.Name,
+			Image:            s.Image,
+			ImagePullSecrets: s.ImagePullSecrets,
+			Commands:         s.Commands,
 		})
 	}
 

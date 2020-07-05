@@ -300,9 +300,10 @@ func signalDeployment(d apiclient.Deployment) signalcd.Deployment {
 	var steps []signalcd.Step
 	for _, step := range d.Pipeline.Steps {
 		steps = append(steps, signalcd.Step{
-			Name:     step.Name,
-			Image:    step.Image,
-			Commands: step.Commands,
+			Name:             step.Name,
+			Image:            step.Image,
+			ImagePullSecrets: step.ImagePullSecrets,
+			Commands:         step.Commands,
 		})
 	}
 

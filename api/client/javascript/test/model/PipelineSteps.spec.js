@@ -66,6 +66,12 @@
       //expect(instance).to.be();
     });
 
+    it('should have the property imagePullSecrets (base name: "imagePullSecrets")', function() {
+      // uncomment below and update the code to test the property imagePullSecrets
+      //var instane = new SignalCd.PipelineSteps();
+      //expect(instance).to.be();
+    });
+
     it('should have the property commands (base name: "commands")', function() {
       // uncomment below and update the code to test the property commands
       //var instane = new SignalCd.PipelineSteps();

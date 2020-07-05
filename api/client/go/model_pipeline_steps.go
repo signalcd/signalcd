@@ -12,7 +12,8 @@ package openapi
 
 // PipelineSteps struct for PipelineSteps
 type PipelineSteps struct {
-	Name     string   `json:"name,omitempty"`
-	Image    string   `json:"image,omitempty"`
-	Commands []string `json:"commands,omitempty"`
+	Name             string   `json:"name,omitempty"`
+	Image            string   `json:"image,omitempty"`
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+	Commands         []string `json:"commands,omitempty"`
 }

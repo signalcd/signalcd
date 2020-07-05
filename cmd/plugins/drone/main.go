@@ -126,9 +126,10 @@ func action(c *cli.Context) error {
 	var pipelineSteps []apiclient.PipelineSteps
 	for _, step := range config.Steps {
 		pipelineSteps = append(pipelineSteps, apiclient.PipelineSteps{
-			Name:     step.Name,
-			Image:    step.Image,
-			Commands: step.Commands,
+			Name:             step.Name,
+			Image:            step.Image,
+			ImagePullSecrets: step.ImagePullSecrets,
+			Commands:         step.Commands,
 		})
 	}
 

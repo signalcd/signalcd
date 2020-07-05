@@ -53,6 +53,9 @@ class PipelineSteps {
             if (data.hasOwnProperty('image')) {
                 obj['image'] = ApiClient.convertToType(data['image'], 'String');
             }
+            if (data.hasOwnProperty('imagePullSecrets')) {
+                obj['imagePullSecrets'] = ApiClient.convertToType(data['imagePullSecrets'], ['String']);
+            }
             if (data.hasOwnProperty('commands')) {
                 obj['commands'] = ApiClient.convertToType(data['commands'], ['String']);
             }
@@ -72,6 +75,11 @@ PipelineSteps.prototype['name'] = undefined;
  * @member {String} image
  */
 PipelineSteps.prototype['image'] = undefined;
+
+/**
+ * @member {Array.<String>} imagePullSecrets
+ */
+PipelineSteps.prototype['imagePullSecrets'] = undefined;
 
 /**
  * @member {Array.<String>} commands

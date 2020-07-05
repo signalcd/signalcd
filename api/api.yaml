@@ -217,6 +217,10 @@ components:
                 type: string
               image:
                 type: string
+              imagePullSecrets:
+                type: array
+                items:
+                  type: string
               commands:
                 type: array
                 items:

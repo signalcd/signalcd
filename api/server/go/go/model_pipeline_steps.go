@@ -14,5 +14,7 @@ type PipelineSteps struct {
 
 	Image string `json:"image,omitempty"`
 
+	ImagePullSecrets []string `json:"imagePullSecrets,omitempty"`
+
 	Commands []string `json:"commands,omitempty"`
 }
